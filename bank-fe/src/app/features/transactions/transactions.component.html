@@ -1,0 +1,310 @@
+<div class="transactions-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Lịch sử giao dịch</h1>
+      <p class="hero-subtitle">Xem và quản lý tất cả giao dịch của bạn</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="transactions-container">
+      <!-- Filters Card -->
+      <div class="filters-card">
+        <form
+          [formGroup]="filterForm"
+          (ngSubmit)="applyFilters()"
+          class="filters-form"
+        >
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label class="filter-label">Loại giao dịch</label>
+              <p-select
+                formControlName="type"
+                [options]="transactionTypes"
+                placeholder="Tất cả"
+                class="filter-select"
+              >
+              </p-select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Trạng thái</label>
+              <p-select
+                formControlName="status"
+                [options]="statusOptions"
+                placeholder="Tất cả"
+                class="filter-select"
+              >
+              </p-select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Từ ngày</label>
+              <p-datePicker
+                formControlName="from"
+                placeholder="Chọn ngày"
+                [showIcon]="true"
+                class="filter-date"
+              >
+              </p-datePicker>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Đến ngày</label>
+              <p-datePicker
+                formControlName="to"
+                placeholder="Chọn ngày"
+                [showIcon]="true"
+                class="filter-date"
+              >
+              </p-datePicker>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Số tiền tối thiểu</label>
+              <p-inputNumber
+                formControlName="min"
+                mode="currency"
+                currency="VND"
+                locale="vi-VN"
+                placeholder="0"
+                class="filter-input"
+              >
+              </p-inputNumber>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Số tiền tối đa</label>
+              <p-inputNumber
+                formControlName="max"
+                mode="currency"
+                currency="VND"
+                locale="vi-VN"
+                placeholder="Không giới hạn"
+                class="filter-input"
+              >
+              </p-inputNumber>
+            </div>
+          </div>
+
+          <div class="filter-actions">
+            <p-button
+              type="submit"
+              label="Lọc"
+              icon="pi pi-filter"
+              class="filter-btn primary"
+            >
+            </p-button>
+            <p-button
+              type="button"
+              label="Xóa bộ lọc"
+              icon="pi pi-times"
+              class="filter-btn secondary"
+              (click)="clearFilters()"
+            >
+            </p-button>
+            <p-button
+              type="button"
+              label="Xuất CSV"
+              icon="pi pi-download"
+              class="filter-btn success"
+              (click)="exportCsv()"
+              [loading]="isExporting"
+            >
+            </p-button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Transactions Table Card -->
+      <div class="transactions-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="pi pi-history"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Lịch sử giao dịch</h3>
+            <p class="header-subtitle">Tất cả giao dịch của bạn</p>
+          </div>
+        </div>
+
+        <div class="transactions-content">
+          <div
+            *ngIf="isLoading; else transactionsContent"
+            class="loading-container"
+          >
+            <p-progressSpinner
+              [style]="{ width: '50px', height: '50px' }"
+            ></p-progressSpinner>
+          </div>
+
+          <ng-template #transactionsContent>
+            <div class="transactions-table">
+              <div class="table-header">
+                <div class="header-cell sortable" (click)="sortBy('type')">
+                  Loại
+                  <i class="pi pi-sort-alt" *ngIf="sortField !== 'type'"></i>
+                  <i
+                    class="pi pi-sort-up"
+                    *ngIf="sortField === 'type' && sortOrder === 1"
+                  ></i>
+                  <i
+                    class="pi pi-sort-down"
+                    *ngIf="sortField === 'type' && sortOrder === -1"
+                  ></i>
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('amount')">
+                  Số tiền
+                  <i class="pi pi-sort-alt" *ngIf="sortField !== 'amount'"></i>
+                  <i
+                    class="pi pi-sort-up"
+                    *ngIf="sortField === 'amount' && sortOrder === 1"
+                  ></i>
+                  <i
+                    class="pi pi-sort-down"
+                    *ngIf="sortField === 'amount' && sortOrder === -1"
+                  ></i>
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('balance')">
+                  Số dư
+                  <i class="pi pi-sort-alt" *ngIf="sortField !== 'balance'"></i>
+                  <i
+                    class="pi pi-sort-up"
+                    *ngIf="sortField === 'balance' && sortOrder === 1"
+                  ></i>
+                  <i
+                    class="pi pi-sort-down"
+                    *ngIf="sortField === 'balance' && sortOrder === -1"
+                  ></i>
+                </div>
+                <div class="header-cell">Mô tả</div>
+                <div class="header-cell sortable" (click)="sortBy('status')">
+                  Trạng thái
+                  <i class="pi pi-sort-alt" *ngIf="sortField !== 'status'"></i>
+                  <i
+                    class="pi pi-sort-up"
+                    *ngIf="sortField === 'status' && sortOrder === 1"
+                  ></i>
+                  <i
+                    class="pi pi-sort-down"
+                    *ngIf="sortField === 'status' && sortOrder === -1"
+                  ></i>
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('createdAt')">
+                  Thời gian
+                  <i
+                    class="pi pi-sort-alt"
+                    *ngIf="sortField !== 'createdAt'"
+                  ></i>
+                  <i
+                    class="pi pi-sort-up"
+                    *ngIf="sortField === 'createdAt' && sortOrder === 1"
+                  ></i>
+                  <i
+                    class="pi pi-sort-down"
+                    *ngIf="sortField === 'createdAt' && sortOrder === -1"
+                  ></i>
+                </div>
+              </div>
+
+              <div class="table-body">
+                <div *ngFor="let transaction of transactions" class="table-row">
+                  <div class="table-cell">
+                    <div class="transaction-type">
+                      <i
+                        [class]="getTransactionIcon(transaction.type)"
+                        [class]="getTransactionColor(transaction.type)"
+                      ></i>
+                      <span class="capitalize">{{
+                        getTransactionTypeLabel(transaction.type)
+                      }}</span>
+                    </div>
+                  </div>
+                  <div class="table-cell">
+                    <span [class]="getAmountClass(transaction.type)">
+                      {{ getAmountPrefix(transaction.type)
+                      }}{{ transaction.amount | currencyVnd }}
+                    </span>
+                  </div>
+                  <div class="table-cell">
+                    {{ transaction.balance | currencyVnd }}
+                  </div>
+                  <div class="table-cell">
+                    <span *ngIf="transaction.description; else noDescription">
+                      {{ transaction.description }}
+                    </span>
+                    <ng-template #noDescription>
+                      <span class="no-description">-</span>
+                    </ng-template>
+                  </div>
+                  <div class="table-cell">
+                    <div
+                      class="status-badge"
+                      [class]="getStatusClass(transaction.status)"
+                    >
+                      {{ getStatusLabel(transaction.status) }}
+                    </div>
+                  </div>
+                  <div class="table-cell">
+                    {{ transaction.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                  </div>
+                </div>
+
+                <div *ngIf="transactions.length === 0" class="empty-state">
+                  <div class="empty-content">
+                    <i class="pi pi-inbox empty-icon"></i>
+                    <p class="empty-text">Không tìm thấy giao dịch nào</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            <div class="pagination-container" *ngIf="totalRecords > pageSize">
+              <div class="pagination-info">
+                Hiển thị {{ (currentPage - 1) * pageSize + 1 }} -
+                {{ Math.min(currentPage * pageSize, totalRecords) }}
+                trong {{ totalRecords }} giao dịch
+              </div>
+              <div class="pagination-controls">
+                <button
+                  class="pagination-btn"
+                  (click)="goToPage(1)"
+                  [disabled]="currentPage === 1"
+                >
+                  <i class="pi pi-angle-double-left"></i>
+                </button>
+                <button
+                  class="pagination-btn"
+                  (click)="goToPage(currentPage - 1)"
+                  [disabled]="currentPage === 1"
+                >
+                  <i class="pi pi-angle-left"></i>
+                </button>
+                <span class="pagination-info">
+                  Trang {{ currentPage }} / {{ totalPages }}
+                </span>
+                <button
+                  class="pagination-btn"
+                  (click)="goToPage(currentPage + 1)"
+                  [disabled]="currentPage === totalPages"
+                >
+                  <i class="pi pi-angle-right"></i>
+                </button>
+                <button
+                  class="pagination-btn"
+                  (click)="goToPage(totalPages)"
+                  [disabled]="currentPage === totalPages"
+                >
+                  <i class="pi pi-angle-double-right"></i>
+                </button>
+              </div>
+            </div>
+          </ng-template>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

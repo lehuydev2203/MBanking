@@ -1,0 +1,1712 @@
+{
+  "/v1": {
+    "get": {
+      "operationId": "AppController_getHello",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": ""
+        }
+      }
+    }
+  },
+  "/v1/auth/register": {
+    "post": {
+      "operationId": "AuthController_register",
+      "summary": "Register a new user account",
+      "description": "Creates a new user account and sends verification email. If email exists but not verified, sends new verification code.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/RegisterDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Registration successful, verification email sent",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "message": "VERIFICATION_SENT"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponseDto"
+              }
+            }
+          }
+        },
+        "202": {
+          "description": "Email exists but not verified, new verification code sent",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "message": "VERIFICATION_SENT"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponseDto"
+              }
+            }
+          }
+        },
+        "409": {
+          "description": "Email already exists and verified",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "EMAIL_EXISTS",
+                  "message": "Email already exists and is verified"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Auth"
+      ]
+    }
+  },
+  "/v1/auth/verify": {
+    "post": {
+      "operationId": "AuthController_verifyEmail",
+      "summary": "Verify email address",
+      "description": "Verifies email address using the verification code sent to email",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/VerifyEmailDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Email verified successfully",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "message": "VERIFIED"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid or expired verification code",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "INVALID_CODE",
+                  "message": "Invalid or expired verification code"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Auth"
+      ]
+    }
+  },
+  "/v1/auth/resend-verification": {
+    "post": {
+      "operationId": "AuthController_resendVerification",
+      "summary": "Resend verification email",
+      "description": "Resends verification email to unverified accounts",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ResendVerificationDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "202": {
+          "description": "Verification email resent",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "message": "VERIFICATION_SENT"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponseDto"
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Account not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "Account not found"
+                }
+              }
+            }
+          }
+        },
+        "409": {
+          "description": "Email already verified",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "EMAIL_EXISTS",
+                  "message": "Email is already verified"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Auth"
+      ]
+    }
+  },
+  "/v1/auth/login": {
+    "post": {
+      "operationId": "AuthController_login",
+      "summary": "Login user",
+      "description": "Authenticates user and returns JWT token",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/LoginDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Login successful",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+                "expiresIn": 900
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid credentials",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "INVALID_CREDENTIALS",
+                  "message": "Invalid email or password"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Email not verified or account locked",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "EMAIL_NOT_VERIFIED",
+                  "message": "Please verify your email before logging in"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Auth"
+      ]
+    }
+  },
+  "/v1/auth/change-password": {
+    "post": {
+      "operationId": "AuthController_changePassword",
+      "summary": "Change password",
+      "description": "Changes user password (requires authentication)",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/ChangePasswordDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Password changed successfully",
+          "schema": {
+            "example": {
+              "success": true,
+              "data": {
+                "message": "PASSWORD_CHANGED"
+              }
+            }
+          },
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MessageResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Invalid current password",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "INVALID_CREDENTIALS",
+                  "message": "Current password is incorrect"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Auth"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/profile": {
+    "get": {
+      "operationId": "AccountsController_getProfile",
+      "summary": "Get user profile",
+      "description": "Returns the current user profile information",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Profile retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileResponseDto"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Account not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "Account not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Me"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    },
+    "patch": {
+      "operationId": "AccountsController_updateProfile",
+      "summary": "Update user profile",
+      "description": "Updates the current user profile information",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateProfileDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Profile updated successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "Validation failed"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Account not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "Account not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Me"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/profile/nickname": {
+    "post": {
+      "operationId": "AccountsController_setNickname",
+      "summary": "Set account nickname",
+      "description": "Sets a nickname for the account to be used in transfers",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetNicknameDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Nickname set successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Nickname already taken or invalid format",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "Nickname already taken"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Account not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "Account not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Me"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/balance": {
+    "get": {
+      "operationId": "BalanceController_getBalance",
+      "summary": "Get account balance",
+      "description": "Returns the current user account balance",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Balance retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BalanceResponseDto"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "Account not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "Account not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transactions/can-withdraw": {
+    "get": {
+      "operationId": "TransactionsController_canWithdraw",
+      "summary": "Check if withdrawal is allowed",
+      "description": "Checks if a withdrawal amount is allowed based on balance, limits, and daily usage",
+      "parameters": [
+        {
+          "name": "amount",
+          "required": true,
+          "in": "query",
+          "description": "Amount to check",
+          "schema": {
+            "example": 1000000,
+            "type": "number"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Withdrawal check completed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanWithdrawResponseDto"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Transactions"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transactions/deposit": {
+    "post": {
+      "operationId": "TransactionsController_deposit",
+      "summary": "Deposit money",
+      "description": "Deposits money into the user account",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/DepositDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Deposit successful",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "Amount must be greater than 0"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Transactions"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transactions/withdraw": {
+    "post": {
+      "operationId": "TransactionsController_withdraw",
+      "summary": "Withdraw money",
+      "description": "Withdraws money from the user account with balance and limit checks",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/WithdrawDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Withdrawal successful",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransactionResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "Amount must be greater than 0"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Withdrawal not allowed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "examples": {
+                  "insufficientFunds": {
+                    "summary": "Insufficient funds",
+                    "value": {
+                      "success": false,
+                      "code": "INSUFFICIENT_FUNDS",
+                      "message": "Insufficient account balance"
+                    }
+                  },
+                  "limitPerTransaction": {
+                    "summary": "Per-transaction limit exceeded",
+                    "value": {
+                      "success": false,
+                      "code": "LIMIT_PER_TRANSACTION",
+                      "message": "Amount exceeds per-transaction limit"
+                    }
+                  },
+                  "dailyLimitExceeded": {
+                    "summary": "Daily limit exceeded",
+                    "value": {
+                      "success": false,
+                      "code": "DAILY_LIMIT_EXCEEDED",
+                      "message": "Amount would exceed daily withdrawal limit"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Transactions"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transactions": {
+    "get": {
+      "operationId": "TransactionsController_getTransactions",
+      "summary": "Lịch sử giao dịch",
+      "description": "Lấy danh sách tất cả giao dịch của người dùng bao gồm: nạp tiền, rút tiền, chuyển khoản đi và chuyển khoản đến. Có thể lọc theo loại giao dịch, khoảng thời gian và số tiền.",
+      "parameters": [
+        {
+          "name": "page",
+          "required": false,
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "minimum": 1,
+            "default": 1,
+            "type": "number"
+          }
+        },
+        {
+          "name": "pageSize",
+          "required": false,
+          "in": "query",
+          "description": "Number of items per page",
+          "schema": {
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "type": "number"
+          }
+        },
+        {
+          "name": "type",
+          "required": false,
+          "in": "query",
+          "description": "Transaction type filter",
+          "schema": {
+            "example": 1,
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
+          }
+        },
+        {
+          "name": "from",
+          "required": false,
+          "in": "query",
+          "description": "Start date filter (ISO string)",
+          "schema": {
+            "example": "2024-01-01T00:00:00.000Z",
+            "type": "string"
+          }
+        },
+        {
+          "name": "to",
+          "required": false,
+          "in": "query",
+          "description": "End date filter (ISO string)",
+          "schema": {
+            "example": "2024-12-31T23:59:59.999Z",
+            "type": "string"
+          }
+        },
+        {
+          "name": "min",
+          "required": false,
+          "in": "query",
+          "description": "Minimum amount filter",
+          "schema": {
+            "minimum": 0.01,
+            "example": 100000,
+            "type": "number"
+          }
+        },
+        {
+          "name": "max",
+          "required": false,
+          "in": "query",
+          "description": "Maximum amount filter",
+          "schema": {
+            "minimum": 0.01,
+            "example": 5000000,
+            "type": "number"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Lấy lịch sử giao dịch thành công. Mỗi giao dịch sẽ có thông tin phân loại (transactionCategory và transactionTypeLabel)",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaginatedResponseDto"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Transactions"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transactions/export.csv": {
+    "get": {
+      "operationId": "TransactionsController_exportTransactions",
+      "summary": "Export transactions to CSV",
+      "description": "Exports user transactions to CSV format with filters",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "CSV export successful",
+          "content": {
+            "text/csv": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Transactions"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/wallet/can-withdraw": {
+    "get": {
+      "operationId": "WalletController_canWithdraw",
+      "summary": "Check if withdrawal is allowed",
+      "description": "Checks if a withdrawal amount is allowed based on balance, limits, and daily usage",
+      "parameters": [
+        {
+          "name": "amount",
+          "required": true,
+          "in": "query",
+          "description": "Amount to check",
+          "schema": {
+            "example": 1000000,
+            "type": "number"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Withdrawal check completed",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanWithdrawResponseDto"
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Wallet"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/users": {
+    "get": {
+      "operationId": "AdminController_getUsers",
+      "summary": "Get users list",
+      "description": "Retrieves paginated list of users with search and filter options (Admin/Superadmin only)",
+      "parameters": [
+        {
+          "name": "page",
+          "required": false,
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "minimum": 1,
+            "default": 1,
+            "type": "number"
+          }
+        },
+        {
+          "name": "pageSize",
+          "required": false,
+          "in": "query",
+          "description": "Number of items per page",
+          "schema": {
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "type": "number"
+          }
+        },
+        {
+          "name": "q",
+          "required": false,
+          "in": "query",
+          "description": "Search query for name or email",
+          "schema": {
+            "example": "john",
+            "type": "string"
+          }
+        },
+        {
+          "name": "role",
+          "required": false,
+          "in": "query",
+          "description": "Filter by role",
+          "schema": {
+            "enum": [
+              "user",
+              "admin",
+              "superadmin"
+            ],
+            "type": "string"
+          }
+        },
+        {
+          "name": "status",
+          "required": false,
+          "in": "query",
+          "description": "Filter by status",
+          "schema": {
+            "enum": [
+              "active",
+              "locked"
+            ],
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Users retrieved successfully"
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Insufficient permissions",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "FORBIDDEN",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/users/{id}": {
+    "patch": {
+      "operationId": "AdminController_updateUser",
+      "summary": "Update user",
+      "description": "Updates user role or status (Superadmin only)",
+      "parameters": [
+        {
+          "name": "id",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/UpdateUserDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "User updated successfully"
+        },
+        "400": {
+          "description": "Validation error",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "Validation failed"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Insufficient permissions or self-demotion attempt",
+          "content": {
+            "application/json": {
+              "schema": {
+                "examples": {
+                  "insufficientPermissions": {
+                    "summary": "Insufficient permissions",
+                    "value": {
+                      "success": false,
+                      "code": "FORBIDDEN",
+                      "message": "Insufficient permissions"
+                    }
+                  },
+                  "selfDemotion": {
+                    "summary": "Self-demotion attempt",
+                    "value": {
+                      "success": false,
+                      "code": "FORBIDDEN",
+                      "message": "Cannot demote yourself from superadmin role"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "User not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/users/{id}/resend-verification": {
+    "post": {
+      "operationId": "AdminController_resendUserVerification",
+      "summary": "Resend user verification",
+      "description": "Resends verification email to a specific user (Admin/Superadmin only)",
+      "parameters": [
+        {
+          "name": "id",
+          "required": true,
+          "in": "path",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "responses": {
+        "202": {
+          "description": "Verification email resent",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "message": "VERIFICATION_SENT"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "User already verified",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "BAD_REQUEST",
+                  "message": "User email is already verified"
+                }
+              }
+            }
+          }
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Insufficient permissions",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "FORBIDDEN",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          }
+        },
+        "404": {
+          "description": "User not found",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "NOT_FOUND",
+                  "message": "User not found"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/admin/transactions": {
+    "get": {
+      "operationId": "AdminController_getTransactions",
+      "summary": "Get transactions list",
+      "description": "Retrieves paginated list of all transactions with filters (Admin/Superadmin only)",
+      "parameters": [
+        {
+          "name": "page",
+          "required": false,
+          "in": "query",
+          "description": "Page number",
+          "schema": {
+            "minimum": 1,
+            "default": 1,
+            "type": "number"
+          }
+        },
+        {
+          "name": "pageSize",
+          "required": false,
+          "in": "query",
+          "description": "Number of items per page",
+          "schema": {
+            "minimum": 1,
+            "maximum": 100,
+            "default": 10,
+            "type": "number"
+          }
+        },
+        {
+          "name": "type",
+          "required": false,
+          "in": "query",
+          "description": "Filter by transaction type",
+          "schema": {
+            "enum": [
+              1,
+              2
+            ],
+            "type": "number"
+          }
+        },
+        {
+          "name": "accountId",
+          "required": false,
+          "in": "query",
+          "description": "Filter by account ID",
+          "schema": {
+            "example": "507f1f77bcf86cd799439011",
+            "type": "string"
+          }
+        },
+        {
+          "name": "from",
+          "required": false,
+          "in": "query",
+          "description": "Start date filter (ISO string)",
+          "schema": {
+            "example": "2024-01-01T00:00:00.000Z",
+            "type": "string"
+          }
+        },
+        {
+          "name": "to",
+          "required": false,
+          "in": "query",
+          "description": "End date filter (ISO string)",
+          "schema": {
+            "example": "2024-12-31T23:59:59.999Z",
+            "type": "string"
+          }
+        },
+        {
+          "name": "min",
+          "required": false,
+          "in": "query",
+          "description": "Minimum amount filter",
+          "schema": {
+            "minimum": 0.01,
+            "example": 100000,
+            "type": "number"
+          }
+        },
+        {
+          "name": "max",
+          "required": false,
+          "in": "query",
+          "description": "Maximum amount filter",
+          "schema": {
+            "minimum": 0.01,
+            "example": 5000000,
+            "type": "number"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Transactions retrieved successfully"
+        },
+        "401": {
+          "description": "Unauthorized",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "UNAUTHORIZED",
+                  "message": "Invalid or expired token"
+                }
+              }
+            }
+          }
+        },
+        "403": {
+          "description": "Insufficient permissions",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": false,
+                  "code": "FORBIDDEN",
+                  "message": "Insufficient permissions"
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Admin"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/health": {
+    "get": {
+      "operationId": "HealthController_getHealth",
+      "summary": "Health check",
+      "description": "Returns the health status of the application and database",
+      "parameters": [],
+      "responses": {
+        "200": {
+          "description": "Health status retrieved successfully",
+          "content": {
+            "application/json": {
+              "schema": {
+                "example": {
+                  "success": true,
+                  "data": {
+                    "status": "up",
+                    "db": "ok",
+                    "appVersion": "1.0.0",
+                    "time": "2024-01-01T00:00:00.000Z"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "tags": [
+        "Health"
+      ]
+    }
+  },
+  "/v1/transfers/initiate": {
+    "post": {
+      "operationId": "TransfersController_initiateTransfer",
+      "summary": "Khởi tạo chuyển khoản",
+      "description": "Bắt đầu quá trình chuyển khoản. Hệ thống sẽ gửi mã xác nhận 6 chữ số qua email để xác thực giao dịch.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TransferRequestDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "201": {
+          "description": "Chuyển khoản được khởi tạo thành công, mã xác nhận đã được gửi qua email",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferInitiateResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Dữ liệu đầu vào không hợp lệ hoặc không tìm thấy tài khoản người nhận"
+        },
+        "403": {
+          "description": "Số dư không đủ hoặc vượt quá giới hạn giao dịch"
+        },
+        "404": {
+          "description": "Không tìm thấy tài khoản người nhận"
+        }
+      },
+      "tags": [
+        "Transfers"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transfers/confirm": {
+    "post": {
+      "operationId": "TransfersController_confirmTransfer",
+      "summary": "Xác nhận chuyển khoản",
+      "description": "Hoàn tất giao dịch chuyển khoản bằng mã xác nhận 6 chữ số đã nhận qua email.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/TransferConfirmDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Chuyển khoản hoàn tất thành công",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TransferConfirmResponseDto"
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Mã xác nhận không hợp lệ hoặc đã hết hạn"
+        },
+        "403": {
+          "description": "Số dư không đủ để thực hiện giao dịch"
+        }
+      },
+      "tags": [
+        "Transfers"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transfers/history": {
+    "get": {
+      "operationId": "TransfersController_getTransferHistory",
+      "summary": "Lịch sử chuyển khoản (Deprecated)",
+      "description": "⚠️ API này đã được tích hợp vào /transactions. Vui lòng sử dụng GET /transactions để lấy lịch sử giao dịch đầy đủ bao gồm cả chuyển khoản. API này sẽ được loại bỏ trong phiên bản tương lai.",
+      "parameters": [
+        {
+          "name": "page",
+          "required": false,
+          "in": "query",
+          "description": "Số trang (bắt đầu từ 1)",
+          "schema": {
+            "example": 1,
+            "type": "number"
+          }
+        },
+        {
+          "name": "pageSize",
+          "required": false,
+          "in": "query",
+          "description": "Số lượng giao dịch mỗi trang (mặc định 10)",
+          "schema": {
+            "example": 10,
+            "type": "number"
+          }
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Lấy lịch sử chuyển khoản thành công"
+        }
+      },
+      "tags": [
+        "Transfers"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  },
+  "/v1/transfers/nickname": {
+    "post": {
+      "operationId": "TransfersController_setNickname",
+      "summary": "Đặt biệt danh tài khoản",
+      "description": "Thiết lập biệt danh cho tài khoản để người khác có thể chuyển tiền dễ dàng hơn thay vì nhớ số tài khoản dài.",
+      "parameters": [],
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "$ref": "#/components/schemas/SetNicknameDto"
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Đặt biệt danh thành công"
+        },
+        "400": {
+          "description": "Biệt danh đã được sử dụng hoặc định dạng không hợp lệ"
+        }
+      },
+      "tags": [
+        "Transfers"
+      ],
+      "security": [
+        {
+          "bearer": []
+        }
+      ]
+    }
+  }
+}

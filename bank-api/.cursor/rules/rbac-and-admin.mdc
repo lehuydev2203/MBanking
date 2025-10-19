@@ -1,0 +1,613 @@
+---
+description: 'RBAC user|admin|superadmin, Admin APIs, Audit.'
+globs:
+  [
+    'src/modules/admin/**/*.ts',
+    'src/common/guards/**/*.ts',
+    'src/common/decorators/**/*.ts',
+  ]
+---
+
+# RBAC & Admin System Standards
+
+## Role-Based Access Control (RBAC)
+
+### Role Definitions
+
+```typescript
+export enum Role {
+  USER = 'user', // Standard user - manage own account
+  ADMIN = 'admin', // Admin - manage users and transactions
+  SUPERADMIN = 'superadmin', // Superadmin - full access + role management
+}
+```
+
+### Role Hierarchy
+
+- **User**: Own profile, transactions, balance
+- **Admin**: All user permissions + user management + transaction monitoring
+- **Superadmin**: All admin permissions + role management + system settings
+
+## Guards Implementation
+
+### JWT Auth Guard
+
+```typescript
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  canActivate(context: ExecutionContext) {
+    return super.canActivate(context);
+  }
+
+  handleRequest(err: any, user: any, info: any) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Invalid or expired token');
+    }
+    return user;
+  }
+}
+```
+
+### Roles Guard
+
+```typescript
+@Injectable()
+export class RolesGuard implements CanActivate {
+  constructor(private reflector: Reflector) {}
+
+  canActivate(context: ExecutionContext): boolean {
+    const requiredRoles = this.reflector.getAllAndOverride<Role[]>(ROLES_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (!requiredRoles) {
+      return true; // No roles required
+    }
+
+    const { user } = context.switchToHttp().getRequest();
+
+    if (!user) {
+      throw new ForbiddenException('User not authenticated');
+    }
+
+    const hasRole = requiredRoles.some((role) => user.role === role);
+
+    if (!hasRole) {
+      throw new ForbiddenException('Insufficient permissions');
+    }
+
+    return true;
+  }
+}
+```
+
+### Roles Decorator
+
+```typescript
+export const ROLES_KEY = 'roles';
+export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
+```
+
+## Controller Protection
+
+### Standard User Endpoints
+
+```typescript
+@Controller('profile')
+@UseGuards(JwtAuthGuard)
+@ApiBearerAuth()
+export class AccountsController {
+  @Get()
+  async getProfile(@CurrentUser() user: Account) {
+    return this.accountsService.getProfile(user._id.toString());
+  }
+}
+```
+
+### Admin Endpoints
+
+```typescript
+@Controller('admin')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
+export class AdminController {
+  @Get('users')
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  async getUsers(@Query() query: AdminUserQueryDto) {
+    return this.adminService.getUsers(query);
+  }
+}
+```
+
+### Superadmin Only Endpoints
+
+```typescript
+@Patch('users/:id')
+@Roles(Role.SUPERADMIN)
+async updateUser(
+  @Param('id') userId: string,
+  @Body() updateUserDto: UpdateUserDto,
+  @CurrentUser() user: Account
+) {
+  return this.adminService.updateUser(userId, updateUserDto, user._id.toString());
+}
+```
+
+## Admin Service Implementation
+
+### User Management
+
+```typescript
+@Injectable()
+export class AdminService {
+  async getUsers(query: AdminUserQueryDto, currentUserId: string) {
+    const { page = 1, pageSize = 10, q, role, status } = query;
+
+    const filter: any = {};
+
+    // Search functionality
+    if (q) {
+      filter.$or = [
+        { name: { $regex: q, $options: 'i' } },
+        { email: { $regex: q, $options: 'i' } },
+      ];
+    }
+
+    // Role filter
+    if (role) {
+      filter.role = role;
+    }
+
+    // Status filter
+    if (status) {
+      filter.status = status;
+    }
+
+    const skip = (page - 1) * pageSize;
+    const total = await this.accountModel.countDocuments(filter);
+
+    const users = await this.accountModel
+      .find(filter)
+      .select('-passwordHash') // Never return password hashes
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(pageSize)
+      .lean();
+
+    return {
+      items: users.map((user) => ({
+        ...user,
+        balance: parseFloat(user.balance.toString()),
+      })),
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  }
+}
+```
+
+### User Update with Self-Demotion Protection
+
+```typescript
+async updateUser(userId: string, updateUserDto: UpdateUserDto, currentUserId: string) {
+  const user = await this.accountModel.findById(userId);
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  // Prevent self-demotion from superadmin
+  if (userId === currentUserId && updateUserDto.role) {
+    const currentUser = await this.accountModel.findById(currentUserId);
+    if (currentUser?.role === 'superadmin' && updateUserDto.role !== 'superadmin') {
+      throw new ForbiddenException({
+        code: 'FORBIDDEN',
+        message: 'Cannot demote yourself from superadmin role'
+      });
+    }
+  }
+
+  const updatedUser = await this.accountModel.findByIdAndUpdate(
+    userId,
+    updateUserDto,
+    { new: true, runValidators: true }
+  ).select('-passwordHash');
+
+  // Log audit
+  await this.auditService.log({
+    actorId: currentUserId,
+    action: 'UPDATE_USER',
+    resource: 'user',
+    meta: {
+      targetUserId: userId,
+      updatedFields: Object.keys(updateUserDto),
+      newValues: updateUserDto
+    }
+  });
+
+  return {
+    ...updatedUser.toJSON(),
+    balance: parseFloat(updatedUser.balance.toString())
+  };
+}
+```
+
+### Resend Verification
+
+```typescript
+async resendUserVerification(userId: string, currentUserId: string) {
+  const user = await this.accountModel.findById(userId);
+
+  if (!user) {
+    throw new NotFoundException('User not found');
+  }
+
+  if (user.isEmailVerified) {
+    throw new BadRequestException({
+      code: 'BAD_REQUEST',
+      message: 'User email is already verified'
+    });
+  }
+
+  // Use auth service to resend verification
+  await this.authService.resendVerification({ email: user.email });
+
+  // Log audit
+  await this.auditService.log({
+    actorId: currentUserId,
+    action: 'RESEND_VERIFICATION',
+    resource: 'user',
+    meta: { targetUserId: userId, email: user.email }
+  });
+
+  return { message: 'VERIFICATION_SENT' };
+}
+```
+
+## Transaction Monitoring
+
+### Admin Transaction View
+
+```typescript
+async getTransactions(query: AdminTransactionQueryDto) {
+  const {
+    page = 1,
+    pageSize = 10,
+    type,
+    accountId,
+    from,
+    to,
+    min,
+    max
+  } = query;
+
+  const filter: any = {};
+
+  // Transaction type filter
+  if (type !== undefined) {
+    filter.transType = type;
+  }
+
+  // Account filter
+  if (accountId) {
+    filter.accountId = accountId;
+  }
+
+  // Date range filter
+  if (from || to) {
+    filter.createdAt = {};
+    if (from) filter.createdAt.$gte = new Date(from);
+    if (to) filter.createdAt.$lte = new Date(to);
+  }
+
+  // Amount range filter
+  if (min !== undefined || max !== undefined) {
+    filter.transMoney = {};
+    if (min !== undefined) filter.transMoney.$gte = min;
+    if (max !== undefined) filter.transMoney.$lte = max;
+  }
+
+  const skip = (page - 1) * pageSize;
+  const total = await this.transactionModel.countDocuments(filter);
+
+  const transactions = await this.transactionModel
+    .find(filter)
+    .populate('accountId', 'name email') // Include account info
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(pageSize)
+    .lean();
+
+  return {
+    items: transactions.map(t => ({
+      ...t,
+      transMoney: parseFloat(t.transMoney.toString()),
+      account: t.accountId // Populated account info
+    })),
+    total,
+    page,
+    pageSize,
+    totalPages: Math.ceil(total / pageSize)
+  };
+}
+```
+
+## Audit Logging
+
+### Audit Service
+
+```typescript
+@Injectable()
+export class AuditService {
+  constructor(
+    @InjectModel(AuditLog.name) private auditLogModel: Model<AuditLogDocument>,
+  ) {}
+
+  async log(auditData: AuditLogData) {
+    const auditLog = new this.auditLogModel({
+      ...auditData,
+      actorId: auditData.actorId ? auditData.actorId : undefined,
+    });
+
+    await auditLog.save();
+  }
+}
+
+export interface AuditLogData {
+  actorId?: string; // User who performed the action
+  action: string; // Action performed (CREATE, UPDATE, DELETE, etc.)
+  resource: string; // Resource affected (user, transaction, etc.)
+  meta?: any; // Additional metadata
+}
+```
+
+### Audit Events
+
+```typescript
+// User actions
+await this.auditService.log({
+  actorId: userId,
+  action: 'UPDATE_PROFILE',
+  resource: 'account',
+  meta: { accountId: userId, updatedFields: ['name', 'phone'] },
+});
+
+// Admin actions
+await this.auditService.log({
+  actorId: adminId,
+  action: 'UPDATE_USER_ROLE',
+  resource: 'user',
+  meta: {
+    targetUserId: userId,
+    oldRole: 'user',
+    newRole: 'admin',
+  },
+});
+
+// Transaction actions
+await this.auditService.log({
+  actorId: userId,
+  action: 'DEPOSIT',
+  resource: 'transaction',
+  meta: {
+    transactionId: transactionId,
+    amount: 1000000,
+    clientRequestId: 'deposit-123',
+  },
+});
+```
+
+## Security Rules
+
+### Role Escalation Prevention
+
+```typescript
+// Users cannot promote themselves
+// Only superadmin can change roles
+// Self-demotion from superadmin is blocked
+
+if (userId === currentUserId && updateUserDto.role) {
+  const currentUser = await this.accountModel.findById(currentUserId);
+  if (
+    currentUser?.role === 'superadmin' &&
+    updateUserDto.role !== 'superadmin'
+  ) {
+    throw new ForbiddenException({
+      code: 'FORBIDDEN',
+      message: 'Cannot demote yourself from superadmin role',
+    });
+  }
+}
+```
+
+### Data Access Control
+
+```typescript
+// Admin can see all users
+// Users can only see their own data
+// Password hashes are never returned
+
+// In admin service
+.select('-passwordHash') // Remove password from all queries
+
+// In user service
+// Only return current user's data
+const account = await this.accountModel.findById(user._id);
+```
+
+### Audit Trail Requirements
+
+```typescript
+// All admin actions must be logged
+// All user role changes must be logged
+// All sensitive operations must be logged
+
+// Required audit fields:
+// - actorId: Who performed the action
+// - action: What action was performed
+// - resource: What resource was affected
+// - meta: Additional context
+```
+
+## Error Handling
+
+### Admin Error Codes
+
+```typescript
+// User not found
+throw new NotFoundException('User not found');
+
+// Insufficient permissions
+throw new ForbiddenException({
+  code: 'FORBIDDEN',
+  message: 'Insufficient permissions',
+});
+
+// Self-demotion attempt
+throw new ForbiddenException({
+  code: 'FORBIDDEN',
+  message: 'Cannot demote yourself from superadmin role',
+});
+
+// Email already verified
+throw new BadRequestException({
+  code: 'BAD_REQUEST',
+  message: 'User email is already verified',
+});
+```
+
+### Validation Errors
+
+```typescript
+// Role validation
+@IsOptional()
+@IsEnum(Role)
+role?: Role;
+
+// Status validation
+@IsOptional()
+@IsEnum(Status)
+status?: Status;
+
+// Search query validation
+@IsOptional()
+@IsString()
+q?: string;
+```
+
+## Testing RBAC
+
+### Unit Tests
+
+```typescript
+describe('RolesGuard', () => {
+  it('should allow admin access to admin endpoints', () => {
+    const mockUser = { role: 'admin' };
+    const mockContext = { getHandler: () => {}, getClass: () => {} };
+
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(['admin', 'superadmin']);
+
+    const result = guard.canActivate(mockContext);
+    expect(result).toBe(true);
+  });
+
+  it('should reject user access to admin endpoints', () => {
+    const mockUser = { role: 'user' };
+
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(['admin', 'superadmin']);
+
+    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
+  });
+});
+```
+
+### E2E Tests
+
+```typescript
+describe('Admin Access Control', () => {
+  it('should reject user access to admin endpoints', async () => {
+    const userToken = await getAuthToken('user@example.com');
+
+    await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${userToken}`)
+      .expect(403)
+      .expect((res) => {
+        expect(res.body.success).toBe(false);
+        expect(res.body.code).toBe('FORBIDDEN');
+      });
+  });
+
+  it('should allow admin access to admin endpoints', async () => {
+    const adminToken = await getAuthToken('admin@example.com');
+
+    await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+  });
+});
+```
+
+## Performance Considerations
+
+### Database Indexes
+
+```typescript
+// Admin queries optimization
+AccountSchema.index({ role: 1 });
+AccountSchema.index({ status: 1 });
+AccountSchema.index({ createdAt: -1 });
+
+// Audit log queries
+AuditLogSchema.index({ createdAt: -1 });
+AuditLogSchema.index({ actorId: 1 });
+AuditLogSchema.index({ action: 1 });
+AuditLogSchema.index({ resource: 1 });
+```
+
+### Query Optimization
+
+```typescript
+// Use select to limit fields
+.select('-passwordHash')
+
+// Use lean() for read-only queries
+.lean()
+
+// Use populate efficiently
+.populate('accountId', 'name email')
+
+// Pagination for large datasets
+.skip((page - 1) * pageSize).limit(pageSize)
+```
+
+## Monitoring & Alerting
+
+### Admin Activity Metrics
+
+- User role changes per day
+- Admin actions per user
+- Failed permission checks
+- Self-demotion attempts
+
+### Security Alerts
+
+- Unauthorized admin access attempts
+- Suspicious role escalation
+- Bulk user modifications
+- Audit log anomalies
+
+### Performance Metrics
+
+- Admin query response times
+- User list loading times
+- Transaction monitoring performance
+- Audit log query performance

@@ -1,0 +1,189 @@
+---
+description: "Kiểm thử FE và hiệu năng cơ bản."
+globs: ["src/**/*.spec.ts", "src/app/**/*.ts"]
+---
+
+# Testing & Performance Guidelines
+
+## Unit Testing
+
+### Service Testing
+
+```typescript
+// AuthService tests
+describe("AuthService", () => {
+  it("should auto-logout when token expires", () => {
+    // Test timer auto-logout logic
+  });
+
+  it("should map error codes correctly", () => {
+    // Test EMAIL_NOT_VERIFIED, INVALID_CREDENTIALS mapping
+  });
+});
+
+// TransactionsService tests
+describe("TransactionsService", () => {
+  it("should map filters to query params", () => {
+    // Test filter object to query string conversion
+  });
+
+  it("should handle CSV export blob", () => {
+    // Test blob download functionality
+  });
+});
+```
+
+### Guard Testing
+
+```typescript
+describe("RoleGuard", () => {
+  it("should block non-admin users", () => {
+    // Test role checking logic
+  });
+
+  it("should redirect to 403 for insufficient permissions", () => {
+    // Test redirect behavior
+  });
+});
+```
+
+## Integration Testing
+
+### User Flows
+
+```typescript
+describe("Login Flow", () => {
+  it("should navigate to dashboard after successful login", () => {
+    // Test complete login flow
+  });
+});
+
+describe("Deposit Flow", () => {
+  it("should create deposit with clientRequestId", () => {
+    // Test deposit creation
+  });
+
+  it("should update recent transactions table", () => {
+    // Test UI updates after deposit
+  });
+});
+
+describe("Withdraw Flow", () => {
+  it("should show reasons when can-withdraw returns false", () => {
+    // Test withdrawal validation
+  });
+
+  it("should show confirmation dialog when allowed", () => {
+    // Test confirmation flow
+  });
+});
+```
+
+## Performance Guidelines
+
+### Change Detection
+
+- Use **OnPush** strategy where possible
+- Minimize component re-renders
+- Use **trackBy** functions for ngFor
+
+### Memory Management
+
+```typescript
+// Always unsubscribe in OnDestroy
+private destroy$ = new Subject<void>();
+
+ngOnDestroy(): void {
+  this.destroy$.next();
+  this.destroy$.complete();
+}
+
+// Use takeUntil pattern
+this.service.getData()
+  .pipe(takeUntil(this.destroy$))
+  .subscribe();
+```
+
+### Bundle Optimization
+
+- **Lazy loading**: All feature modules
+- **Tree shaking**: Remove unused code
+- **Code splitting**: Separate vendor chunks
+- **Compression**: Gzip/Brotli compression
+
+### API Optimization
+
+- **Pagination**: Limit data per request
+- **Caching**: Cache static data
+- **Debouncing**: For search inputs
+- **Loading states**: Show progress indicators
+
+## E2E Testing Scenarios
+
+### Critical User Journeys
+
+1. **Registration → Verification → Login → Dashboard**
+2. **Login → Deposit → View Transactions**
+3. **Login → Withdraw → Confirm → View Balance**
+4. **Admin Login → User Management → Role Change**
+
+### Error Scenarios
+
+1. **Invalid credentials → Error message**
+2. **Insufficient balance → Withdrawal blocked**
+3. **Network error → Graceful degradation**
+4. **Token expiry → Auto logout**
+
+## Performance Monitoring
+
+### Metrics to Track
+
+- **First Contentful Paint (FCP)**
+- **Largest Contentful Paint (LCP)**
+- **Cumulative Layout Shift (CLS)**
+- **Time to Interactive (TTI)**
+
+### Optimization Targets
+
+- **FCP**: < 1.5s
+- **LCP**: < 2.5s
+- **CLS**: < 0.1
+- **TTI**: < 3.5s
+
+## Testing Best Practices
+
+### Test Structure
+
+```typescript
+describe("ComponentName", () => {
+  let component: ComponentName;
+  let fixture: ComponentFixture<ComponentName>;
+
+  beforeEach(() => {
+    // Setup
+  });
+
+  it("should create", () => {
+    expect(component).toBeTruthy();
+  });
+
+  describe("when user action", () => {
+    it("should expected behavior", () => {
+      // Test implementation
+    });
+  });
+});
+```
+
+### Mocking Strategy
+
+- **Services**: Mock HTTP calls
+- **Router**: Mock navigation
+- **LocalStorage**: Mock storage
+- **Timers**: Mock setTimeout/setInterval
+
+### Test Data
+
+- Use **factory functions** for test data
+- **Consistent test data** across tests
+- **Edge cases**: Empty, null, invalid data

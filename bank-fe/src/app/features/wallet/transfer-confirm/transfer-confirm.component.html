@@ -1,0 +1,197 @@
+<div class="transfer-confirm-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Xác nhận chuyển khoản</h1>
+      <p class="hero-subtitle">
+        Nhập mã xác nhận 6 chữ số đã được gửi qua email
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="transfer-confirm-content">
+      <!-- Main Form -->
+      <div class="form-section">
+        <div class="form-card">
+          <div class="card-header">
+            <div class="header-icon">
+              <i class="pi pi-shield"></i>
+            </div>
+            <div class="header-content">
+              <h3 class="header-title">Xác thực giao dịch</h3>
+              <p class="header-subtitle">
+                Mã xác nhận đã được gửi đến email của bạn
+              </p>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <!-- Transfer Summary -->
+            <div class="transfer-summary" *ngIf="transferData">
+              <h3 class="summary-title">Thông tin giao dịch</h3>
+              <div class="summary-content">
+                <div class="summary-item">
+                  <span class="summary-label">Người nhận:</span>
+                  <span class="summary-value">{{
+                    transferData.recipientIdentifier
+                  }}</span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Số tiền:</span>
+                  <span class="summary-value negative">
+                    -{{ transferData.amount | currencyVnd }}
+                  </span>
+                </div>
+                <div class="summary-item">
+                  <span class="summary-label">Nội dung:</span>
+                  <span class="summary-value">{{
+                    transferData.transName
+                  }}</span>
+                </div>
+              </div>
+            </div>
+
+            <form
+              [formGroup]="confirmForm"
+              (ngSubmit)="onSubmit()"
+              class="confirm-form"
+            >
+              <div class="form-field">
+                <label for="code" class="form-label">
+                  <i class="pi pi-key"></i>
+                  Mã xác nhận <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    pInputText
+                    id="code"
+                    formControlName="code"
+                    placeholder="Nhập mã 6 chữ số"
+                    class="form-input code-input"
+                    maxlength="6"
+                    [class.error]="
+                      confirmForm.get('code')?.invalid &&
+                      confirmForm.get('code')?.touched
+                    "
+                  />
+                </div>
+                <div
+                  class="error-message"
+                  *ngIf="
+                    confirmForm.get('code')?.invalid &&
+                    confirmForm.get('code')?.touched
+                  "
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span *ngIf="confirmForm.get('code')?.errors?.['required']">
+                    Vui lòng nhập mã xác nhận
+                  </span>
+                  <span *ngIf="confirmForm.get('code')?.errors?.['pattern']">
+                    Mã xác nhận phải có đúng 6 chữ số
+                  </span>
+                </div>
+              </div>
+
+              <!-- Timer -->
+              <div class="timer-section" *ngIf="timeLeft > 0">
+                <div class="timer-info">
+                  <i class="pi pi-clock"></i>
+                  <span
+                    >Mã xác nhận còn hiệu lực trong:
+                    <strong>{{ formatTime(timeLeft) }}</strong></span
+                  >
+                </div>
+              </div>
+
+              <!-- Expired Message -->
+              <div class="expired-section" *ngIf="timeLeft <= 0">
+                <div class="expired-info">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span
+                    >Mã xác nhận đã hết hạn. Vui lòng thực hiện lại giao
+                    dịch.</span
+                  >
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                class="confirm-button"
+                [disabled]="confirmForm.invalid || isLoading || timeLeft <= 0"
+              >
+                <i class="pi pi-check" *ngIf="!isLoading"></i>
+                <i class="pi pi-spin pi-spinner" *ngIf="isLoading"></i>
+                <span>{{
+                  isLoading ? "Đang xử lý..." : "Xác nhận chuyển khoản"
+                }}</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="card-footer">
+            <div class="info-message">
+              <i class="pi pi-info-circle"></i>
+              <span
+                >Nếu không nhận được email, vui lòng kiểm tra thư mục spam hoặc
+                thực hiện lại giao dịch</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Panel -->
+      <div class="action-section">
+        <!-- Resend Code -->
+        <div class="action-card">
+          <div class="action-header">
+            <div class="action-icon">
+              <i class="pi pi-refresh"></i>
+            </div>
+            <div class="action-content">
+              <h3 class="action-title">Gửi lại mã</h3>
+              <p class="action-subtitle">Nếu chưa nhận được mã xác nhận</p>
+            </div>
+          </div>
+          <div class="action-body">
+            <button
+              class="resend-button"
+              (click)="resendCode()"
+              [disabled]="isResending || timeLeft > 0"
+            >
+              <i class="pi pi-refresh" *ngIf="!isResending"></i>
+              <i class="pi pi-spin pi-spinner" *ngIf="isResending"></i>
+              <span>{{ isResending ? "Đang gửi..." : "Gửi lại mã" }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cancel Transfer -->
+        <div class="action-card">
+          <div class="action-header">
+            <div class="action-icon cancel-icon">
+              <i class="pi pi-times"></i>
+            </div>
+            <div class="action-content">
+              <h3 class="action-title">Hủy giao dịch</h3>
+              <p class="action-subtitle">Quay lại trang chuyển khoản</p>
+            </div>
+          </div>
+          <div class="action-body">
+            <button
+              class="cancel-button"
+              (click)="cancelTransfer()"
+              [disabled]="isLoading"
+            >
+              <i class="pi pi-arrow-left"></i>
+              <span>Quay lại</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,117 @@
+---
+description: "Admin: Users, Transactions, Health; RoleGuard; 403 page."
+globs: ["src/app/features/admin/**/*.ts", "src/app/features/admin/**/*.html"]
+---
+
+# Admin Panel Guidelines
+
+## RoleGuard Implementation
+
+```typescript
+// Chỉ cho phép admin và superadmin
+private allowedRoles = ['admin', 'superadmin'];
+
+canActivate(): boolean {
+  if (!this.authService.isAuthenticated) {
+    this.router.navigate(['/login']);
+    return false;
+  }
+
+  const currentUser = this.authService.currentUser;
+  if (!currentUser || !this.allowedRoles.includes(currentUser.role)) {
+    this.router.navigate(['/403']);
+    return false;
+  }
+
+  return true;
+}
+```
+
+## User Management
+
+1. **User Listing**
+   - Pagination với lazy loading
+   - Search: name, email
+   - Filter: role, status
+   - Sort: creation date, last login
+
+2. **User Actions**
+   - Edit role: user/admin/superadmin
+   - Change status: active/suspended/unverified
+   - Resend verification email
+   - View user details
+
+3. **Confirmation Dialogs**
+   - Role changes require confirmation
+   - Status changes require confirmation
+   - Clear action descriptions
+
+## Transaction Management
+
+1. **Admin Transaction View**
+   - All transactions across users
+   - Advanced filtering options
+   - User-specific filtering
+   - Export capabilities
+
+2. **Transaction Details**
+   - Full transaction information
+   - User context
+   - Status management
+   - Audit trail
+
+## System Health
+
+1. **Health Monitoring**
+   - Database status
+   - Redis cache status
+   - External services status
+   - System uptime
+   - Version information
+
+2. **Auto-refresh**
+   - Update every 30 seconds
+   - Visual indicators for status
+   - Historical data (if available)
+
+## 403 Forbidden Page
+
+1. **Design**
+   - Clear error message
+   - Helpful navigation options
+   - Contact information
+   - Professional appearance
+
+2. **Functionality**
+   - Return to dashboard button
+   - Logout option
+   - Contact admin link
+
+## Admin Navigation
+
+1. **Menu Structure**
+   - Users management
+   - Transactions overview
+   - System health
+   - Admin settings (future)
+
+2. **Access Control**
+   - Hide admin menu for non-admin users
+   - Role-based menu items
+   - Clear visual indicators
+
+## Data Tables
+
+1. **Standard Features**
+   - Pagination
+   - Sorting
+   - Filtering
+   - Export
+   - Loading states
+   - Empty states
+
+2. **Admin-specific**
+   - Bulk actions
+   - Advanced filters
+   - User context
+   - Audit information

@@ -1,0 +1,695 @@
+---
+description: 'Bắt buộc test nghiệp vụ tiền và bảo mật; Throttler; Logger.'
+globs: ['test/**/*.ts', 'src/**/*.spec.ts', 'src/main.ts']
+---
+
+# Testing & Quality Standards
+
+## Testing Requirements
+
+### Bắt buộc Test Cases
+
+#### 1. Authentication Tests
+
+```typescript
+describe('AuthService', () => {
+  // ✅ Registration flow
+  it('should register new user successfully', async () => {
+    const registerDto = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'TestPass123!',
+    };
+
+    mockAccountModel.findOne.mockResolvedValue(null);
+    mockAccountModel.save.mockResolvedValue(mockAccount);
+
+    const result = await service.register(registerDto);
+    expect(result).toEqual({ message: 'VERIFICATION_SENT' });
+  });
+
+  // ✅ Duplicate email handling
+  it('should resend verification for unverified email', async () => {
+    mockAccountModel.findOne.mockResolvedValue({
+      _id: 'account-id',
+      email: 'test@example.com',
+      isEmailVerified: false,
+    });
+
+    const result = await service.register(registerDto);
+    expect(result).toEqual({ message: 'VERIFICATION_SENT' });
+  });
+
+  // ✅ Email verification
+  it('should verify email with valid code', async () => {
+    mockEmailVerificationModel.findOne.mockResolvedValue({
+      accountId: 'account-id',
+      code: '123456',
+      expiresAt: new Date(Date.now() + 60000),
+      usedAt: null,
+    });
+
+    const result = await service.verifyEmail({ code: '123456' });
+    expect(result).toEqual({ message: 'VERIFIED' });
+  });
+
+  // ✅ Login with verified email
+  it('should login successfully with verified email', async () => {
+    const mockAccount = {
+      _id: 'account-id',
+      email: 'test@example.com',
+      passwordHash: 'hashed-password',
+      status: 'active',
+      isEmailVerified: true,
+      role: 'user',
+    };
+
+    mockAccountModel.findOne.mockResolvedValue(mockAccount);
+    jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+
+    const result = await service.login(loginDto);
+    expect(result.accessToken).toBeDefined();
+    expect(result.expiresIn).toBe(900);
+  });
+
+  // ✅ Password change validation
+  it('should change password with correct current password', async () => {
+    mockAccountModel.findById.mockResolvedValue({
+      _id: 'account-id',
+      passwordHash: 'old-hashed-password',
+      save: jest.fn().mockResolvedValue({}),
+    });
+
+    jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
+    jest.spyOn(bcrypt, 'hash').mockResolvedValue('new-hashed-password');
+
+    const result = await service.changePassword(
+      'account-id',
+      changePasswordDto,
+    );
+    expect(result).toEqual({ message: 'PASSWORD_CHANGED' });
+  });
+});
+```
+
+#### 2. Transaction Security Tests
+
+```typescript
+describe('TransactionsService', () => {
+  // ✅ Deposit idempotency
+  it('should return existing transaction for duplicate clientRequestId', async () => {
+    const existingTransaction = {
+      _id: 'existing-id',
+      clientRequestId: 'deposit-123',
+      toJSON: () => ({ id: 'existing-id', amount: 1000000 }),
+    };
+
+    mockTransactionModel.findOne.mockResolvedValue(existingTransaction);
+
+    const result = await service.deposit(userId, {
+      amount: 1000000,
+      clientRequestId: 'deposit-123',
+    });
+
+    expect(result.code).toBe('IDEMPOTENT_REPLAY');
+  });
+
+  // ✅ Withdrawal with sufficient funds
+  it('should withdraw successfully with sufficient balance', async () => {
+    jest.spyOn(service, 'canWithdraw').mockResolvedValue({
+      allowed: true,
+      reasons: [],
+      balance: 5000000,
+      dailyUsed: 0,
+      dailyLimit: 500000000,
+    });
+
+    mockAccountModel.findById.mockResolvedValue({
+      balance: Decimal128.fromString('5000000'),
+    });
+
+    const result = await service.withdraw(userId, { amount: 1000000 });
+    expect(result).toBeDefined();
+  });
+
+  // ✅ Insufficient funds
+  it('should reject withdrawal with insufficient funds', async () => {
+    jest.spyOn(service, 'canWithdraw').mockResolvedValue({
+      allowed: false,
+      reasons: ['Insufficient account balance'],
+      balance: 500000,
+      dailyUsed: 0,
+      dailyLimit: 500000000,
+    });
+
+    await expect(service.withdraw(userId, { amount: 1000000 })).rejects.toThrow(
+      ForbiddenException,
+    );
+  });
+
+  // ✅ Per-transaction limit
+  it('should reject withdrawal exceeding 20M limit', async () => {
+    jest.spyOn(service, 'canWithdraw').mockResolvedValue({
+      allowed: false,
+      reasons: ['Amount exceeds per-transaction limit of 20,000,000 VND'],
+      balance: 50000000,
+      dailyUsed: 0,
+      dailyLimit: 500000000,
+    });
+
+    await expect(
+      service.withdraw(userId, { amount: 25000000 }),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  // ✅ Daily limit
+  it('should reject withdrawal exceeding daily limit', async () => {
+    jest.spyOn(service, 'canWithdraw').mockResolvedValue({
+      allowed: false,
+      reasons: [
+        'Amount would exceed daily withdrawal limit of 500,000,000 VND',
+      ],
+      balance: 1000000000,
+      dailyUsed: 490000000,
+      dailyLimit: 500000000,
+    });
+
+    await expect(
+      service.withdraw(userId, { amount: 15000000 }),
+    ).rejects.toThrow(ForbiddenException);
+  });
+
+  // ✅ Concurrency test - prevent negative balance
+  it('should prevent negative balance with concurrent withdrawals', async () => {
+    const accountBalance = Decimal128.fromString('1000000');
+
+    // Simulate concurrent withdrawals
+    const promises = [
+      service.withdraw(userId, { amount: 600000 }),
+      service.withdraw(userId, { amount: 600000 }),
+    ];
+
+    // Only one should succeed
+    const results = await Promise.allSettled(promises);
+    const successful = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
+
+    expect(successful).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+  });
+});
+```
+
+#### 3. RBAC Security Tests
+
+```typescript
+describe('RolesGuard', () => {
+  // ✅ User cannot access admin endpoints
+  it('should reject user access to admin endpoints', () => {
+    const mockUser = { role: 'user' };
+    const mockContext = {
+      switchToHttp: () => ({
+        getRequest: () => ({ user: mockUser }),
+      }),
+      getHandler: () => {},
+      getClass: () => {},
+    };
+
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(['admin', 'superadmin']);
+
+    expect(() => guard.canActivate(mockContext)).toThrow(ForbiddenException);
+  });
+
+  // ✅ Admin can access admin endpoints
+  it('should allow admin access to admin endpoints', () => {
+    const mockUser = { role: 'admin' };
+    const mockContext = {
+      switchToHttp: () => ({
+        getRequest: () => ({ user: mockUser }),
+      }),
+      getHandler: () => {},
+      getClass: () => {},
+    };
+
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(['admin', 'superadmin']);
+
+    const result = guard.canActivate(mockContext);
+    expect(result).toBe(true);
+  });
+
+  // ✅ Superadmin can access all endpoints
+  it('should allow superadmin access to all endpoints', () => {
+    const mockUser = { role: 'superadmin' };
+    const mockContext = {
+      switchToHttp: () => ({
+        getRequest: () => ({ user: mockUser }),
+      }),
+      getHandler: () => {},
+      getClass: () => {},
+    };
+
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue(['admin', 'superadmin']);
+
+    const result = guard.canActivate(mockContext);
+    expect(result).toBe(true);
+  });
+});
+```
+
+### E2E Test Scenarios
+
+#### 1. Complete User Journey
+
+```typescript
+describe('Complete User Flow (e2e)', () => {
+  it('should complete registration → verification → login → transaction flow', async () => {
+    // 1. Register
+    const registerResponse = await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: 'TestPass123!',
+      })
+      .expect(201);
+
+    expect(registerResponse.body.data.message).toBe('VERIFICATION_SENT');
+
+    // 2. Verify email (with mocked verification code)
+    await request(app.getHttpServer())
+      .post('/auth/verify')
+      .send({ code: '123456' })
+      .expect(200);
+
+    // 3. Login
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        email: 'test@example.com',
+        password: 'TestPass123!',
+      })
+      .expect(200);
+
+    const token = loginResponse.body.data.accessToken;
+
+    // 4. Deposit
+    await request(app.getHttpServer())
+      .post('/transactions/deposit')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount: 1000000 })
+      .expect(201);
+
+    // 5. Withdraw
+    await request(app.getHttpServer())
+      .post('/transactions/withdraw')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount: 500000 })
+      .expect(201);
+
+    // 6. Check balance
+    const balanceResponse = await request(app.getHttpServer())
+      .get('/balance')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(balanceResponse.body.data.balance).toBe(500000);
+  });
+});
+```
+
+#### 2. Concurrency Tests
+
+```typescript
+describe('Concurrency Tests (e2e)', () => {
+  it('should prevent negative balance with concurrent withdrawals', async () => {
+    const token = await getAuthToken();
+
+    // Deposit initial amount
+    await request(app.getHttpServer())
+      .post('/transactions/deposit')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount: 1000000 })
+      .expect(201);
+
+    // Attempt concurrent withdrawals
+    const promises = [
+      request(app.getHttpServer())
+        .post('/transactions/withdraw')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ amount: 600000 }),
+      request(app.getHttpServer())
+        .post('/transactions/withdraw')
+        .set('Authorization', `Bearer ${token}`)
+        .send({ amount: 600000 }),
+    ];
+
+    const results = await Promise.allSettled(promises);
+
+    // Only one should succeed
+    const successful = results.filter((r) => r.status === 'fulfilled');
+    const failed = results.filter((r) => r.status === 'rejected');
+
+    expect(successful).toHaveLength(1);
+    expect(failed).toHaveLength(1);
+  });
+});
+```
+
+#### 3. Admin Access Control
+
+```typescript
+describe('Admin Access Control (e2e)', () => {
+  it('should enforce RBAC properly', async () => {
+    const userToken = await getAuthToken('user@example.com');
+    const adminToken = await getAuthToken('admin@example.com');
+
+    // User cannot access admin endpoints
+    await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${userToken}`)
+      .expect(403);
+
+    // Admin can access admin endpoints
+    await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${adminToken}`)
+      .expect(200);
+
+    // Superadmin can change roles
+    const superadminToken = await getAuthToken('superadmin@example.com');
+    await request(app.getHttpServer())
+      .patch('/admin/users/some-user-id')
+      .set('Authorization', `Bearer ${superadminToken}`)
+      .send({ role: 'admin' })
+      .expect(200);
+  });
+});
+```
+
+## Rate Limiting Tests
+
+### Throttler Configuration Tests
+
+```typescript
+describe('Rate Limiting', () => {
+  it('should limit auth endpoints to 5 requests per 10 minutes', async () => {
+    const registerData = {
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'TestPass123!',
+    };
+
+    // First 5 requests should succeed
+    for (let i = 0; i < 5; i++) {
+      await request(app.getHttpServer())
+        .post('/auth/register')
+        .send({ ...registerData, email: `test${i}@example.com` })
+        .expect(201);
+    }
+
+    // 6th request should be rate limited
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({ ...registerData, email: 'test6@example.com' })
+      .expect(429);
+  });
+
+  it('should allow normal API usage within limits', async () => {
+    const token = await getAuthToken();
+
+    // 100 requests should succeed (general API limit)
+    for (let i = 0; i < 100; i++) {
+      await request(app.getHttpServer())
+        .get('/profile')
+        .set('Authorization', `Bearer ${token}`)
+        .expect(200);
+    }
+
+    // 101st request should be rate limited
+    await request(app.getHttpServer())
+      .get('/profile')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(429);
+  });
+});
+```
+
+## Logging Tests
+
+### Structured Logging Tests
+
+```typescript
+describe('Logging', () => {
+  it('should log user registration', async () => {
+    const loggerSpy = jest.spyOn(logger, 'log');
+
+    await authService.register({
+      name: 'Test User',
+      email: 'test@example.com',
+      password: 'TestPass123!',
+    });
+
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'User registered successfully',
+      expect.objectContaining({
+        email: 'test@example.com',
+        userId: expect.any(String),
+      }),
+    );
+  });
+
+  it('should log failed login attempts', async () => {
+    const loggerSpy = jest.spyOn(logger, 'error');
+
+    try {
+      await authService.login({
+        email: 'nonexistent@example.com',
+        password: 'wrongpassword',
+      });
+    } catch (error) {
+      // Expected to fail
+    }
+
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'Failed login attempt',
+      expect.objectContaining({
+        email: 'nonexistent@example.com',
+        error: expect.any(String),
+      }),
+    );
+  });
+
+  it('should log transaction events', async () => {
+    const loggerSpy = jest.spyOn(logger, 'log');
+
+    await transactionsService.deposit(userId, {
+      amount: 1000000,
+      transName: 'Test Deposit',
+    });
+
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'Deposit transaction completed',
+      expect.objectContaining({
+        userId,
+        amount: 1000000,
+        transactionId: expect.any(String),
+      }),
+    );
+  });
+});
+```
+
+## Security Test Requirements
+
+### Input Validation Tests
+
+```typescript
+describe('Input Validation', () => {
+  it('should reject invalid email format', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'invalid-email',
+        password: 'TestPass123!',
+      })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toContain('email');
+      });
+  });
+
+  it('should reject weak passwords', async () => {
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send({
+        name: 'Test User',
+        email: 'test@example.com',
+        password: '123456', // Too weak
+      })
+      .expect(400)
+      .expect((res) => {
+        expect(res.body.success).toBe(false);
+        expect(res.body.message).toContain('password');
+      });
+  });
+
+  it('should reject negative transaction amounts', async () => {
+    const token = await getAuthToken();
+
+    await request(app.getHttpServer())
+      .post('/transactions/deposit')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ amount: -1000 })
+      .expect(400);
+  });
+});
+```
+
+### SQL Injection Tests
+
+```typescript
+describe('SQL Injection Protection', () => {
+  it('should prevent SQL injection in search queries', async () => {
+    const token = await getAdminToken();
+
+    await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${token}`)
+      .query({ q: "'; DROP TABLE users; --" })
+      .expect(200);
+
+    // Verify users table still exists
+    const users = await request(app.getHttpServer())
+      .get('/admin/users')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    expect(users.body.data.items).toBeDefined();
+  });
+});
+```
+
+## Performance Tests
+
+### Database Performance Tests
+
+```typescript
+describe('Database Performance', () => {
+  it('should handle large transaction lists efficiently', async () => {
+    const token = await getAuthToken();
+
+    const startTime = Date.now();
+
+    await request(app.getHttpServer())
+      .get('/transactions?pageSize=100')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    // Should respond within 1 second
+    expect(duration).toBeLessThan(1000);
+  });
+
+  it('should handle daily limit calculations efficiently', async () => {
+    const token = await getAuthToken();
+
+    const startTime = Date.now();
+
+    await request(app.getHttpServer())
+      .get('/wallet/can-withdraw?amount=1000000')
+      .set('Authorization', `Bearer ${token}`)
+      .expect(200);
+
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    // Should respond within 500ms
+    expect(duration).toBeLessThan(500);
+  });
+});
+```
+
+## Test Coverage Requirements
+
+### Minimum Coverage Targets
+
+- **Unit Tests**: 80% coverage
+- **Integration Tests**: 70% coverage
+- **E2E Tests**: Critical user journeys covered
+
+### Required Test Categories
+
+1. **Authentication Flow**: Registration → Verification → Login
+2. **Transaction Security**: Deposit, Withdraw, Limits, Idempotency
+3. **RBAC**: Role-based access control
+4. **Rate Limiting**: Throttler functionality
+5. **Error Handling**: All error scenarios
+6. **Input Validation**: All DTOs and endpoints
+7. **Security**: Injection attacks, unauthorized access
+8. **Performance**: Database queries, API response times
+
+### Test Data Management
+
+```typescript
+// Use factories for test data
+export const createTestUser = (overrides = {}) => ({
+  name: 'Test User',
+  email: 'test@example.com',
+  password: 'TestPass123!',
+  ...overrides,
+});
+
+export const createTestTransaction = (overrides = {}) => ({
+  amount: 1000000,
+  transName: 'Test Transaction',
+  ...overrides,
+});
+```
+
+### Mock Strategy
+
+```typescript
+// Mock external services
+jest.mock('../email/email.service');
+jest.mock('bcrypt');
+
+// Mock database operations
+const mockAccountModel = {
+  findOne: jest.fn(),
+  findById: jest.fn(),
+  save: jest.fn(),
+  findByIdAndUpdate: jest.fn(),
+};
+
+// Reset mocks between tests
+beforeEach(() => {
+  jest.clearAllMocks();
+});
+```
+
+## Quality Gates
+
+### Pre-commit Hooks
+
+- Linting passes
+- Type checking passes
+- Unit tests pass
+- Test coverage meets minimum requirements
+
+### CI/CD Pipeline
+
+- All tests pass
+- Code coverage meets targets
+- Security scans pass
+- Performance benchmarks met
+- Documentation updated

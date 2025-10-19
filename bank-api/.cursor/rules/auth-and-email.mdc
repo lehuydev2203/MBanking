@@ -1,0 +1,449 @@
+---
+description: 'Auth + Verify Email + JWT 15m + Resend + Change Password.'
+globs: ['src/modules/auth/**/*.ts', 'src/modules/email/**/*.ts']
+---
+
+# Authentication & Email Verification Standards
+
+## Authentication Flow
+
+### Registration Process
+
+```typescript
+// 1. Validate input
+const { name, email, phone, password } = registerDto;
+
+// 2. Check email existence
+const existingAccount = await this.accountModel.findOne({ email });
+
+// 3. Handle existing accounts
+if (existingAccount?.isEmailVerified) {
+  throw new ConflictException({
+    code: 'EMAIL_EXISTS',
+    message: 'Email already verified',
+  });
+}
+
+// 4. Hash password
+const passwordHash = await bcrypt.hash(password, 12);
+
+// 5. Create account
+const account = new this.accountModel({ name, email, phone, passwordHash });
+await account.save();
+
+// 6. Send verification email
+await this.createAndSendVerificationCode(account._id, email);
+```
+
+### Email Verification
+
+```typescript
+// 1. Find valid verification code
+const verification = await this.emailVerificationModel.findOne({
+  code,
+  usedAt: { $exists: false },
+  expiresAt: { $gt: new Date() },
+});
+
+// 2. Update account status
+await this.accountModel.findByIdAndUpdate(verification.accountId, {
+  isEmailVerified: true,
+  verifiedAt: new Date(),
+});
+
+// 3. Mark verification as used
+verification.usedAt = new Date();
+await verification.save();
+```
+
+### Login Process
+
+```typescript
+// 1. Find account with password
+const account = await this.accountModel
+  .findOne({ email })
+  .select('+passwordHash');
+
+// 2. Validate credentials
+const isPasswordValid = await bcrypt.compare(password, account.passwordHash);
+
+// 3. Check account status
+if (account.status !== 'active') {
+  throw new ForbiddenException({
+    code: 'FORBIDDEN',
+    message: 'Account is locked',
+  });
+}
+
+// 4. Check email verification
+if (!account.isEmailVerified) {
+  throw new ForbiddenException({
+    code: 'EMAIL_NOT_VERIFIED',
+    message: 'Please verify email',
+  });
+}
+
+// 5. Generate JWT
+const payload = {
+  sub: account._id.toString(),
+  email: account.email,
+  role: account.role,
+};
+const accessToken = this.jwtService.sign(payload);
+```
+
+## JWT Configuration
+
+### Token Settings
+
+```typescript
+// JWT expires in 15 minutes
+JWT_EXPIRES_IN=15m
+
+// Secret should be strong and environment-specific
+JWT_SECRET=your-super-secret-key-change-in-production
+```
+
+### JWT Strategy
+
+```typescript
+@Injectable()
+export class JwtStrategy extends PassportStrategy(Strategy) {
+  async validate(payload: JwtPayload) {
+    const user = await this.authService.validateUserById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    return user;
+  }
+}
+```
+
+### JWT Guard
+
+```typescript
+@Injectable()
+export class JwtAuthGuard extends AuthGuard('jwt') {
+  handleRequest(err: any, user: any, info: any) {
+    if (err || !user) {
+      throw err || new UnauthorizedException('Invalid or expired token');
+    }
+    return user;
+  }
+}
+```
+
+## Rate Limiting cho Auth Endpoints
+
+### Throttler Configuration
+
+```typescript
+// Auth endpoints: 5 requests per 10 minutes
+@UseGuards(ThrottlerGuard)
+@Throttle(5, 600) // 5 requests, 600 seconds (10 minutes)
+```
+
+### Protected Endpoints
+
+- `POST /auth/register` - 5 req/10min
+- `POST /auth/resend-verification` - 5 req/10min
+- `POST /auth/login` - Không limit (user có thể thử nhiều lần)
+
+## Password Security
+
+### Password Requirements
+
+```typescript
+@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/, {
+  message: 'Password must contain uppercase, lowercase, number, and special character'
+})
+@MinLength(8, { message: 'Password must be at least 8 characters' })
+password: string;
+```
+
+### Password Hashing
+
+```typescript
+// Always use bcrypt with salt rounds >= 12
+const saltRounds = 12;
+const passwordHash = await bcrypt.hash(password, saltRounds);
+
+// Never store plain text passwords
+// Never log password values
+// Always validate password strength
+```
+
+### Password Change
+
+```typescript
+// 1. Verify current password
+const isCurrentPasswordValid = await bcrypt.compare(
+  currentPassword,
+  account.passwordHash,
+);
+
+// 2. Hash new password
+const newPasswordHash = await bcrypt.hash(newPassword, 12);
+
+// 3. Update account
+account.passwordHash = newPasswordHash;
+await account.save();
+
+// 4. Log audit
+await this.auditService.log({
+  actorId: userId,
+  action: 'CHANGE_PASSWORD',
+  resource: 'account',
+  meta: { accountId: userId },
+});
+```
+
+## Email Verification System
+
+### Verification Code Generation
+
+```typescript
+// Generate 6-digit random code
+const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+// Set expiration (15 minutes)
+const expiresAt = new Date();
+expiresAt.setMinutes(expiresAt.getMinutes() + 15);
+
+// Invalidate existing codes
+await this.emailVerificationModel.updateMany(
+  { accountId },
+  { usedAt: new Date() },
+);
+```
+
+### Email Service
+
+```typescript
+async sendVerificationEmail(email: string, code: string) {
+  const verificationUrl = `${baseUrl}/verify-email?code=${code}`;
+
+  const mailOptions = {
+    from: this.configService.get<string>('email.from'),
+    to: email,
+    subject: 'Verify Your Email - Banking API',
+    html: `
+      <h2>Email Verification</h2>
+      <p>Your verification code: <strong>${code}</strong></p>
+      <p>Or click: <a href="${verificationUrl}">Verify Email</a></p>
+      <p><strong>Expires in 15 minutes</strong></p>
+    `
+  };
+
+  await this.transporter.sendMail(mailOptions);
+}
+```
+
+### Email Templates
+
+- HTML format với styling
+- Plain text fallback
+- Mobile-friendly design
+- Clear call-to-action
+- Security warnings
+
+## Error Handling cho Auth
+
+### Standard Auth Errors
+
+```typescript
+// Registration errors
+EMAIL_EXISTS: 'Email already exists and verified';
+EMAIL_NOT_VERIFIED: 'Email exists but not verified - verification resent';
+
+// Verification errors
+INVALID_CODE: 'Invalid verification code';
+CODE_EXPIRED: 'Verification code expired';
+
+// Login errors
+INVALID_CREDENTIALS: 'Invalid email or password';
+EMAIL_NOT_VERIFIED: 'Please verify your email before logging in';
+FORBIDDEN: 'Account is locked';
+
+// Password errors
+INVALID_CREDENTIALS: 'Current password is incorrect';
+```
+
+### Error Response Format
+
+```typescript
+{
+  success: false,
+  code: 'EMAIL_NOT_VERIFIED',
+  message: 'Please verify your email before logging in',
+  timestamp: '2024-01-01T00:00:00.000Z',
+  path: '/auth/login'
+}
+```
+
+## Security Best Practices
+
+### Token Security
+
+- JWT tokens expire in 15 minutes
+- No refresh token (có thể implement sau)
+- Tokens không được cache
+- Logout không cần server-side (stateless)
+
+### Session Management
+
+- Stateless authentication
+- No server-side sessions
+- Token validation on every request
+- Automatic token expiration
+
+### Input Validation
+
+```typescript
+// Email validation
+@IsEmail({}, { message: 'Please provide a valid email address' })
+email: string;
+
+// Phone validation
+@Matches(/^(\+84|84|0)[1-9][0-9]{8,9}$/, {
+  message: 'Please provide a valid Vietnamese phone number'
+})
+phone?: string;
+
+// Password validation
+@MinLength(8)
+@Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+password: string;
+```
+
+### Audit Logging
+
+```typescript
+// Log all authentication events
+await this.auditService.log({
+  actorId: userId,
+  action: 'LOGIN',
+  resource: 'auth',
+  meta: { email, timestamp: new Date() },
+});
+
+await this.auditService.log({
+  actorId: userId,
+  action: 'PASSWORD_CHANGE',
+  resource: 'account',
+  meta: { accountId: userId },
+});
+```
+
+## Testing Authentication
+
+### Unit Tests
+
+```typescript
+describe('AuthService', () => {
+  it('should register new user', async () => {
+    mockAccountModel.findOne.mockResolvedValue(null);
+    mockAccountModel.save.mockResolvedValue(mockAccount);
+
+    const result = await service.register(registerDto);
+    expect(result).toEqual({ message: 'VERIFICATION_SENT' });
+  });
+
+  it('should reject duplicate verified email', async () => {
+    mockAccountModel.findOne.mockResolvedValue({ isEmailVerified: true });
+
+    await expect(service.register(registerDto)).rejects.toThrow(
+      ConflictException,
+    );
+  });
+});
+```
+
+### E2E Tests
+
+```typescript
+describe('Auth Flow', () => {
+  it('should complete registration and verification', async () => {
+    // Register
+    await request(app.getHttpServer())
+      .post('/auth/register')
+      .send(registerData)
+      .expect(201);
+
+    // Verify (with mocked email service)
+    await request(app.getHttpServer())
+      .post('/auth/verify')
+      .send({ code: '123456' })
+      .expect(200);
+
+    // Login
+    await request(app.getHttpServer())
+      .post('/auth/login')
+      .send(loginData)
+      .expect(200);
+  });
+});
+```
+
+## Email Service Configuration
+
+### SMTP Settings
+
+```typescript
+// Development (MailHog)
+EMAIL_HOST=mailhog
+EMAIL_PORT=1025
+
+// Production (SMTP)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-app-password
+```
+
+### Email Templates
+
+- Professional design
+- Company branding
+- Clear instructions
+- Security notices
+- Unsubscribe options (future)
+
+## Performance Considerations
+
+### Database Queries
+
+```typescript
+// Use select to limit fields
+const account = await this.accountModel
+  .findOne({ email })
+  .select('+passwordHash');
+
+// Index on email for fast lookups
+AccountSchema.index({ email: 1 }, { unique: true });
+
+// Index on verification codes
+EmailVerificationSchema.index({ code: 1 }, { unique: true });
+```
+
+### Caching Strategy
+
+- No caching for auth tokens (security)
+- Email verification codes: 15min TTL
+- User data: Có thể cache với Redis (future)
+
+## Monitoring & Alerting
+
+### Auth Metrics
+
+- Failed login attempts
+- Registration success rate
+- Email verification rate
+- Password change frequency
+
+### Security Alerts
+
+- Multiple failed logins
+- Suspicious registration patterns
+- Email verification abuse
+- Token manipulation attempts

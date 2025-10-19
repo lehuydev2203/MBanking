@@ -1,0 +1,464 @@
+# LOG TRAO ĐỔI - DỰ ÁN NESTJS BANKING API
+
+## TỔNG QUAN DỰ ÁN
+Dự án "banking-be" - NestJS Banking API với đầy đủ tính năng:
+- NestJS 10, Node 20, Yarn
+- MongoDB với Mongoose
+- JWT Authentication (15 phút)
+- Email Verification (6 chữ số, 15 phút)
+- RBAC: user/admin/superadmin
+- Transaction limits: 20M/lần, 500M/ngày
+- Idempotency support
+- Swagger documentation
+- Docker & Docker Compose
+- Comprehensive testing
+
+## CẤU TRÚC DỰ ÁN
+
+### 1. Tech Stack & Dependencies
+- **Core**: NestJS 10, Node 20, Yarn
+- **Database**: MongoDB, Mongoose, Decimal128
+- **Authentication**: JWT, Passport.js, bcrypt
+- **Email**: Nodemailer với MailHog (dev)
+- **Validation**: class-validator, class-transformer
+- **Documentation**: Swagger/OpenAPI
+- **Logging**: @nestjs/pino
+- **Testing**: Jest, supertest
+- **Docker**: Multi-stage build, Docker Compose
+
+### 2. Cấu trúc thư mục
+```
+src/
+├── main.ts
+├── app.module.ts
+├── config/           # Cấu hình ứng dụng
+├── common/           # Shared utilities
+│   ├── guards/       # JWT, Roles guards
+│   ├── decorators/   # Custom decorators
+│   ├── filters/      # Exception filters
+│   ├── interceptors/ # Transform interceptors
+│   ├── pipes/        # Validation pipes
+│   └── dto/          # Common DTOs
+├── database/         # MongoDB schemas
+├── modules/          # Feature modules
+│   ├── auth/         # Authentication
+│   ├── accounts/     # User profiles
+│   ├── transactions/ # Money operations
+│   ├── admin/        # Admin panel
+│   ├── health/       # Health checks
+│   ├── email/        # Email service
+│   ├── audit/        # Audit logging
+│   └── wallet/       # Wallet queries
+└── seed/             # Database seeders
+
+docs/                 # Documentation
+.cursor/rules/        # Cursor AI rules
+test/                 # E2E tests
+scripts/              # Utility scripts
+```
+
+## CÁC MODULE CHÍNH
+
+### 1. Authentication Module
+**Endpoints:**
+- `POST /auth/register` - Đăng ký tài khoản
+- `POST /auth/verify` - Xác minh email
+- `POST /auth/resend-verification` - Gửi lại mã xác minh
+- `POST /auth/login` - Đăng nhập
+- `POST /auth/change-password` - Đổi mật khẩu
+
+**Tính năng:**
+- Email verification với mã 6 chữ số (15 phút)
+- JWT token (15 phút expiration)
+- Rate limiting: 5 req/10min cho auth endpoints
+- Password complexity validation
+- Bcrypt hashing với salt rounds >= 12
+
+### 2. Accounts Module
+**Endpoints:**
+- `GET /profile` - Lấy thông tin profile
+- `PATCH /profile` - Cập nhật profile
+- `GET /balance` - Lấy số dư tài khoản
+
+**Tính năng:**
+- Profile management
+- Balance checking
+- Audit logging cho profile updates
+
+### 3. Transactions Module
+**Endpoints:**
+- `GET /wallet/can-withdraw` - Kiểm tra có thể rút tiền
+- `POST /transactions/deposit` - Nạp tiền
+- `POST /transactions/withdraw` - Rút tiền
+- `GET /transactions` - Lịch sử giao dịch
+- `GET /transactions/export.csv` - Xuất CSV
+
+**Tính năng:**
+- Deposit/withdraw với MongoDB transactions
+- Per-transaction limit: 20,000,000 VND
+- Daily limit: 500,000,000 VND (VN timezone)
+- Idempotency support với clientRequestId
+- CSV export với injection protection
+- Balance validation và concurrency control
+
+### 4. Admin Module
+**Endpoints:**
+- `GET /admin/users` - Danh sách users (Admin/Superadmin)
+- `PATCH /admin/users/:id` - Cập nhật user (Superadmin only)
+- `POST /admin/users/:id/resend-verification` - Gửi lại mã xác minh
+- `GET /admin/transactions` - Tất cả giao dịch
+
+**Tính năng:**
+- RBAC với 3 roles: user/admin/superadmin
+- User management với search/filter
+- Transaction monitoring
+- Self-demotion protection
+- Comprehensive audit logging
+
+### 5. Health Module
+**Endpoints:**
+- `GET /health` - Health check
+
+**Tính năng:**
+- Database connection status
+- Application version
+- Timestamp
+
+## DATABASE SCHEMAS
+
+### 1. Account Schema
+```typescript
+{
+  name: string (required)
+  email: string (required, unique, lowercase)
+  phone?: string (unique, sparse)
+  passwordHash: string (required)
+  role: 'user' | 'admin' | 'superadmin' (default: 'user')
+  status: 'active' | 'locked' (default: 'active')
+  balance: Decimal128 (default: 0)
+  isEmailVerified: boolean (default: false)
+  verifiedAt?: Date
+  createdAt: Date
+  updatedAt: Date
+}
+```
+
+### 2. EmailVerification Schema
+```typescript
+{
+  accountId: ObjectId (ref: Account, required)
+  code: string (required, unique)
+  expiresAt: Date (required)
+  usedAt?: Date
+  createdAt: Date
+}
+```
+
+### 3. Transaction Schema
+```typescript
+{
+  accountId: ObjectId (ref: Account, required)
+  transName: string (required)
+  transMoney: Decimal128 (required, > 0)
+  transType: 1 | 2 (1=deposit, 2=withdraw)
+  clientRequestId?: string (unique, sparse)
+  createdAt: Date
+}
+```
+
+### 4. AuditLog Schema
+```typescript
+{
+  actorId?: ObjectId (ref: Account)
+  action: string (required)
+  resource: string (required)
+  meta: any
+  createdAt: Date
+}
+```
+
+## CONFIGURATION
+
+### 1. Environment Variables (.env.sample)
+```
+MONGODB_URI=mongodb://mongo:27017/banking
+JWT_SECRET=change-me
+APP_BASE_URL=http://localhost:4200
+EMAIL_HOST=mailhog
+EMAIL_PORT=1025
+EMAIL_USER=
+EMAIL_PASS=
+TZ=Asia/Ho_Chi_Minh
+SEED_SUPERADMIN_EMAIL=superadmin@example.com
+SEED_SUPERADMIN_PASSWORD=ChangeMe123!
+```
+
+### 2. Docker Configuration
+- **Dockerfile**: Multi-stage build (node:20-alpine)
+- **docker-compose.yml**: mongo, mailhog, api services
+- **Ports**: API:3000, Mongo:27017, MailHog:1025/8025
+
+### 3. Swagger Documentation
+- **UI**: http://localhost:3000/docs
+- **JSON**: http://localhost:3000/docs-json
+- Bearer authentication globally configured
+- Comprehensive API documentation với examples
+
+## SECURITY FEATURES
+
+### 1. Authentication & Authorization
+- JWT tokens với 15 phút expiration
+- RBAC với 3 roles và proper guards
+- Password complexity requirements
+- Rate limiting cho auth endpoints
+
+### 2. Transaction Security
+- MongoDB transactions cho atomicity
+- Balance validation trước khi withdraw
+- Daily limits với VN timezone
+- Idempotency support
+- Concurrency control
+
+### 3. Input Validation
+- class-validator cho tất cả inputs
+- Email format validation
+- Vietnamese phone number validation
+- Amount validation (> 0)
+- CSV injection protection
+
+### 4. Audit & Monitoring
+- Comprehensive audit logging
+- Structured logging với Pino
+- Health checks
+- Error tracking
+
+## TESTING
+
+### 1. Unit Tests
+- AuthService tests
+- TransactionsService tests
+- RolesGuard tests
+- Mocking strategies
+
+### 2. Integration Tests
+- Complete user flows
+- Concurrency testing
+- Admin operations
+- Database interactions
+
+### 3. E2E Tests
+- Full API workflows
+- Authentication flows
+- Transaction scenarios
+- Admin access control
+
+## CURSOR RULES
+
+### 1. api-standards.mdc
+Chuẩn API: DTO+Validation, Swagger, phân trang, Decimal128, mã lỗi chuẩn
+
+### 2. auth-and-email.mdc
+Auth + Verify Email + JWT 15m + Resend + Change Password
+
+### 3. transactions-and-limits.mdc
+Nạp/Rút an toàn, transaction Mongo, limit 20M/lần & 500M/ngày, can-withdraw, idempotency
+
+### 4. rbac-and-admin.mdc
+RBAC user|admin|superadmin, Admin APIs, Audit
+
+### 5. testing-and-quality.mdc
+Bắt buộc test nghiệp vụ tiền và bảo mật; Throttler; Logger
+
+### 6. chore-docs-and-swagger.mdc
+Luôn cập nhật Swagger + docs/FEATURES.md khi thay đổi API
+
+## YARN SCRIPTS
+
+### Development
+- `yarn start:dev` - Development server
+- `yarn build` - Build application
+- `yarn start:prod` - Production server
+
+### Testing
+- `yarn test` - Unit tests
+- `yarn test:e2e` - E2E tests
+
+### Docker
+- `yarn docker:up` - Start all services
+- `yarn docker:down` - Stop all services
+- `yarn docker:logs` - View API logs
+
+### Utilities
+- `yarn seed:superadmin` - Create superadmin user
+- `yarn lint` - ESLint check
+- `yarn lint:fix` - ESLint fix
+
+## ERROR CODES
+
+### Authentication Errors
+- `EMAIL_EXISTS`: Email đã tồn tại và verified
+- `EMAIL_NOT_VERIFIED`: Email chưa được xác minh
+- `INVALID_CODE`: Mã xác minh không hợp lệ
+- `CODE_EXPIRED`: Mã xác minh đã hết hạn
+- `INVALID_CREDENTIALS`: Email/password không đúng
+- `FORBIDDEN`: Tài khoản bị khóa
+
+### Transaction Errors
+- `INSUFFICIENT_FUNDS`: Số dư không đủ
+- `LIMIT_PER_TRANSACTION`: Vượt giới hạn mỗi giao dịch
+- `DAILY_LIMIT_EXCEEDED`: Vượt giới hạn hàng ngày
+- `IDEMPOTENT_REPLAY`: Giao dịch trùng lặp
+
+### Authorization Errors
+- `UNAUTHORIZED`: Token không hợp lệ
+- `FORBIDDEN`: Không có quyền truy cập
+
+## RESPONSE FORMAT
+
+### Success Response
+```typescript
+{
+  success: true,
+  data: any,
+  message?: string
+}
+```
+
+### Error Response
+```typescript
+{
+  success: false,
+  code: string,
+  message: string,
+  details?: any
+}
+```
+
+## FEATURES IMPLEMENTED
+
+### ✅ Core Features
+- [x] User registration với email verification
+- [x] JWT authentication (15 phút)
+- [x] RBAC với 3 roles
+- [x] Profile management
+- [x] Transaction system (deposit/withdraw)
+- [x] Transaction limits (20M/lần, 500M/ngày)
+- [x] Idempotency support
+- [x] CSV export
+- [x] Admin panel
+- [x] Health checks
+- [x] Audit logging
+
+### ✅ Technical Features
+- [x] Docker & Docker Compose
+- [x] Swagger documentation
+- [x] Comprehensive testing
+- [x] Structured logging
+- [x] Input validation
+- [x] Error handling
+- [x] Rate limiting
+- [x] CORS configuration
+- [x] Database indexes
+- [x] Superadmin seeder
+
+### ✅ Security Features
+- [x] Password hashing với bcrypt
+- [x] JWT token security
+- [x] Rate limiting
+- [x] Input sanitization
+- [x] CSV injection protection
+- [x] Audit trail
+- [x] Role-based access control
+
+## QUICK START
+
+### 1. Setup
+```bash
+# Clone và cài đặt dependencies
+yarn install
+
+# Cấu hình environment
+cp .env.sample .env
+
+# Chạy với Docker
+yarn docker:up
+
+# Seed superadmin
+yarn seed:superadmin
+```
+
+### 2. Access Points
+- **API**: http://localhost:3000
+- **Swagger**: http://localhost:3000/docs
+- **Health**: http://localhost:3000/health
+- **MailHog**: http://localhost:8025
+
+### 3. Testing
+```bash
+# Unit tests
+yarn test
+
+# E2E tests
+yarn test:e2e
+
+# Build
+yarn build
+```
+
+## PROJECT STATUS
+
+### ✅ Completed
+- Tất cả core features đã được implement
+- Database schemas và relationships
+- Authentication & authorization
+- Transaction system với limits
+- Admin panel với RBAC
+- Comprehensive testing
+- Docker setup
+- Swagger documentation
+- Cursor rules
+- Documentation
+
+### 🎯 Ready for Use
+Dự án đã sẵn sàng để:
+- Development và testing
+- Production deployment
+- API integration
+- User management
+- Transaction processing
+
+## TECHNICAL HIGHLIGHTS
+
+### 1. Architecture
+- Modular NestJS architecture
+- Clean separation of concerns
+- Scalable design patterns
+- Comprehensive error handling
+
+### 2. Security
+- Multi-layer security approach
+- Proper authentication/authorization
+- Input validation và sanitization
+- Audit logging
+
+### 3. Performance
+- Database indexing
+- Efficient queries
+- Connection pooling
+- Optimized aggregations
+
+### 4. Maintainability
+- Comprehensive documentation
+- Cursor AI rules
+- Consistent code style
+- Extensive testing
+
+### 5. Developer Experience
+- Hot reload development
+- Comprehensive Swagger docs
+- Docker development environment
+- Clear project structure
+
+---
+
+**Dự án đã hoàn thành đầy đủ theo yêu cầu ban đầu và sẵn sàng để sử dụng!**

@@ -1,0 +1,67 @@
+---
+description: "Dark mode; màu thương hiệu; a11y; PrimeNG components."
+globs:
+  [
+    "src/styles.scss",
+    "src/app/shared/styles/theme-overrides.scss",
+    "src/app/shared/**/*.ts",
+    "src/app/**/*.html",
+  ]
+---
+
+# Dark Theme & UX Guidelines
+
+## Màu sắc thương hiệu
+
+```scss
+:root {
+  --brand-primary: #7c8cf9; // Màu chính
+  --brand-secondary: #22d3ee; // Màu phụ
+  --brand-danger: #f87171; // Màu lỗi
+  --brand-success: #34d399; // Màu thành công
+  --brand-warning: #fbbf24; // Màu cảnh báo
+  --brand-info: #60a5fa; // Màu thông tin
+  --brand-surface: #0b1220; // Màu nền
+}
+```
+
+## PrimeNG Components bắt buộc
+
+- **p-button**: Border-radius 12px, hover effects
+- **p-inputtext**: Dark background, focus ring
+- **p-datatable**: Dark theme với hover states
+- **p-dialog**: Dark header/content/footer
+- **p-toast**: Màu theo severity
+- **p-card**: Dark background với border
+- **p-menu**: Dark background với hover
+- **p-calendar**: Dark datepicker
+- **p-paginator**: Dark theme
+
+## Accessibility (A11Y)
+
+- **Focus ring**: `outline: 2px solid var(--brand-secondary); outline-offset: 2px;`
+- **ARIA labels**: Tất cả interactive elements
+- **Color contrast**: ≥ 4.5:1 ratio
+- **Keyboard navigation**: Tab order hợp lý
+- **Screen reader**: Semantic HTML
+
+## Responsive Design
+
+- **Mobile-first**: Thiết kế ưu tiên mobile
+- **Breakpoints**: sm (640px), md (768px), lg (1024px), xl (1280px)
+- **PrimeFlex**: Sử dụng utility classes
+- **Grid system**: Responsive grid với col-12, col-md-6, etc.
+
+## Loading States
+
+- **p-progressSpinner**: Kích thước phù hợp
+- **Skeleton loading**: Placeholder cho nội dung
+- **Button loading**: Disable khi đang xử lý
+- **Empty states**: Thông báo khi không có dữ liệu
+
+## Error Handling
+
+- **Toast messages**: Sử dụng p-toast với severity
+- **Form validation**: Hiển thị lỗi inline
+- **Error pages**: 403, 404, 500 pages
+- **Graceful degradation**: Fallback khi có lỗi

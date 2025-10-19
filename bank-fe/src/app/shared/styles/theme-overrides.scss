@@ -1,0 +1,420 @@
+// Global Theme Variables - Based on Login Form Design
+:root {
+  // Primary Colors (from login button and header)
+  --brand-primary: #7c8cf9;
+  --brand-primary-light: #6b7ae8;
+  --brand-primary-dark: #2563eb;
+  --brand-secondary: #3b82f6;
+
+  // Background Colors (from login page)
+  --brand-background-dark: #0f172a;
+  --brand-background-medium: #1e293b;
+  --brand-background-light: #1f2937;
+  --brand-gradient-start: #667eea;
+  --brand-gradient-end: #764ba2;
+
+  // Status Colors
+  --brand-danger: #ef4444;
+  --brand-success: #10b981;
+  --brand-warning: #f59e0b;
+  --brand-info: #3b82f6;
+
+  // Surface Colors
+  --brand-surface-card: rgba(255, 255, 255, 0.95);
+  --brand-surface-content: rgba(255, 255, 255, 0.05);
+  --brand-border: rgba(255, 255, 255, 0.1);
+
+  // Text Colors
+  --brand-text-primary: #111827;
+  --brand-text-secondary: #6b7280;
+  --brand-text-placeholder: #9ca3af;
+  --brand-text-white: #ffffff;
+
+  // Input Colors
+  --brand-input-background: #f9fafb;
+  --brand-input-border: #e5e7eb;
+  --brand-input-focus: #7c8cf9;
+}
+
+// Global Body Styles
+body {
+  background-color: var(--brand-background-dark);
+  color: var(--brand-text-primary);
+  font-family:
+    "Inter",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    Roboto,
+    sans-serif;
+}
+
+// PrimeNG Button Overrides
+.p-button {
+  border-radius: 12px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+
+  &.p-button-primary {
+    background: linear-gradient(
+      135deg,
+      var(--brand-primary) 0%,
+      var(--brand-secondary) 100%
+    );
+    border: none;
+    box-shadow: 0 4px 15px rgba(124, 140, 249, 0.3);
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(
+        135deg,
+        var(--brand-primary-light) 0%,
+        var(--brand-primary-dark) 100%
+      );
+      box-shadow: 0 6px 20px rgba(124, 140, 249, 0.4);
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  &.p-button-secondary {
+    background: var(--brand-background-medium);
+    border-color: var(--brand-border);
+    color: var(--brand-text-white);
+
+    &:hover {
+      background: var(--brand-background-light);
+      border-color: var(--brand-primary);
+    }
+  }
+
+  &.p-button-success {
+    background: var(--brand-success);
+    border-color: var(--brand-success);
+
+    &:hover {
+      background: #059669;
+      border-color: #059669;
+    }
+  }
+
+  &.p-button-danger {
+    background: var(--brand-danger);
+    border-color: var(--brand-danger);
+
+    &:hover {
+      background: #dc2626;
+      border-color: #dc2626;
+    }
+  }
+
+  &.p-button-warning {
+    background: var(--brand-warning);
+    border-color: var(--brand-warning);
+
+    &:hover {
+      background: #d97706;
+      border-color: #d97706;
+    }
+  }
+}
+
+// PrimeNG Card Overrides
+.p-card {
+  background: var(--brand-surface-card);
+  border: 1px solid var(--brand-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(10px);
+
+  .p-card-header {
+    background: linear-gradient(
+      135deg,
+      var(--brand-primary) 0%,
+      var(--brand-secondary) 100%
+    );
+    color: var(--brand-text-white);
+    border-radius: 16px 16px 0 0;
+    padding: 1.5rem;
+  }
+
+  .p-card-content {
+    background: transparent;
+    color: var(--brand-text-primary);
+  }
+
+  .p-card-footer {
+    background: var(--brand-surface-content);
+    border-top: 1px solid var(--brand-border);
+    border-radius: 0 0 16px 16px;
+  }
+}
+
+// PrimeNG Input Overrides
+.p-inputtext {
+  background-color: var(--brand-input-background);
+  border: 2px solid var(--brand-input-border);
+  border-radius: 12px;
+  color: var(--brand-text-primary);
+  transition: all 0.3s ease;
+
+  &:focus {
+    border-color: var(--brand-input-focus);
+    box-shadow: 0 0 0 3px rgba(124, 140, 249, 0.1);
+    background: white;
+  }
+
+  &::placeholder {
+    color: var(--brand-text-placeholder);
+  }
+}
+
+// PrimeNG Password Overrides
+.p-password {
+  .p-inputtext {
+    background-color: var(--brand-input-background);
+    border: 2px solid var(--brand-input-border);
+    border-radius: 12px;
+    color: var(--brand-text-primary);
+
+    &:focus {
+      border-color: var(--brand-input-focus);
+      box-shadow: 0 0 0 3px rgba(124, 140, 249, 0.1);
+      background: white;
+    }
+
+    &::placeholder {
+      color: var(--brand-text-placeholder);
+    }
+  }
+
+  .p-password-toggle-icon {
+    color: var(--brand-text-secondary);
+
+    &:hover {
+      color: var(--brand-input-focus);
+    }
+  }
+}
+
+// PrimeNG Dropdown/Select Overrides
+.p-dropdown {
+  background-color: var(--brand-input-background);
+  border: 2px solid var(--brand-input-border);
+  border-radius: 12px;
+
+  &:not(.p-disabled):hover {
+    border-color: var(--brand-input-focus);
+  }
+
+  &:not(.p-disabled).p-focus {
+    border-color: var(--brand-input-focus);
+    box-shadow: 0 0 0 3px rgba(124, 140, 249, 0.1);
+  }
+
+  .p-dropdown-label {
+    color: var(--brand-text-primary);
+  }
+}
+
+// PrimeNG Table Overrides
+.p-datatable {
+  .p-datatable-header {
+    background: var(--brand-background-medium);
+    border-color: var(--brand-border);
+    color: var(--brand-text-white);
+  }
+
+  .p-datatable-thead > tr > th {
+    background: var(--brand-background-light);
+    border-color: var(--brand-border);
+    color: var(--brand-text-white);
+    font-weight: 600;
+  }
+
+  .p-datatable-tbody > tr {
+    background: var(--brand-surface-card);
+    border-color: var(--brand-border);
+
+    &:nth-child(even) {
+      background: var(--brand-surface-content);
+    }
+
+    &:hover {
+      background: var(--brand-background-medium);
+    }
+
+    > td {
+      border-color: var(--brand-border);
+      color: var(--brand-text-primary);
+    }
+  }
+}
+
+// PrimeNG Dialog Overrides
+.p-dialog {
+  .p-dialog-header {
+    background: linear-gradient(
+      135deg,
+      var(--brand-primary) 0%,
+      var(--brand-secondary) 100%
+    );
+    border-color: var(--brand-border);
+    color: var(--brand-text-white);
+    border-radius: 12px 12px 0 0;
+  }
+
+  .p-dialog-content {
+    background: var(--brand-surface-card);
+    color: var(--brand-text-primary);
+  }
+
+  .p-dialog-footer {
+    background: var(--brand-surface-content);
+    border-color: var(--brand-border);
+    border-radius: 0 0 12px 12px;
+  }
+}
+
+// PrimeNG Toast Overrides
+.p-toast {
+  .p-toast-message {
+    border-radius: 12px;
+    backdrop-filter: blur(10px);
+
+    &.p-toast-message-success {
+      background: var(--brand-success);
+      border-color: var(--brand-success);
+    }
+
+    &.p-toast-message-error {
+      background: var(--brand-danger);
+      border-color: var(--brand-danger);
+    }
+
+    &.p-toast-message-warn {
+      background: var(--brand-warning);
+      border-color: var(--brand-warning);
+    }
+
+    &.p-toast-message-info {
+      background: var(--brand-info);
+      border-color: var(--brand-info);
+    }
+  }
+}
+
+// PrimeNG Menu Overrides
+.p-menu {
+  background: var(--brand-surface-card);
+  border: 1px solid var(--brand-border);
+  border-radius: 12px;
+  backdrop-filter: blur(10px);
+
+  .p-menuitem-link {
+    color: var(--brand-text-primary);
+    border-radius: 8px;
+    margin: 2px;
+
+    &:hover {
+      background: var(--brand-background-medium);
+      color: var(--brand-text-white);
+    }
+
+    &.p-menuitem-link-active {
+      background: linear-gradient(
+        135deg,
+        var(--brand-primary) 0%,
+        var(--brand-secondary) 100%
+      );
+      color: var(--brand-text-white);
+    }
+  }
+}
+
+// PrimeNG TabView Overrides
+.p-tabview {
+  .p-tabview-nav {
+    background: var(--brand-surface-card);
+    border-bottom: 1px solid var(--brand-border);
+
+    .p-tabview-nav-link {
+      color: var(--brand-text-secondary);
+      border-color: transparent;
+
+      &:hover {
+        color: var(--brand-text-primary);
+        background: var(--brand-surface-content);
+      }
+
+      &.p-highlight {
+        color: var(--brand-primary);
+        border-color: var(--brand-primary);
+        background: var(--brand-surface-card);
+      }
+    }
+  }
+
+  .p-tabview-panel {
+    background: var(--brand-surface-card);
+    color: var(--brand-text-primary);
+  }
+}
+
+// Utility Classes
+.text-brand-primary {
+  color: var(--brand-primary) !important;
+}
+.text-brand-secondary {
+  color: var(--brand-secondary) !important;
+}
+.text-brand-danger {
+  color: var(--brand-danger) !important;
+}
+.text-brand-success {
+  color: var(--brand-success) !important;
+}
+.text-brand-warning {
+  color: var(--brand-warning) !important;
+}
+.text-brand-info {
+  color: var(--brand-info) !important;
+}
+
+.bg-brand-primary {
+  background-color: var(--brand-primary) !important;
+}
+.bg-brand-secondary {
+  background-color: var(--brand-secondary) !important;
+}
+.bg-brand-danger {
+  background-color: var(--brand-danger) !important;
+}
+.bg-brand-success {
+  background-color: var(--brand-success) !important;
+}
+.bg-brand-warning {
+  background-color: var(--brand-warning) !important;
+}
+.bg-brand-info {
+  background-color: var(--brand-info) !important;
+}
+
+// Gradient Backgrounds
+.bg-gradient-primary {
+  background: linear-gradient(
+    135deg,
+    var(--brand-primary) 0%,
+    var(--brand-secondary) 100%
+  );
+}
+
+.bg-gradient-page {
+  background: linear-gradient(
+    135deg,
+    var(--brand-gradient-start) 0%,
+    var(--brand-gradient-end) 100%
+  );
+}

@@ -1,0 +1,220 @@
+<div class="profile-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Hồ sơ cá nhân</h1>
+      <p class="hero-subtitle">Quản lý thông tin tài khoản của bạn</p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="profile-container">
+      <!-- Profile Information Card -->
+      <div class="profile-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="pi pi-user"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Thông tin cá nhân</h3>
+            <p class="header-subtitle">Cập nhật thông tin cơ bản</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div
+            *ngIf="isLoadingProfile; else profileContent"
+            class="loading-container"
+          >
+            <p-progressSpinner
+              [style]="{ width: '50px', height: '50px' }"
+            ></p-progressSpinner>
+          </div>
+
+          <ng-template #profileContent>
+            <!-- Display Mode -->
+            <div *ngIf="!isEditing; else editMode" class="profile-display">
+              <div class="info-item">
+                <label class="info-label">Họ và tên</label>
+                <div class="info-value">
+                  {{ currentProfile?.name || "Chưa cập nhật" }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <label class="info-label">Email</label>
+                <div class="info-value">
+                  {{ currentProfile?.email || "Chưa cập nhật" }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <label class="info-label">Số điện thoại</label>
+                <div class="info-value">
+                  {{ currentProfile?.phone || "Chưa cập nhật" }}
+                </div>
+              </div>
+
+              <div class="info-item">
+                <label class="info-label">Biệt danh</label>
+                <div class="info-value">
+                  {{ currentProfile?.nickname || "Chưa đặt" }}
+                </div>
+              </div>
+
+              <button
+                type="button"
+                class="form-button primary"
+                (click)="startEditing()"
+              >
+                <i class="pi pi-pencil"></i>
+                <span>Chỉnh sửa</span>
+              </button>
+            </div>
+
+            <!-- Edit Mode -->
+            <ng-template #editMode>
+              <form
+                [formGroup]="profileForm"
+                (ngSubmit)="updateProfile()"
+                class="profile-form"
+              >
+                <div class="form-group">
+                  <label class="form-label">Họ và tên</label>
+                  <div class="readonly-field">
+                    {{ currentProfile?.name || "Chưa cập nhật" }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label">Email</label>
+                  <div class="readonly-field">
+                    {{ currentProfile?.email || "Chưa cập nhật" }}
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="phone" class="form-label">Số điện thoại</label>
+                  <input
+                    id="phone"
+                    type="text"
+                    pInputText
+                    formControlName="phone"
+                    placeholder="Nhập số điện thoại"
+                    class="form-input"
+                  />
+                  <small
+                    *ngIf="
+                      profileForm.get('phone')?.invalid &&
+                      profileForm.get('phone')?.touched
+                    "
+                    class="form-error"
+                  >
+                    Số điện thoại là bắt buộc
+                  </small>
+                </div>
+
+                <div class="form-group">
+                  <label for="nickname" class="form-label">Biệt danh</label>
+                  <input
+                    id="nickname"
+                    type="text"
+                    pInputText
+                    formControlName="nickname"
+                    placeholder="Nhập biệt danh (3-20 ký tự)"
+                    class="form-input"
+                    maxlength="20"
+                  />
+                  <small class="form-help">
+                    Biệt danh giúp người khác dễ dàng chuyển tiền cho bạn
+                  </small>
+                  <small
+                    class="form-help error"
+                    *ngIf="profileForm.get('nickname')?.errors?.['pattern']"
+                  >
+                    Biệt danh chỉ được chứa chữ cái, số và dấu gạch dưới
+                  </small>
+                </div>
+
+                <div class="form-group">
+                  <label for="newPassword" class="form-label"
+                    >Mật khẩu mới</label
+                  >
+                  <p-password
+                    id="newPassword"
+                    formControlName="newPassword"
+                    placeholder="Nhập mật khẩu mới (để trống nếu không muốn đổi)"
+                    [feedback]="true"
+                    [toggleMask]="true"
+                    class="form-password"
+                  >
+                  </p-password>
+                  <small
+                    *ngIf="
+                      profileForm.get('newPassword')?.invalid &&
+                      profileForm.get('newPassword')?.touched
+                    "
+                    class="form-error"
+                  >
+                    Mật khẩu mới phải có ít nhất 6 ký tự
+                  </small>
+                </div>
+
+                <div class="form-actions">
+                  <button
+                    type="button"
+                    class="form-button secondary"
+                    (click)="cancelEditing()"
+                  >
+                    <i class="pi pi-times"></i>
+                    <span>Hủy</span>
+                  </button>
+
+                  <button
+                    type="submit"
+                    class="form-button primary"
+                    [disabled]="profileForm.invalid || isUpdatingProfile"
+                  >
+                    <i class="pi pi-save"></i>
+                    <span>Cập nhật</span>
+                    <p-progressSpinner
+                      *ngIf="isUpdatingProfile"
+                      [style]="{ width: '20px', height: '20px' }"
+                    ></p-progressSpinner>
+                  </button>
+                </div>
+              </form>
+            </ng-template>
+          </ng-template>
+        </div>
+      </div>
+
+      <!-- Logout Card -->
+      <div class="logout-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="pi pi-sign-out"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Đăng xuất</h3>
+            <p class="header-subtitle">Thoát khỏi tài khoản của bạn</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="logout-content">
+            <p class="logout-description">
+              Bạn có chắc chắn muốn đăng xuất khỏi tài khoản không?
+            </p>
+
+            <button type="button" class="form-button danger" (click)="logout()">
+              <i class="pi pi-sign-out"></i>
+              <span>Đăng xuất</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

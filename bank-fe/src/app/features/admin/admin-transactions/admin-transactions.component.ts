@@ -1,0 +1,39 @@
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { CardModule } from 'primeng/card';
+
+@Component({
+  selector: 'app-admin-transactions',
+  standalone: true,
+  imports: [CommonModule, CardModule],
+  template: `
+    <div class="grid">
+      <div class="col-12">
+        <p-card>
+          <ng-template pTemplate="header">
+            <div class="p-4">
+              <h1 class="text-2xl font-bold mb-2">Quản lý giao dịch</h1>
+              <p class="text-gray-400">
+                Xem và quản lý tất cả giao dịch trong hệ thống
+              </p>
+            </div>
+          </ng-template>
+
+          <div class="p-4">
+            <div class="text-center p-8">
+              <i class="pi pi-cog text-6xl text-gray-400 mb-4"></i>
+              <h3 class="text-xl font-semibold mb-2">
+                Chức năng đang phát triển
+              </h3>
+              <p class="text-gray-400">
+                Trang quản lý giao dịch sẽ được triển khai trong phiên bản tiếp
+                theo
+              </p>
+            </div>
+          </div>
+        </p-card>
+      </div>
+    </div>
+  `,
+})
+export class AdminTransactionsComponent {}

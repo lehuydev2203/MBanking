@@ -1,0 +1,98 @@
+---
+description: "Luồng nạp/rút: idempotent, can-withdraw, confirm, refresh balance."
+globs:
+  ["src/app/features/wallet/**/*.ts", "src/app/features/transactions/**/*.ts"]
+---
+
+# Transaction Flow Guidelines
+
+## Deposit Flow
+
+1. **Form Validation**
+   - Amount: min 1,000₫, max 100,000,000₫
+   - Optional: transName (max 100 chars)
+   - Real-time validation với error messages
+
+2. **Idempotency**
+   - Generate UUID v4 làm clientRequestId
+   - Prevent duplicate transactions
+   - Handle idempotency errors gracefully
+
+3. **Transaction Summary**
+   - Show amount, fees (0₫), total
+   - Visual confirmation before submit
+   - Clear pricing breakdown
+
+4. **API Call & Response**
+   - Call `/transactions/deposit`
+   - Show loading state
+   - Success: toast + reset form + refresh balance
+   - Error: show error message
+
+## Withdraw Flow
+
+1. **Amount Input**
+   - Same validation as deposit
+   - Real-time amount formatting
+
+2. **Pre-check (can-withdraw)**
+   - Call `/transactions/can-withdraw`
+   - Show reasons if not allowed
+   - Display max amount if applicable
+   - Visual feedback (green/red indicators)
+
+3. **Confirmation Dialog**
+   - Show amount and impact
+   - Clear confirmation message
+   - Cancel/Confirm actions
+
+4. **Withdraw Execution**
+   - Call `/transactions/withdraw`
+   - UUID v4 for idempotency
+   - Success: toast + reset + refresh balance
+   - Error: show specific error
+
+## Transaction History
+
+1. **Filtering**
+   - Type: deposit/withdraw/transfer
+   - Date range: from/to dates
+   - Amount range: min/max
+   - Status: pending/completed/failed/cancelled
+
+2. **Data Display**
+   - Pagination với lazy loading
+   - Sorting by createdAt (desc)
+   - Empty states với helpful messages
+   - Loading states với spinners
+
+3. **Export**
+   - CSV export với current filters
+   - Filename với timestamp
+   - Blob download handling
+
+## Balance Management
+
+1. **Real-time Updates**
+   - Refresh balance after transactions
+   - Show in header và dashboard
+   - Loading states during refresh
+
+2. **Currency Formatting**
+   - Use CurrencyVndPipe
+   - Consistent formatting across app
+   - Proper locale (vi-VN)
+
+## Error Handling
+
+1. **Transaction Errors**
+   - INSUFFICIENT_BALANCE
+   - WITHDRAWAL_LIMIT_EXCEEDED
+   - INVALID_AMOUNT
+   - NETWORK_ERRORS
+
+2. **User Feedback**
+   - Toast messages với severity
+   - Inline form validation
+   - Clear error descriptions
+   - Recovery suggestions

@@ -1,0 +1,852 @@
+// Deposit Component Styles - Modern Banking Theme
+.deposit-page {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+
+  // Animated background
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(
+        circle at 20% 80%,
+        rgba(120, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(255, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 40%,
+        rgba(120, 219, 255, 0.2) 0%,
+        transparent 50%
+      );
+    animation: backgroundShift 20s ease-in-out infinite;
+    z-index: 0;
+  }
+}
+
+@keyframes backgroundShift {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0);
+  }
+  33% {
+    transform: translateX(-20px) translateY(-10px);
+  }
+  66% {
+    transform: translateX(20px) translateY(10px);
+  }
+}
+
+// Hero Section
+.hero-section {
+  position: relative;
+  z-index: 1;
+  padding: 4rem 2rem 2rem;
+  text-align: center;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  margin-bottom: 2rem;
+  border-radius: 0 0 2rem 2rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+}
+
+.hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.hero-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.hero-subtitle {
+  font-size: 1.25rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0;
+  font-weight: 300;
+}
+
+// Content Wrapper
+.content-wrapper {
+  position: relative;
+  z-index: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 2rem 4rem;
+}
+
+.deposit-content {
+  display: grid;
+  grid-template-columns: 1fr 400px;
+  gap: 2rem;
+  align-items: start;
+}
+
+// Form Section
+.form-section {
+  .form-card {
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.15) 0%,
+      rgba(255, 255, 255, 0.08) 25%,
+      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.02) 75%,
+      rgba(255, 255, 255, 0.01) 100%
+    );
+    backdrop-filter: blur(60px) saturate(200%) brightness(110%);
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow:
+      0 20px 40px rgba(0, 0, 0, 0.15),
+      0 8px 16px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+    position: relative;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.6) 20%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.6) 80%,
+        transparent 100%
+      );
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        transparent 30%,
+        transparent 70%,
+        rgba(255, 255, 255, 0.05) 100%
+      );
+      pointer-events: none;
+    }
+  }
+
+  .card-header {
+    padding: 2.5rem 2rem 1.5rem 2rem;
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.9) 0%,
+      rgba(118, 75, 162, 0.9) 50%,
+      rgba(102, 126, 234, 0.8) 100%
+    );
+    backdrop-filter: blur(30px) saturate(180%) brightness(120%);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    position: relative;
+    z-index: 2;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.15) 0%,
+        rgba(255, 255, 255, 0.05) 30%,
+        transparent 50%,
+        rgba(255, 255, 255, 0.08) 70%,
+        rgba(255, 255, 255, 0.12) 100%
+      );
+      pointer-events: none;
+    }
+
+    &::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.5) 50%,
+        transparent 100%
+      );
+    }
+
+    .header-icon {
+      width: 70px;
+      height: 70px;
+      background: linear-gradient(
+        135deg,
+        rgba(16, 185, 129, 0.95) 0%,
+        rgba(5, 150, 105, 0.95) 50%,
+        rgba(16, 185, 129, 0.9) 100%
+      );
+      backdrop-filter: blur(25px) saturate(200%) brightness(110%);
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow:
+        0 12px 40px rgba(16, 185, 129, 0.4),
+        0 4px 16px rgba(16, 185, 129, 0.2),
+        inset 0 2px 0 rgba(255, 255, 255, 0.4),
+        inset 0 -1px 0 rgba(255, 255, 255, 0.1);
+      animation: pulse 2s infinite;
+      position: relative;
+      z-index: 3;
+
+      i {
+        font-size: 2.2rem;
+        color: white;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+    }
+
+    .header-content {
+      flex: 1;
+      position: relative;
+      z-index: 2;
+
+      .header-title {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+        color: #ffffff;
+        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+      }
+
+      .header-subtitle {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.85);
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        font-weight: 400;
+      }
+    }
+  }
+
+  .card-content {
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .card-footer {
+    padding: 1.5rem 2rem 2rem 2rem;
+    background: rgba(255, 255, 255, 0.02);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+// Form Styles
+.deposit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+
+  .form-label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #e0e0e0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    i {
+      font-size: 1rem;
+      color: #a0a0a0;
+    }
+
+    .required {
+      color: #ef4444;
+    }
+  }
+
+  .input-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  .form-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    color: #111827;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+
+    &:focus {
+      outline: none;
+      border-color: #10b981;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      transform: translateY(-1px);
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  .char-count {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 0.25rem;
+    text-align: right;
+  }
+
+  .error-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 0.25rem;
+    animation: shake 0.5s ease-in-out;
+
+    i {
+      font-size: 0.7rem;
+    }
+  }
+}
+
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+// Transaction Summary
+.transaction-summary {
+  background: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem 0;
+
+  .summary-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #ffffff;
+    margin-bottom: 1rem;
+  }
+
+  .summary-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    &.total {
+      font-weight: 600;
+      font-size: 1.125rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid rgba(16, 185, 129, 0.2);
+    }
+
+    .summary-label {
+      color: #cbd5e1;
+    }
+
+    .summary-value {
+      color: #ffffff;
+      font-weight: 500;
+
+      &.positive {
+        color: #10b981;
+      }
+    }
+  }
+
+  .summary-divider {
+    height: 1px;
+    background: rgba(16, 185, 129, 0.2);
+    margin: 0.5rem 0;
+  }
+}
+
+// Deposit Button
+.deposit-button {
+  width: 100%;
+  padding: 1rem;
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease-in-out;
+  cursor: pointer;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+
+  // Linear gradient background
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background-size: 200% 200%;
+  animation: gradient-shift 3s ease infinite;
+  color: white;
+  box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+
+  // Hiệu ứng ánh sáng
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.4),
+      transparent
+    );
+    z-index: 1;
+    transition: left 3s ease-in-out;
+  }
+
+  &:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.5);
+
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    background-size: 200% 200%;
+    animation: gradient-shift 1.5s ease infinite;
+
+    &::before {
+      left: 100%;
+    }
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  i,
+  span {
+    position: relative;
+    z-index: 2;
+    color: white;
+  }
+
+  span {
+    font-weight: 600;
+  }
+}
+
+// Info Message
+.info-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #94a3b8;
+  font-size: 0.875rem;
+
+  i {
+    color: #3b82f6;
+  }
+}
+
+// Info Section
+.info-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.info-card {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
+
+  .info-header {
+    padding: 1.5rem 1.5rem 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .info-icon {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      i {
+        font-size: 1.5rem;
+        color: white;
+      }
+
+      &.balance-icon {
+        background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+      }
+
+      &.details-icon {
+        background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+      }
+    }
+
+    .info-content {
+      flex: 1;
+
+      .info-title {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.25rem;
+      }
+
+      .info-subtitle {
+        color: #94a3b8;
+        font-size: 0.875rem;
+      }
+    }
+  }
+
+  .info-body {
+    padding: 0 1.5rem 1.5rem 1.5rem;
+  }
+}
+
+// Balance Card
+.balance-card {
+  .balance-amount {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #10b981;
+    text-align: center;
+  }
+
+  .balance-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 3rem;
+  }
+}
+
+// Details Card
+.details-card {
+  .info-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+
+    .item-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      margin-top: 0.125rem;
+
+      i {
+        font-size: 1rem;
+        color: white;
+      }
+    }
+
+    &:nth-child(1) .item-icon {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    }
+
+    &:nth-child(2) .item-icon {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    }
+
+    &:nth-child(3) .item-icon {
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    }
+
+    .item-content {
+      flex: 1;
+
+      .item-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #ffffff;
+        margin-bottom: 0.25rem;
+      }
+
+      .item-description {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        line-height: 1.4;
+      }
+    }
+  }
+}
+
+// Keyframes cho gradient animation
+@keyframes gradient-shift {
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+// PrimeNG InputNumber Override
+:host ::ng-deep .p-inputnumber {
+  width: 100%;
+
+  .p-inputnumber-input {
+    width: 100%;
+    padding: 1rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #f9fafb;
+    color: #111827;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+
+    &:focus {
+      border-color: #10b981;
+      background: white;
+      box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+      transform: translateY(-1px);
+    }
+
+    &::placeholder {
+      color: #9ca3af;
+    }
+  }
+
+  &.error .p-inputnumber-input {
+    border-color: #ef4444;
+    background: #fef2f2;
+
+    &:focus {
+      border-color: #ef4444;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+    }
+  }
+}
+
+// Responsive Design
+@media (max-width: 1024px) {
+  .deposit-content {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .info-section {
+    order: -1;
+  }
+}
+
+@media (max-width: 768px) {
+  .deposit-container {
+    padding: 1rem 0;
+  }
+
+  .deposit-content {
+    padding: 0 1rem;
+    gap: 1rem;
+  }
+
+  .form-section .card-header {
+    padding: 1.5rem 1.5rem 0.8rem 1.5rem;
+
+    .header-icon {
+      width: 50px;
+      height: 50px;
+
+      i {
+        font-size: 1.5rem;
+      }
+    }
+
+    .header-content .card-title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .form-section .card-content {
+    padding: 1.5rem;
+  }
+
+  .form-section .card-footer {
+    padding: 1rem 1.5rem 1.5rem 1.5rem;
+  }
+
+  .info-card .info-header {
+    padding: 1rem 1rem 0.8rem 1rem;
+
+    .info-icon {
+      width: 40px;
+      height: 40px;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .info-content .info-title {
+      font-size: 1.125rem;
+    }
+  }
+
+  .info-card .info-body {
+    padding: 0 1rem 1rem 1rem;
+  }
+
+  .balance-card .balance-amount {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .deposit-content {
+    padding: 0 0.75rem;
+  }
+
+  .form-section .card-header {
+    padding: 1rem 1rem 0.5rem 1rem;
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+
+    .header-icon {
+      width: 45px;
+      height: 45px;
+
+      i {
+        font-size: 1.25rem;
+      }
+    }
+
+    .header-content .card-title {
+      font-size: 1.25rem;
+    }
+  }
+
+  .form-section .card-content {
+    padding: 1rem;
+  }
+
+  .form-section .card-footer {
+    padding: 0.75rem 1rem 1rem 1rem;
+  }
+
+  .deposit-button {
+    padding: 0.8rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .transaction-summary {
+    padding: 1rem;
+  }
+
+  .info-card .info-header {
+    padding: 0.75rem 0.75rem 0.5rem 0.75rem;
+
+    .info-icon {
+      width: 35px;
+      height: 35px;
+
+      i {
+        font-size: 1rem;
+      }
+    }
+
+    .info-content .info-title {
+      font-size: 1rem;
+    }
+  }
+
+  .info-card .info-body {
+    padding: 0 0.75rem 0.75rem 0.75rem;
+  }
+}

@@ -1,0 +1,278 @@
+<div class="transfer-page">
+  <!-- Hero Section -->
+  <div class="hero-section">
+    <div class="hero-content">
+      <h1 class="hero-title">Chuyển khoản</h1>
+      <p class="hero-subtitle">
+        Chuyển tiền đến tài khoản khác một cách an toàn và nhanh chóng
+      </p>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="transfer-content">
+      <!-- Main Form -->
+      <div class="form-section">
+        <div class="form-card">
+          <div class="card-header">
+            <div class="header-icon">
+              <i class="pi pi-send"></i>
+            </div>
+            <div class="header-content">
+              <h3 class="header-title">Chuyển tiền đến tài khoản khác</h3>
+              <p class="header-subtitle">
+                Nhập thông tin người nhận và số tiền cần chuyển
+              </p>
+            </div>
+          </div>
+
+          <div class="card-content">
+            <form
+              [formGroup]="transferForm"
+              (ngSubmit)="onSubmit()"
+              class="transfer-form"
+            >
+              <div class="form-field">
+                <label for="recipient" class="form-label">
+                  <i class="pi pi-user"></i>
+                  Tài khoản người nhận <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    pInputText
+                    id="recipient"
+                    formControlName="recipient"
+                    placeholder="Nhập số tài khoản (10 chữ số) hoặc nickname"
+                    class="form-input"
+                    [class.error]="
+                      transferForm.get('recipient')?.invalid &&
+                      transferForm.get('recipient')?.touched
+                    "
+                  />
+                </div>
+                <div
+                  class="error-message"
+                  *ngIf="
+                    transferForm.get('recipient')?.invalid &&
+                    transferForm.get('recipient')?.touched
+                  "
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span
+                    *ngIf="transferForm.get('recipient')?.errors?.['required']"
+                  >
+                    Vui lòng nhập tài khoản người nhận
+                  </span>
+                  <span
+                    *ngIf="transferForm.get('recipient')?.errors?.['pattern']"
+                  >
+                    Vui lòng nhập số tài khoản 10 chữ số hoặc nickname 3-20 ký
+                    tự
+                  </span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="amount" class="form-label">
+                  <i class="pi pi-money-bill"></i>
+                  Số tiền chuyển <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                  <p-inputNumber
+                    id="amount"
+                    formControlName="amount"
+                    mode="currency"
+                    currency="VND"
+                    locale="vi-VN"
+                    [min]="1000"
+                    [max]="100000000"
+                    [step]="1000"
+                    placeholder="Nhập số tiền"
+                    class="amount-input"
+                    [class.error]="
+                      transferForm.get('amount')?.invalid &&
+                      transferForm.get('amount')?.touched
+                    "
+                  >
+                  </p-inputNumber>
+                </div>
+                <div
+                  class="error-message"
+                  *ngIf="
+                    transferForm.get('amount')?.invalid &&
+                    transferForm.get('amount')?.touched
+                  "
+                >
+                  <i class="pi pi-exclamation-triangle"></i>
+                  <span
+                    *ngIf="transferForm.get('amount')?.errors?.['required']"
+                  >
+                    Vui lòng nhập số tiền
+                  </span>
+                  <span *ngIf="transferForm.get('amount')?.errors?.['min']">
+                    Số tiền tối thiểu là 1,000 ₫
+                  </span>
+                  <span *ngIf="transferForm.get('amount')?.errors?.['max']">
+                    Số tiền tối đa là 100,000,000 ₫
+                  </span>
+                  <span
+                    *ngIf="transferForm.get('amount')?.errors?.['insufficient']"
+                  >
+                    Số dư không đủ để thực hiện giao dịch
+                  </span>
+                </div>
+              </div>
+
+              <div class="form-field">
+                <label for="transName" class="form-label">
+                  <i class="pi pi-comment"></i>
+                  Nội dung chuyển khoản <span class="required">*</span>
+                </label>
+                <div class="input-wrapper">
+                  <input
+                    pInputText
+                    id="transName"
+                    formControlName="transName"
+                    placeholder="Nhập nội dung chuyển khoản"
+                    class="form-input"
+                    maxlength="100"
+                  />
+                </div>
+                <div class="char-count">
+                  {{ transferForm.get("transName")?.value?.length || 0 }}/100 ký
+                  tự
+                </div>
+              </div>
+
+              <!-- Transaction Summary -->
+              <div
+                class="transaction-summary"
+                *ngIf="transferForm.get('amount')?.value"
+              >
+                <h3 class="summary-title">Tóm tắt giao dịch</h3>
+                <div class="summary-content">
+                  <div class="summary-item">
+                    <span class="summary-label">Số tiền chuyển:</span>
+                    <span class="summary-value negative">
+                      -{{ transferForm.get("amount")?.value | currencyVnd }}
+                    </span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Phí giao dịch:</span>
+                    <span class="summary-value">0 ₫</span>
+                  </div>
+                  <div class="summary-divider"></div>
+                  <div class="summary-item total">
+                    <span class="summary-label">Tổng cộng:</span>
+                    <span class="summary-value negative">
+                      -{{ transferForm.get("amount")?.value | currencyVnd }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Submit Button -->
+              <button
+                type="submit"
+                class="transfer-button"
+                [disabled]="transferForm.invalid || isLoading"
+              >
+                <i class="pi pi-check" *ngIf="!isLoading"></i>
+                <i class="pi pi-spin pi-spinner" *ngIf="isLoading"></i>
+                <span>{{
+                  isLoading ? "Đang xử lý..." : "Khởi tạo chuyển khoản"
+                }}</span>
+              </button>
+            </form>
+          </div>
+
+          <div class="card-footer">
+            <div class="info-message">
+              <i class="pi pi-info-circle"></i>
+              <span
+                >Hệ thống sẽ gửi mã xác nhận 6 chữ số qua email để hoàn tất giao
+                dịch</span
+              >
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info Panel -->
+      <div class="info-section">
+        <!-- Current Balance -->
+        <div class="info-card balance-card">
+          <div class="info-header">
+            <div class="info-icon balance-icon">
+              <i class="pi pi-wallet"></i>
+            </div>
+            <div class="info-content">
+              <h3 class="info-title">Số dư hiện tại</h3>
+              <p class="info-subtitle">Tài khoản của bạn</p>
+            </div>
+          </div>
+          <div class="info-body">
+            <div class="balance-amount">
+              {{ currentBalance?.balance ?? 0 | currencyVnd }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Transfer Info -->
+        <div class="info-card details-card">
+          <div class="info-header">
+            <div class="info-icon details-icon">
+              <i class="pi pi-info-circle"></i>
+            </div>
+            <div class="info-content">
+              <h3 class="info-title">Thông tin chuyển khoản</h3>
+              <p class="info-subtitle">Chi tiết giao dịch</p>
+            </div>
+          </div>
+          <div class="info-body">
+            <div class="info-items">
+              <div class="info-item">
+                <div class="item-icon">
+                  <i class="pi pi-info-circle"></i>
+                </div>
+                <div class="item-content">
+                  <h4 class="item-title">Giới hạn giao dịch</h4>
+                  <p class="item-description">
+                    Tối thiểu: 1,000 ₫<br />
+                    Tối đa: 100,000,000 ₫
+                  </p>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="item-icon">
+                  <i class="pi pi-clock"></i>
+                </div>
+                <div class="item-content">
+                  <h4 class="item-title">Thời gian xử lý</h4>
+                  <p class="item-description">
+                    Giao dịch được xử lý ngay lập tức sau khi xác nhận
+                  </p>
+                </div>
+              </div>
+
+              <div class="info-item">
+                <div class="item-icon">
+                  <i class="pi pi-shield"></i>
+                </div>
+                <div class="item-content">
+                  <h4 class="item-title">Bảo mật</h4>
+                  <p class="item-description">
+                    Xác thực 2 lớp qua email để đảm bảo an toàn
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+

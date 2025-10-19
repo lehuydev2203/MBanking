@@ -1,0 +1,402 @@
+---
+description: 'Chuẩn API: DTO+Validation, Swagger, phân trang, Decimal128, mã lỗi chuẩn.'
+globs: ['src/modules/**/*.ts', 'src/common/**/*.ts', 'src/main.ts']
+---
+
+# API Standards & Conventions
+
+## DTO và Validation
+
+### Bắt buộc sử dụng class-validator
+
+```typescript
+// ✅ Đúng
+export class CreateUserDto {
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @IsString()
+  @MinLength(8)
+  password: string;
+}
+
+// ❌ Sai - không có validation
+export class CreateUserDto {
+  email: string;
+  password: string;
+}
+```
+
+### Validation Rules
+
+- **Email**: `@IsEmail()` cho tất cả email fields
+- **Password**: `@MinLength(8)` + pattern validation cho complexity
+- **Phone**: Regex pattern cho số điện thoại VN
+- **Amount**: `@IsPositive()` cho số tiền
+- **Optional fields**: `@IsOptional()` + validation rules
+
+## Swagger Documentation
+
+### Bắt buộc có ApiProperty cho tất cả DTOs
+
+```typescript
+export class RegisterDto {
+  @ApiProperty({
+    description: 'Full name of the user',
+    example: 'Nguyễn Văn A',
+  })
+  @IsString()
+  name: string;
+}
+```
+
+### Controller Documentation
+
+```typescript
+@ApiTags('Auth')
+@ApiOperation({
+  summary: 'Register user',
+  description: 'Creates new user account'
+})
+@ApiResponse({ status: 201, description: 'User created' })
+```
+
+## Pagination Standards
+
+### Sử dụng PaginationDto base class
+
+```typescript
+export class UserQueryDto extends PaginationDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  search?: string;
+}
+```
+
+### Response Format
+
+```typescript
+{
+  items: T[],
+  total: number,
+  page: number,
+  pageSize: number,
+  totalPages: number
+}
+```
+
+## Decimal128 Handling
+
+### Database Schema
+
+```typescript
+@Prop({ type: Decimal128, default: Decimal128.fromString('0') })
+balance: Decimal128;
+```
+
+### Transform Response
+
+```typescript
+// Sử dụng TransformInterceptor tự động chuyển Decimal128 → number
+// Hoặc manual transform:
+transMoney: parseFloat(transaction.transMoney.toString());
+```
+
+## Error Codes Standards
+
+### Standard Error Format
+
+```typescript
+throw new BadRequestException({
+  code: 'INVALID_CODE',
+  message: 'Invalid verification code',
+});
+```
+
+### Business Error Codes
+
+- `EMAIL_EXISTS`: Email đã tồn tại
+- `EMAIL_NOT_VERIFIED`: Email chưa verify
+- `INVALID_CODE`: Mã xác minh không hợp lệ
+- `CODE_EXPIRED`: Mã hết hạn
+- `INVALID_CREDENTIALS`: Sai thông tin đăng nhập
+- `INSUFFICIENT_FUNDS`: Không đủ số dư
+- `LIMIT_PER_TRANSACTION`: Vượt giới hạn mỗi giao dịch
+- `DAILY_LIMIT_EXCEEDED`: Vượt giới hạn hàng ngày
+- `IDEMPOTENT_REPLAY`: Giao dịch trùng lặp
+- `FORBIDDEN`: Không có quyền
+
+## Idempotency
+
+### Client Request ID
+
+```typescript
+export class TransactionDto {
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  clientRequestId?: string;
+}
+```
+
+### Idempotency Logic
+
+```typescript
+if (clientRequestId) {
+  const existing = await this.findByClientRequestId(clientRequestId);
+  if (existing) {
+    return { ...existing, code: 'IDEMPOTENT_REPLAY' };
+  }
+}
+```
+
+## Response Interceptors
+
+### TransformInterceptor Usage
+
+```typescript
+// Tự động transform Decimal128 và format response
+@UseInterceptors(TransformInterceptor)
+```
+
+### Standard Response Format
+
+```typescript
+{
+  success: true,
+  data: T
+}
+```
+
+## API Versioning
+
+### URI Versioning
+
+```typescript
+app.enableVersioning({
+  type: VersioningType.URI,
+  defaultVersion: '1',
+});
+```
+
+### Controller Versioning
+
+```typescript
+@Controller({ version: '1' })
+@Controller({ version: '2' })
+```
+
+## Rate Limiting
+
+### Throttler Configuration
+
+```typescript
+@UseGuards(ThrottlerGuard)
+@Throttle(5, 600) // 5 requests per 10 minutes
+```
+
+### Different Limits cho Different Endpoints
+
+- Auth endpoints: 5 req/10min
+- General API: 100 req/min
+- Admin endpoints: Same as general
+
+## CORS Configuration
+
+### Development
+
+```typescript
+app.enableCors({
+  origin: [baseUrl, 'http://localhost:3000'],
+  credentials: true,
+});
+```
+
+## Security Headers
+
+### Authentication
+
+```typescript
+@ApiBearerAuth('JWT-auth')
+@UseGuards(JwtAuthGuard)
+```
+
+### Authorization
+
+```typescript
+@Roles(Role.ADMIN, Role.SUPERADMIN)
+@UseGuards(JwtAuthGuard, RolesGuard)
+```
+
+## Database Transactions
+
+### MongoDB Sessions
+
+```typescript
+const session = await this.model.db.startSession();
+try {
+  await session.withTransaction(async () => {
+    // Multiple operations
+  });
+} finally {
+  await session.endSession();
+}
+```
+
+## Logging Standards
+
+### Structured Logging
+
+```typescript
+this.logger.log('User registered', { userId, email });
+this.logger.error('Transaction failed', { error, transactionId });
+```
+
+### Audit Logging
+
+```typescript
+await this.auditService.log({
+  actorId: userId,
+  action: 'DEPOSIT',
+  resource: 'transaction',
+  meta: { amount, transactionId },
+});
+```
+
+## Testing Standards
+
+### Unit Tests
+
+```typescript
+describe('AuthService', () => {
+  it('should register new user', async () => {
+    // Arrange
+    const registerDto = { ... };
+    mockAccountModel.findOne.mockResolvedValue(null);
+
+    // Act
+    const result = await service.register(registerDto);
+
+    // Assert
+    expect(result).toEqual({ message: 'VERIFICATION_SENT' });
+  });
+});
+```
+
+### E2E Tests
+
+```typescript
+it('should complete user registration flow', async () => {
+  // Register → Verify → Login → Transaction
+});
+```
+
+## Performance Considerations
+
+### Database Indexes
+
+```typescript
+// Indexes cho performance
+AccountSchema.index({ email: 1 }, { unique: true });
+TransactionSchema.index({ accountId: 1, createdAt: -1 });
+```
+
+### Aggregation cho Daily Limits
+
+```typescript
+const dailyUsed = await this.transactionModel.aggregate([
+  {
+    $match: { accountId, transType: WITHDRAW, createdAt: { $gte: todayStart } },
+  },
+  { $group: { _id: null, total: { $sum: '$transMoney' } } },
+]);
+```
+
+## Code Organization
+
+### Module Structure
+
+```
+src/modules/[feature]/
+├── dto/           # Data Transfer Objects
+├── __tests__/     # Unit tests
+├── [feature].controller.ts
+├── [feature].service.ts
+└── [feature].module.ts
+```
+
+### Import Order
+
+```typescript
+// 1. External libraries
+import { Injectable } from '@nestjs/common';
+import { Model } from 'mongoose';
+
+// 2. Internal modules
+import { Account } from '../../database/schemas/account.schema';
+import { AuditService } from '../audit/audit.service';
+
+// 3. DTOs
+import { CreateUserDto } from './dto/create-user.dto';
+```
+
+## Documentation Updates
+
+### Khi thay đổi API
+
+1. Cập nhật Swagger annotations
+2. Cập nhật DTO validation
+3. Cập nhật test cases
+4. Cập nhật docs/FEATURES.md
+5. Cập nhật README.md nếu cần
+
+### Version Control
+
+- Commit message: `feat: add user profile update endpoint`
+- PR description: Mô tả chi tiết thay đổi
+- Breaking changes: Ghi rõ trong PR
+
+## Error Handling
+
+### Global Exception Filter
+
+```typescript
+// Tự động format tất cả errors
+@Catch()
+export class HttpExceptionFilter implements ExceptionFilter {
+  // Transform errors to standard format
+}
+```
+
+### Business Logic Errors
+
+```typescript
+// Throw với business error codes
+throw new ForbiddenException({
+  code: 'INSUFFICIENT_FUNDS',
+  message: 'Insufficient account balance',
+});
+```
+
+## Environment Configuration
+
+### Config Files
+
+```typescript
+// src/config/[feature].config.ts
+export default registerAs('feature', () => ({
+  setting: process.env.FEATURE_SETTING || 'default',
+}));
+```
+
+### Validation
+
+```typescript
+// Validate environment variables
+const config = Joi.object({
+  MONGODB_URI: Joi.string().required(),
+  JWT_SECRET: Joi.string().required(),
+});
+```

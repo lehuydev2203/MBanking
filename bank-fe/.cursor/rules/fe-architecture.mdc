@@ -1,0 +1,61 @@
+---
+description: "Kiến trúc Angular 20 Standalone + PrimeNG; routing; guards; services."
+globs: ["src/app/**/*.ts", "src/app/**/*.html", "src/app/**/*.scss"]
+---
+
+# Kiến trúc Frontend Banking
+
+## Cấu trúc thư mục chuẩn
+
+```
+src/app/
+├── core/                    # Core functionality
+│   ├── services/           # API services (AuthService, AccountsService, etc.)
+│   ├── interceptors/       # HTTP interceptors (AuthToken, HttpError)
+│   └── guards/            # Route guards (AuthGuard, RoleGuard)
+├── shared/                 # Shared components
+│   ├── components/        # Reusable components (ForbiddenComponent)
+│   ├── pipes/            # Custom pipes (CurrencyVndPipe)
+│   └── styles/           # Theme overrides
+└── features/              # Feature modules
+    ├── auth/             # Authentication (Login, Register, VerifyEmail)
+    ├── dashboard/        # Dashboard
+    ├── wallet/           # Deposit/Withdraw
+    ├── transactions/     # Transaction history
+    ├── profile/          # User profile
+    ├── admin/            # Admin panel
+    └── layout/           # Main layout
+```
+
+## Routing Structure
+
+- **Public routes**: `/register`, `/verify-email`, `/login`, `/403`
+- **Protected routes**: `/app/*` (AuthGuard)
+- **Admin routes**: `/app/admin/*` (RoleGuard)
+- **Lazy loading**: Tất cả feature modules sử dụng lazy loading
+
+## Services Pattern
+
+- **ApiService**: Wrapper cho HttpClient với baseApiUrl
+- **AuthService**: Quản lý authentication, JWT, auto-logout
+- **AccountsService**: Quản lý profile và balance
+- **TransactionsService**: Quản lý giao dịch
+- **AdminService**: Quản lý admin functions
+
+## State Management
+
+- Sử dụng **BehaviorSubject** cho reactive state
+- **takeUntil(destroy$)** pattern để tránh memory leaks
+- **OnDestroy** interface để cleanup subscriptions
+
+## Guards
+
+- **AuthGuard**: Kiểm tra authentication
+- **RoleGuard**: Kiểm tra quyền admin/superadmin
+- Redirect đến `/login` hoặc `/403` khi cần
+
+## Interceptors
+
+- **AuthTokenInterceptor**: Tự động gắn Bearer token
+- **HttpErrorInterceptor**: Xử lý lỗi và hiển thị toast
+- Map mã lỗi BE thành thông báo tiếng Việt

@@ -1,0 +1,97 @@
+<div class="layout-container">
+  <!-- Header -->
+  <header class="layout-header">
+    <div class="header-content">
+      <!-- Logo & Balance -->
+      <div class="logo-section">
+        <a routerLink="/app/dashboard" class="logo-link">
+          <div class="logo-icon">
+            <i class="pi pi-university"></i>
+          </div>
+          <span class="logo-text">M Banking</span>
+        </a>
+
+        <!-- Balance Display -->
+        <div class="balance-section">
+          <div class="balance-info">
+            <div class="balance-label">Số dư</div>
+            <div class="balance-amount">
+              {{ getDisplayBalance() }}
+            </div>
+          </div>
+          <button
+            class="balance-toggle-btn"
+            (click)="toggleBalanceVisibility()"
+            [title]="isBalanceVisible ? 'Ẩn số dư' : 'Hiện số dư'"
+          >
+            <i [class]="isBalanceVisible ? 'pi pi-eye' : 'pi pi-eye-slash'"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Navigation Menu -->
+      <nav class="navigation-menu">
+        <a
+          routerLink="/app/dashboard"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-chart-pie"></i>
+          <span>Dashboard</span>
+        </a>
+        <a routerLink="/app/deposit" routerLinkActive="active" class="nav-link">
+          <i class="pi pi-plus-circle"></i>
+          <span>Nạp tiền</span>
+        </a>
+        <a
+          routerLink="/app/withdraw"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-minus-circle"></i>
+          <span>Rút tiền</span>
+        </a>
+        <a
+          routerLink="/app/transfer"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-send"></i>
+          <span>Chuyển khoản</span>
+        </a>
+        <a
+          routerLink="/app/transactions"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-list"></i>
+          <span>Giao dịch</span>
+        </a>
+        <a routerLink="/app/profile" routerLinkActive="active" class="nav-link">
+          <i class="pi pi-user"></i>
+          <span>Hồ sơ</span>
+        </a>
+        <a
+          *ngIf="isAdmin"
+          routerLink="/app/admin"
+          routerLinkActive="active"
+          class="nav-link admin-link"
+        >
+          <i class="pi pi-cog"></i>
+          <span>Quản trị</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>
+
+<!-- Global Components -->
+<p-toast></p-toast>
+<p-confirmDialog></p-confirmDialog>

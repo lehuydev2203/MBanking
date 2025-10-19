@@ -1,0 +1,197 @@
+<div class="dashboard-container">
+  <!-- Welcome Section -->
+  <div class="welcome-section">
+    <div class="welcome-card">
+      <div class="welcome-header">
+        <div class="welcome-icon">
+          <i class="pi pi-home"></i>
+        </div>
+        <div class="welcome-content">
+          <h1 class="welcome-title">Chào mừng trở lại!</h1>
+          <p class="welcome-subtitle">
+            Tổng quan tài khoản và giao dịch gần đây
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Cards -->
+  <div class="stats-grid">
+    <!-- Balance Card -->
+    <div class="stat-card balance-card">
+      <div class="stat-header">
+        <div class="stat-icon balance-icon">
+          <i class="pi pi-wallet"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-title">Số dư hiện tại</h3>
+          <div class="stat-value">
+            {{ balance?.balance ?? 0 | currencyVnd }}
+          </div>
+        </div>
+      </div>
+      <div class="stat-footer">
+        <p class="last-updated">
+          Cập nhật lần cuối:
+          {{
+            balance?.lastUpdated ?? getDefaultDate() | date: "dd/MM/yyyy HH:mm"
+          }}
+        </p>
+        <button class="refresh-button" (click)="refreshBalance()">
+          <i class="pi pi-refresh"></i>
+          <span>Làm mới</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="stat-card actions-card">
+      <div class="stat-header">
+        <div class="stat-icon actions-icon">
+          <i class="pi pi-bolt"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-title">Thao tác nhanh</h3>
+          <p class="stat-description">Thực hiện giao dịch nhanh chóng</p>
+        </div>
+      </div>
+      <div class="actions-grid">
+        <button class="action-button deposit-button" routerLink="/app/deposit">
+          <i class="pi pi-plus-circle"></i>
+          <span>Nạp tiền</span>
+        </button>
+        <button
+          class="action-button withdraw-button"
+          routerLink="/app/withdraw"
+        >
+          <i class="pi pi-minus-circle"></i>
+          <span>Rút tiền</span>
+        </button>
+        <button
+          class="action-button transfer-button"
+          routerLink="/app/transfer"
+        >
+          <i class="pi pi-send"></i>
+          <span>Chuyển khoản</span>
+        </button>
+        <button
+          class="action-button transactions-button"
+          routerLink="/app/transactions"
+        >
+          <i class="pi pi-list"></i>
+          <span>Xem giao dịch</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Account Info Card -->
+    <div class="stat-card account-card">
+      <div class="stat-header">
+        <div class="stat-icon account-icon">
+          <i class="pi pi-user"></i>
+        </div>
+        <div class="stat-info">
+          <h3 class="stat-title">Thông tin tài khoản</h3>
+          <p class="stat-description">Chi tiết tài khoản của bạn</p>
+        </div>
+      </div>
+      <div class="account-info">
+        <div class="info-item">
+          <span class="info-label">Trạng thái:</span>
+          <div class="status-badge active">
+            <i class="pi pi-check-circle"></i>
+            <span>Hoạt động</span>
+          </div>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Loại tài khoản:</span>
+          <span class="info-value">Cá nhân</span>
+        </div>
+        <div class="info-item">
+          <span class="info-label">Ngày tạo:</span>
+          <span class="info-value">{{ currentDate | date: "dd/MM/yyyy" }}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Transactions -->
+  <div class="transactions-section">
+    <div class="transactions-card">
+      <div class="transactions-header">
+        <div class="header-left">
+          <div class="header-icon">
+            <i class="pi pi-history"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Giao dịch gần đây</h3>
+            <p class="header-subtitle">Lịch sử giao dịch mới nhất</p>
+          </div>
+        </div>
+        <button class="view-all-button" routerLink="/app/transactions">
+          <i class="pi pi-external-link"></i>
+          <span>Xem tất cả</span>
+        </button>
+      </div>
+
+      <div class="transactions-content">
+        <div class="transactions-table">
+          <div class="table-header">
+            <div class="header-cell">Loại</div>
+            <div class="header-cell">Số tiền</div>
+            <div class="header-cell">Số dư</div>
+            <div class="header-cell">Trạng thái</div>
+            <div class="header-cell">Thời gian</div>
+          </div>
+
+          <div class="table-body">
+            <div
+              *ngFor="let transaction of recentTransactions"
+              class="table-row"
+            >
+              <div class="table-cell">
+                <div class="transaction-type">
+                  <i
+                    [class]="getTransactionIcon(transaction.type)"
+                    [class]="getTransactionColor(transaction.type)"
+                  ></i>
+                  <span class="capitalize">{{
+                    getTransactionTypeLabel(transaction.type)
+                  }}</span>
+                </div>
+              </div>
+              <div class="table-cell">
+                <span [class]="getAmountClass(transaction.type)">
+                  {{ getAmountPrefix(transaction.type)
+                  }}{{ transaction.amount | currencyVnd }}
+                </span>
+              </div>
+              <div class="table-cell">
+                {{ transaction.balance | currencyVnd }}
+              </div>
+              <div class="table-cell">
+                <div
+                  class="status-badge"
+                  [class]="getStatusClass(transaction.status)"
+                >
+                  {{ getStatusLabel(transaction.status) }}
+                </div>
+              </div>
+              <div class="table-cell">
+                {{ transaction.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              </div>
+            </div>
+
+            <div *ngIf="recentTransactions.length === 0" class="empty-state">
+              <div class="empty-icon">
+                <i class="pi pi-inbox"></i>
+              </div>
+              <p class="empty-text">Chưa có giao dịch nào</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

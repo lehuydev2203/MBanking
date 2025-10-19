@@ -1,0 +1,7 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* PrimeNG v20 Styles */
+@import "primeicons/primeicons.css";
+
+/* Custom theme overrides */
+@import "./app/shared/styles/theme-overrides.scss";

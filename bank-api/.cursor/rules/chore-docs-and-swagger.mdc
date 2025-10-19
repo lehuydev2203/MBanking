@@ -1,0 +1,505 @@
+---
+description: 'Luôn cập nhật Swagger + docs/FEATURES.md khi thay đổi API.'
+globs: ['src/**/*.ts', 'docs/**/*.md']
+---
+
+# Documentation & Swagger Standards
+
+## Swagger Documentation Requirements
+
+### Bắt buộc Swagger Annotations
+
+#### Controller Level
+
+```typescript
+@ApiTags('Auth') // Group endpoints by feature
+@Controller('auth')
+export class AuthController {
+  // Controller implementation
+}
+```
+
+#### Endpoint Level
+
+```typescript
+@Post('register')
+@HttpCode(HttpStatus.CREATED)
+@ApiOperation({
+  summary: 'Register a new user account',
+  description: 'Creates a new user account and sends verification email. If email exists but not verified, sends new verification code.'
+})
+@ApiResponse({
+  status: 201,
+  description: 'Registration successful, verification email sent',
+  type: MessageResponseDto,
+  schema: {
+    example: { success: true, data: { message: 'VERIFICATION_SENT' } }
+  }
+})
+@ApiResponse({
+  status: 409,
+  description: 'Email already exists and verified',
+  schema: {
+    example: {
+      success: false,
+      code: 'EMAIL_EXISTS',
+      message: 'Email already exists and is verified'
+    }
+  }
+})
+async register(@Body() registerDto: RegisterDto) {
+  return this.authService.register(registerDto);
+}
+```
+
+#### DTO Documentation
+
+```typescript
+export class RegisterDto {
+  @ApiProperty({
+    description: 'Full name of the user',
+    example: 'Nguyễn Văn A',
+    minLength: 2,
+  })
+  @IsString()
+  @MinLength(2)
+  name: string;
+
+  @ApiProperty({
+    description: 'Email address',
+    example: 'user@example.com',
+  })
+  @IsEmail()
+  email: string;
+
+  @ApiPropertyOptional({
+    description: 'Phone number (Vietnamese format)',
+    example: '+84901234567',
+  })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @ApiProperty({
+    description: 'Password (minimum 8 characters with complexity requirements)',
+    example: 'SecurePass123!',
+    minLength: 8,
+  })
+  @IsString()
+  @MinLength(8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+  password: string;
+}
+```
+
+#### Response DTOs
+
+```typescript
+export class LoginResponseDto {
+  @ApiProperty({
+    description: 'JWT access token',
+    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+  })
+  accessToken: string;
+
+  @ApiProperty({
+    description: 'Token expiration time in seconds',
+    example: 900,
+  })
+  expiresIn: number;
+}
+
+export class PaginatedResponseDto<T> {
+  @ApiProperty({ description: 'Array of items' })
+  items: T[];
+
+  @ApiProperty({ description: 'Total number of items' })
+  total: number;
+
+  @ApiProperty({ description: 'Current page number' })
+  page: number;
+
+  @ApiProperty({ description: 'Number of items per page' })
+  pageSize: number;
+
+  @ApiProperty({ description: 'Total number of pages' })
+  totalPages: number;
+}
+```
+
+### Authentication Documentation
+
+```typescript
+@ApiBearerAuth('JWT-auth') // For protected endpoints
+@UseGuards(JwtAuthGuard)
+export class ProtectedController {
+  @Get('profile')
+  @ApiOperation({
+    summary: 'Get user profile',
+    description: 'Returns the current authenticated user profile information',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Profile retrieved successfully',
+    type: ProfileResponseDto,
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Unauthorized - Invalid or expired token',
+    schema: {
+      example: {
+        success: false,
+        code: 'UNAUTHORIZED',
+        message: 'Invalid or expired token',
+      },
+    },
+  })
+  async getProfile(@CurrentUser() user: Account) {
+    return this.accountsService.getProfile(user._id.toString());
+  }
+}
+```
+
+### Error Response Documentation
+
+```typescript
+@ApiResponse({
+  status: 400,
+  description: 'Bad Request - Validation failed',
+  schema: {
+    example: {
+      success: false,
+      code: 'BAD_REQUEST',
+      message: 'Validation failed',
+      details: {
+        email: ['Email must be a valid email address'],
+        password: ['Password must be at least 8 characters long']
+      },
+      timestamp: '2024-01-01T00:00:00.000Z',
+      path: '/auth/register'
+    }
+  }
+})
+```
+
+## Swagger Configuration
+
+### Main Application Setup
+
+```typescript
+// src/main.ts
+const config = new DocumentBuilder()
+  .setTitle('Banking API')
+  .setDescription(
+    'NestJS Banking API with RBAC, email verification, and transaction limits',
+  )
+  .setVersion('1.0')
+  .addBearerAuth(
+    {
+      type: 'http',
+      scheme: 'bearer',
+      bearerFormat: 'JWT',
+      name: 'JWT',
+      description: 'Enter JWT token',
+      in: 'header',
+    },
+    'JWT-auth',
+  )
+  .build();
+
+const document = SwaggerModule.createDocument(app, config);
+SwaggerModule.setup('docs', app, document, {
+  swaggerOptions: {
+    persistAuthorization: true,
+  },
+});
+
+// Also expose JSON format
+SwaggerModule.setup('docs-json', app, document, {
+  jsonDocumentUrl: 'swagger.json',
+});
+```
+
+### Global Response Format
+
+```typescript
+// All responses follow this format:
+{
+  success: true|false,
+  data?: T,           // Present on success
+  code?: string,      // Present on error
+  message?: string,   // Present on error
+  details?: any,      // Present on error (optional)
+  timestamp?: string, // Present on error
+  path?: string       // Present on error
+}
+```
+
+## Documentation Update Process
+
+### Khi thêm endpoint mới
+
+1. **Thêm Swagger annotations**:
+   - `@ApiOperation()` với summary và description
+   - `@ApiResponse()` cho tất cả status codes
+   - `@ApiProperty()` cho DTOs
+
+2. **Cập nhật DTOs**:
+   - Validation decorators
+   - Swagger property descriptions
+   - Examples cho complex fields
+
+3. **Test Swagger UI**:
+   - Kiểm tra endpoint hiển thị đúng
+   - Test authentication flow
+   - Verify examples work
+
+4. **Cập nhật docs/FEATURES.md**:
+   - Thêm endpoint vào danh sách
+   - Mô tả chức năng
+   - Cập nhật error codes
+
+### Khi thay đổi endpoint hiện có
+
+1. **Cập nhật Swagger annotations**
+2. **Cập nhật DTOs nếu cần**
+3. **Test backward compatibility**
+4. **Cập nhật version nếu breaking change**
+5. **Cập nhật docs/FEATURES.md**
+
+### Khi thêm error code mới
+
+1. **Cập nhật error handling**
+2. **Thêm vào Swagger examples**
+3. **Cập nhật docs/FEATURES.md**
+4. **Cập nhật test cases**
+
+## FEATURES.md Maintenance
+
+### Structure Requirements
+
+```markdown
+# Banking API - Tính năng chi tiết
+
+## 📋 Danh sách tính năng đã triển khai
+
+### ✅ Authentication & Authorization
+
+- [x] User registration với email verification
+- [x] Email verification với mã 6 chữ số (15 phút)
+- [x] Login với JWT token (15 phút)
+- [x] Password change với validation
+- [x] Role-based access control (RBAC)
+  - [x] User: Quản lý tài khoản cá nhân
+  - [x] Admin: Quản lý users và transactions
+  - [x] Superadmin: Full access + quản lý roles
+- [x] Rate limiting cho auth endpoints (5 req/10min)
+
+### ✅ Transaction System
+
+- [x] Deposit money (không giới hạn)
+- [x] Withdraw money với limits:
+  - [x] Per-transaction limit: 20,000,000 VND
+  - [x] Daily limit: 500,000,000 VND (theo VN timezone)
+- [x] Transaction history với pagination
+- [x] Transaction filtering (type, date range, amount)
+- [x] CSV export với CSV injection protection
+- [x] Idempotency support với clientRequestId
+- [x] MongoDB transactions cho data consistency
+```
+
+### API Endpoints Documentation
+
+```markdown
+## 📝 API Endpoints
+
+### Authentication
+
+- `POST /auth/register` - Đăng ký tài khoản
+- `POST /auth/verify` - Xác minh email
+- `POST /auth/resend-verification` - Gửi lại mã xác minh
+- `POST /auth/login` - Đăng nhập
+- `POST /auth/change-password` - Đổi mật khẩu
+
+### User Profile
+
+- `GET /profile` - Lấy thông tin profile
+- `PATCH /profile` - Cập nhật profile
+- `GET /balance` - Lấy số dư tài khoản
+
+### Transactions
+
+- `GET /wallet/can-withdraw` - Kiểm tra có thể rút tiền
+- `POST /transactions/deposit` - Nạp tiền
+- `POST /transactions/withdraw` - Rút tiền
+- `GET /transactions` - Danh sách giao dịch
+- `GET /transactions/export.csv` - Xuất CSV
+
+### Admin (Admin/Superadmin only)
+
+- `GET /admin/users` - Danh sách users
+- `PATCH /admin/users/:id` - Cập nhật user (Superadmin only)
+- `POST /admin/users/:id/resend-verification` - Gửi lại mã xác minh
+- `GET /admin/transactions` - Tất cả giao dịch
+```
+
+### Error Codes Documentation
+
+```markdown
+## 📊 Error Codes
+
+### Authentication Errors
+
+- `EMAIL_EXISTS`: Email đã tồn tại và đã verified
+- `EMAIL_NOT_VERIFIED`: Email chưa được xác minh
+- `INVALID_CODE`: Mã xác minh không hợp lệ
+- `CODE_EXPIRED`: Mã xác minh đã hết hạn
+- `INVALID_CREDENTIALS`: Email/password không đúng
+- `UNAUTHORIZED`: Token không hợp lệ hoặc hết hạn
+- `FORBIDDEN`: Không có quyền truy cập
+
+### Transaction Errors
+
+- `INSUFFICIENT_FUNDS`: Số dư không đủ
+- `LIMIT_PER_TRANSACTION`: Vượt quá giới hạn mỗi giao dịch
+- `DAILY_LIMIT_EXCEEDED`: Vượt quá giới hạn hàng ngày
+- `IDEMPOTENT_REPLAY`: Giao dịch trùng lặp (clientRequestId)
+```
+
+## README.md Maintenance
+
+### Required Sections
+
+1. **Project Overview**: Mô tả ngắn gọn
+2. **Features**: Danh sách tính năng chính
+3. **Installation**: Hướng dẫn cài đặt
+4. **Configuration**: Environment variables
+5. **API Documentation**: Links đến Swagger
+6. **Scripts**: Available npm/yarn scripts
+7. **Architecture**: Project structure
+8. **Security**: Security features
+9. **Testing**: How to run tests
+10. **Deployment**: Docker và production setup
+
+### Update Triggers
+
+- Thêm feature mới → Cập nhật Features section
+- Thay đổi API → Cập nhật API Documentation links
+- Thêm script mới → Cập nhật Scripts section
+- Thay đổi architecture → Cập nhật Architecture section
+- Thêm security feature → Cập nhật Security section
+
+## Documentation Quality Checklist
+
+### Swagger Checklist
+
+- [ ] Tất cả endpoints có `@ApiOperation()`
+- [ ] Tất cả DTOs có `@ApiProperty()`
+- [ ] Tất cả responses có `@ApiResponse()`
+- [ ] Authentication được document đúng
+- [ ] Error responses có examples
+- [ ] Request/response examples work
+- [ ] Swagger UI loads without errors
+
+### FEATURES.md Checklist
+
+- [ ] Feature list is up to date
+- [ ] API endpoints are documented
+- [ ] Error codes are listed
+- [ ] Business rules are explained
+- [ ] Limits and constraints are documented
+- [ ] Performance considerations noted
+
+### README.md Checklist
+
+- [ ] Installation instructions work
+- [ ] Environment variables are documented
+- [ ] Scripts are up to date
+- [ ] API documentation links work
+- [ ] Architecture diagram is current
+- [ ] Security features are highlighted
+
+## Automated Documentation
+
+### Pre-commit Hooks
+
+```bash
+# Check if Swagger is up to date
+npm run swagger:check
+
+# Validate documentation
+npm run docs:validate
+
+# Generate API documentation
+npm run docs:generate
+```
+
+### CI/CD Integration
+
+```yaml
+# .github/workflows/docs.yml
+- name: Check Documentation
+  run: |
+    npm run docs:validate
+    npm run swagger:check
+
+- name: Update Documentation
+  run: |
+    npm run docs:generate
+    npm run docs:deploy
+```
+
+## Documentation Standards
+
+### Writing Style
+
+- Sử dụng tiếng Việt cho user-facing docs
+- Sử dụng tiếng Anh cho technical docs
+- Consistent terminology
+- Clear and concise descriptions
+- Examples for complex concepts
+
+### Code Examples
+
+- Always include working examples
+- Use realistic data
+- Show both success and error cases
+- Include authentication when needed
+- Use proper HTTP status codes
+
+### Version Control
+
+- Commit documentation changes with code changes
+- Use descriptive commit messages
+- Tag releases with documentation updates
+- Maintain changelog for breaking changes
+
+## Swagger Best Practices
+
+### Organization
+
+- Group endpoints by feature (`@ApiTags()`)
+- Use consistent naming conventions
+- Order endpoints logically
+- Include authentication requirements
+
+### Descriptions
+
+- Write clear, concise descriptions
+- Include business context
+- Mention side effects
+- Document rate limiting
+
+### Examples
+
+- Use realistic data
+- Show edge cases
+- Include error examples
+- Test examples in Swagger UI
+
+### Validation
+
+- Document all validation rules
+- Show error messages
+- Include format requirements
+- Mention optional vs required fields

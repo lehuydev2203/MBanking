@@ -1,0 +1,60 @@
+---
+description: "Kết nối API; sinh types từ Swagger; xử lý token exp & lỗi chuẩn."
+globs: ["src/app/core/**/*.ts", "src/app/features/**/**/*.ts"]
+---
+
+# API Integration & Type Safety
+
+## ApiService Pattern
+
+```typescript
+// Wrapper cho HttpClient với baseApiUrl
+get<T>(endpoint: string, params?: Record<string, any>): Observable<T>
+post<T>(endpoint: string, body: any): Observable<T>
+put<T>(endpoint: string, body: any): Observable<T>
+patch<T>(endpoint: string, body: any): Observable<T>
+delete<T>(endpoint: string): Observable<T>
+postBlob(endpoint: string, body: any): Observable<Blob>
+```
+
+## OpenAPI TypeScript
+
+- **Command**: `yarn api:types`
+- **Output**: `src/app/core/api-types.ts`
+- **Source**: `http://localhost:3000/docs-json`
+- **Usage**: Import types từ generated file
+
+## Error Mapping
+
+```typescript
+const errorMap: Record<string, string> = {
+  EMAIL_NOT_VERIFIED: "Email chưa được xác thực...",
+  INVALID_CREDENTIALS: "Email hoặc mật khẩu không chính xác.",
+  INSUFFICIENT_BALANCE: "Số dư không đủ...",
+  WITHDRAWAL_LIMIT_EXCEEDED: "Vượt quá giới hạn rút tiền.",
+  // ... more mappings
+};
+```
+
+## Auto-logout Pattern
+
+```typescript
+// JWT expiration handling
+getTokenExpirationLeft(): number
+isTokenExpired(): boolean
+setupAutoLogout(): void // Warning 60s before, logout when expired
+```
+
+## HTTP Status Handling
+
+- **401**: Auto logout + redirect to login
+- **403**: Redirect to 403 page
+- **4xx/5xx**: Show toast with mapped message
+- **Network errors**: Generic error message
+
+## Request/Response Types
+
+- **Interfaces**: Định nghĩa rõ ràng cho tất cả API calls
+- **Generic types**: Sử dụng generic cho reusable responses
+- **Validation**: Type guards cho runtime type checking
+- **Null safety**: Handle null/undefined values properly
