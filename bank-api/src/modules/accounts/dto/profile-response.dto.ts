@@ -14,6 +14,18 @@ export class ProfileResponseDto {
   phone?: string;
 
   @ApiProperty({
+    description: 'Account number (10 digits)',
+    example: '1234567890',
+  })
+  accountNumber: string;
+
+  @ApiPropertyOptional({
+    description: 'Account nickname for transfers',
+    example: 'john_doe',
+  })
+  nickname?: string;
+
+  @ApiProperty({
     description: 'User role',
     enum: ['user', 'admin', 'superadmin'],
   })

@@ -5,7 +5,7 @@ import { PaginationDto } from '../../../common/dto/pagination.dto';
 
 export class AdminUserQueryDto extends PaginationDto {
   @ApiPropertyOptional({
-    description: 'Search query for name or email',
+    description: 'Search query for name, email, account number, or nickname',
     example: 'john',
   })
   @IsOptional()

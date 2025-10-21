@@ -4,6 +4,7 @@ import {
   ArgumentsHost,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 
@@ -18,6 +19,8 @@ export interface ErrorResponse {
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(HttpExceptionFilter.name);
+
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
@@ -27,6 +30,29 @@ export class HttpExceptionFilter implements ExceptionFilter {
     let code: string = 'INTERNAL_SERVER_ERROR';
     let message: string = 'Internal server error';
     let details: any = undefined;
+
+    // Log the full error for debugging
+    console.error('=== EXCEPTION DEBUG ===');
+    console.error('Exception:', exception);
+    console.error('Type:', typeof exception);
+    console.error('Constructor:', exception?.constructor?.name);
+    if (exception instanceof Error) {
+      console.error('Message:', exception.message);
+      console.error('Stack:', exception.stack);
+    }
+    console.error('Request body:', request.body);
+    console.error('========================');
+
+    this.logger.error('Exception caught:', {
+      exception: exception instanceof Error ? exception.message : exception,
+      stack: exception instanceof Error ? exception.stack : undefined,
+      url: request.url,
+      method: request.method,
+      body: request.body,
+      headers: request.headers,
+      exceptionType: typeof exception,
+      exceptionConstructor: exception?.constructor?.name,
+    });
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
@@ -45,6 +71,22 @@ export class HttpExceptionFilter implements ExceptionFilter {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
       code = 'INTERNAL_SERVER_ERROR';
       message = 'Internal server error';
+
+      // Log non-HTTP exceptions with full details
+      if (exception instanceof Error) {
+        this.logger.error('Non-HTTP Exception:', {
+          name: exception.name,
+          message: exception.message,
+          stack: exception.stack,
+          cause: (exception as any).cause,
+        });
+      } else {
+        this.logger.error('Unknown exception type:', {
+          type: typeof exception,
+          value: exception,
+          constructor: exception?.constructor?.name,
+        });
+      }
     }
 
     const errorResponse: ErrorResponse = {

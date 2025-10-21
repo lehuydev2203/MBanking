@@ -44,8 +44,8 @@ export class LoginComponent {
     private messageService: MessageService,
   ) {
     this.loginForm = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(3)]],
+      email: ['vip.mstudio@gmail.com', [Validators.required, Validators.email]],
+      password: ['123456', [Validators.required, Validators.minLength(3)]],
     });
   }
 
@@ -53,7 +53,6 @@ export class LoginComponent {
     if (this.loginForm.valid) {
       this.isLoading = true;
       const loginData: LoginRequest = this.loginForm.value;
-      console.log('🚀 ~ LoginComponent ~ onSubmit ~ loginData:', loginData);
 
       this.authService.login(loginData).subscribe({
         next: (response) => {

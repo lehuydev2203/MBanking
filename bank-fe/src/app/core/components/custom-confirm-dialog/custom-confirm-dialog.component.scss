@@ -1,0 +1,343 @@
+// Custom Confirm Dialog - Dark Theme
+.dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.dialog-container {
+  background: linear-gradient(
+    135deg,
+    rgba(15, 23, 42, 0.95) 0%,
+    rgba(30, 41, 59, 0.95) 100%
+  );
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  box-shadow:
+    0 25px 50px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.05);
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow: hidden;
+  animation: slideIn 0.3s ease-out;
+  position: relative;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      var(--brand-primary, #7c8cf9) 20%,
+      var(--brand-secondary, #22d3ee) 50%,
+      var(--brand-primary, #7c8cf9) 80%,
+      transparent 100%
+    );
+  }
+}
+
+.dialog-header {
+  background: linear-gradient(
+    135deg,
+    var(--brand-primary, #7c8cf9) 0%,
+    var(--brand-secondary, #22d3ee) 100%
+  );
+  padding: 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.3) 50%,
+      transparent 100%
+    );
+  }
+}
+
+.dialog-title {
+  color: #ffffff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.dialog-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+  }
+
+  &:active {
+    transform: scale(0.95);
+  }
+
+  i {
+    font-size: 0.875rem;
+  }
+}
+
+.dialog-content {
+  padding: 2rem;
+  background: transparent;
+}
+
+.dialog-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.message-icon {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(
+    135deg,
+    var(--brand-warning, #fbbf24) 0%,
+    #f59e0b 100%
+  );
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+
+  i {
+    font-size: 1.5rem;
+    color: #ffffff;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+}
+
+.message-text {
+  flex: 1;
+  color: #ffffff;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  font-weight: 400;
+}
+
+.dialog-footer {
+  padding: 1.5rem 2rem;
+  background: rgba(255, 255, 255, 0.02);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.dialog-btn {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  min-width: 100px;
+  position: relative;
+  overflow: hidden;
+
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.2),
+      transparent
+    );
+    transition: left 0.5s ease;
+  }
+
+  &:hover::before {
+    left: 100%;
+  }
+}
+
+.cancel-btn {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.confirm-btn {
+  background: linear-gradient(
+    135deg,
+    var(--brand-success, #34d399) 0%,
+    #10b981 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(52, 211, 153, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(52, 211, 153, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Danger variant for withdrawal
+.danger-btn {
+  background: linear-gradient(
+    135deg,
+    var(--brand-danger, #f87171) 0%,
+    #ef4444 100%
+  );
+  color: #ffffff;
+  box-shadow: 0 4px 15px rgba(248, 113, 113, 0.3);
+
+  &:hover {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(248, 113, 113, 0.4);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+// Animations
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+// Responsive Design
+@media (max-width: 640px) {
+  .dialog-overlay {
+    padding: 0.5rem;
+  }
+
+  .dialog-container {
+    max-width: 100%;
+    margin: 0;
+  }
+
+  .dialog-header {
+    padding: 1rem 1.5rem;
+  }
+
+  .dialog-title {
+    font-size: 1.125rem;
+  }
+
+  .dialog-content {
+    padding: 1.5rem;
+  }
+
+  .dialog-message {
+    flex-direction: column;
+    text-align: center;
+    gap: 0.75rem;
+  }
+
+  .message-icon {
+    width: 40px;
+    height: 40px;
+    margin: 0 auto;
+
+    i {
+      font-size: 1.25rem;
+    }
+  }
+
+  .message-text {
+    font-size: 1rem;
+  }
+
+  .dialog-footer {
+    padding: 1rem 1.5rem;
+    flex-direction: column-reverse;
+    gap: 0.75rem;
+
+    .dialog-btn {
+      width: 100%;
+      min-width: auto;
+    }
+  }
+}
+
+// Brand Colors
+:root {
+  --brand-primary: #7c8cf9;
+  --brand-secondary: #22d3ee;
+  --brand-danger: #f87171;
+  --brand-success: #34d399;
+  --brand-warning: #fbbf24;
+  --brand-info: #60a5fa;
+}

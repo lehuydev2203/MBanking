@@ -11,10 +11,17 @@ import { TagModule } from 'primeng/tag';
 import {
   AccountsService,
   AccountBalance,
+  UserProfile,
 } from '../../core/services/accounts.service';
 import {
   TransactionsService,
-  Transaction,
+  TransactionData,
+  TransactionType,
+  getTransactionTypeLabel,
+  getTransactionTypeIcon,
+  getTransactionTypeColor,
+  isIncomingTransaction,
+  isOutgoingTransaction,
 } from '../../core/services/transactions.service';
 import { CurrencyVndPipe } from '../../shared/pipes/currency-vnd.pipe';
 
@@ -36,8 +43,10 @@ import { CurrencyVndPipe } from '../../shared/pipes/currency-vnd.pipe';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   balance: AccountBalance | null = null;
-  recentTransactions: Transaction[] = [];
+  recentTransactions: TransactionData[] = [];
   isLoadingTransactions = false;
+  currentProfile: UserProfile | null = null;
+  isLoadingProfile = false;
   currentDate = new Date();
 
   // Default values when API fails
@@ -62,6 +71,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.loadBalance();
     this.loadRecentTransactions();
+    this.loadProfile();
   }
 
   ngOnDestroy(): void {
@@ -80,6 +90,39 @@ export class DashboardComponent implements OnInit, OnDestroy {
         error: () => {
           // Set default balance when API fails
           this.balance = this.defaultBalance;
+        },
+      });
+  }
+
+  private loadProfile(): void {
+    this.isLoadingProfile = true;
+    this.accountsService
+      .getProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (profile) => {
+          console.log(
+            '🚀 ~ DashboardComponent ~ loadProfile ~ profile:',
+            profile,
+          );
+          this.currentProfile = profile;
+          this.isLoadingProfile = false;
+        },
+        error: (error) => {
+          console.error('Error loading profile:', error);
+          this.isLoadingProfile = false;
+          // Set default profile when API fails
+          this.currentProfile = {
+            id: 'unknown',
+            name: 'Người dùng',
+            email: 'user@example.com',
+            role: 'user',
+            status: 'active',
+            isEmailVerified: false,
+            createdAt: new Date().toISOString(),
+            accountNumber: '00000000',
+            nickname: 'Người dùng',
+          };
         },
       });
   }
@@ -106,44 +149,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.accountsService.refreshBalance();
   }
 
-  getTransactionIcon(type: string): string {
-    const icons: Record<string, string> = {
-      deposit: 'pi pi-plus-circle',
-      withdraw: 'pi pi-minus-circle',
-      transfer: 'pi pi-arrow-right-arrow-left',
-    };
-    return icons[type] || 'pi pi-circle';
+  refreshProfile(): void {
+    this.accountsService.refreshProfile();
   }
 
-  getTransactionColor(type: string): string {
-    const colors: Record<string, string> = {
-      deposit: 'text-brand-success',
-      withdraw: 'text-brand-danger',
-      transfer: 'text-brand-info',
-    };
-    return colors[type] || 'text-gray-400';
+  getTransactionIcon(type: number): string {
+    return getTransactionTypeIcon(type);
   }
 
-  getTransactionTypeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      deposit: 'Nạp tiền',
-      withdraw: 'Rút tiền',
-      transfer: 'Chuyển khoản',
-    };
-    return labels[type] || type;
+  getTransactionColor(type: number): string {
+    return getTransactionTypeColor(type);
   }
 
-  getAmountPrefix(type: string): string {
-    return type === 'deposit' ? '+' : type === 'withdraw' ? '-' : '';
+  getTransactionTypeLabel(type: number): string {
+    return getTransactionTypeLabel(type);
   }
 
-  getAmountClass(type: string): string {
-    const classes: Record<string, string> = {
-      deposit: 'text-brand-success font-semibold',
-      withdraw: 'text-brand-danger font-semibold',
-      transfer: 'text-brand-info font-semibold',
-    };
-    return classes[type] || 'font-semibold';
+  getAmountPrefix(type: number): string {
+    return isIncomingTransaction(type)
+      ? '+'
+      : isOutgoingTransaction(type)
+        ? '-'
+        : '';
+  }
+
+  getAmountClass(type: number): string {
+    const color = getTransactionTypeColor(type);
+    return `${color} font-semibold`;
   }
 
   getStatusLabel(status: string): string {
@@ -174,5 +206,14 @@ export class DashboardComponent implements OnInit, OnDestroy {
       cancelled: 'status-badge cancelled',
     };
     return classes[status] || 'status-badge';
+  }
+
+  getAccountTypeLabel(role?: string): string {
+    const labels: Record<string, string> = {
+      user: 'Cá nhân',
+      admin: 'Quản trị viên',
+      superadmin: 'Siêu quản trị viên',
+    };
+    return labels[role || 'user'] || 'Cá nhân';
   }
 }

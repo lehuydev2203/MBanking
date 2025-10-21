@@ -21,7 +21,10 @@ import {
   TransactionsService,
   TransferRequest,
 } from '../../../core/services/transactions.service';
-import { AccountsService } from '../../../core/services/accounts.service';
+import {
+  AccountsService,
+  RecipientInfo,
+} from '../../../core/services/accounts.service';
 import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
 
 @Component({
@@ -47,6 +50,8 @@ export class TransferComponent implements OnInit, OnDestroy {
   transferForm: FormGroup;
   isLoading = false;
   currentBalance: any = null;
+  recipientInfo: RecipientInfo | null = null;
+  isCheckingRecipient = false;
 
   private destroy$ = new Subject<void>();
 
@@ -67,11 +72,22 @@ export class TransferComponent implements OnInit, OnDestroy {
         ],
       ],
       amount: [
-        null,
+        { value: null, disabled: true },
         [Validators.required, Validators.min(1000), Validators.max(100000000)],
       ],
-      transName: ['', [Validators.required, Validators.maxLength(100)]],
+      transName: [
+        { value: '', disabled: true },
+        [Validators.required, Validators.maxLength(100)],
+      ],
     });
+
+    // Listen to recipient changes
+    this.transferForm
+      .get('recipient')
+      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      .subscribe((value) => {
+        this.onRecipientChange(value);
+      });
   }
 
   ngOnInit(): void {
@@ -102,8 +118,88 @@ export class TransferComponent implements OnInit, OnDestroy {
       });
   }
 
+  private onRecipientChange(value: string): void {
+    // Clear previous recipient info
+    this.recipientInfo = null;
+
+    // Disable other fields initially
+    this.transferForm.get('amount')?.disable();
+    this.transferForm.get('transName')?.disable();
+
+    // Clear values
+    this.transferForm.get('amount')?.setValue(null);
+    this.transferForm.get('transName')?.setValue('');
+
+    if (!value || value.length < 3) {
+      return;
+    }
+
+    // Check if it's a valid format
+    const recipientControl = this.transferForm.get('recipient');
+    if (recipientControl?.invalid) {
+      return;
+    }
+
+    // Call API to get recipient info
+    this.isCheckingRecipient = true;
+
+    this.accountsService
+      .getRecipientInfo(value)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (recipientData) => {
+          this.isCheckingRecipient = false;
+          this.recipientInfo = recipientData;
+
+          // Enable other fields
+          this.transferForm.get('amount')?.enable();
+          this.transferForm.get('transName')?.enable();
+
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: `Đã tìm thấy tài khoản: ${this.recipientInfo.name}`,
+            life: 3000,
+          });
+        },
+        error: (error) => {
+          this.isCheckingRecipient = false;
+          this.recipientInfo = null;
+
+          // Show error message
+          const errorMessage =
+            error.error?.message || 'Không tìm thấy tài khoản người nhận';
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: errorMessage,
+            life: 5000,
+          });
+        },
+      });
+  }
+
   onSubmit(): void {
-    if (this.transferForm.valid) {
+    // Check if recipient is valid first
+    if (!this.recipientInfo) {
+      this.messageService.add({
+        severity: 'warn',
+        summary: 'Cảnh báo',
+        detail: 'Vui lòng nhập và xác thực tài khoản người nhận trước',
+      });
+      return;
+    }
+
+    // Check if form is valid (only for enabled fields)
+    const recipientValid = this.transferForm.get('recipient')?.valid;
+    const amountValid = this.transferForm.get('amount')?.enabled
+      ? this.transferForm.get('amount')?.valid
+      : true;
+    const transNameValid = this.transferForm.get('transName')?.enabled
+      ? this.transferForm.get('transName')?.valid
+      : true;
+
+    if (recipientValid && amountValid && transNameValid) {
       const amount = this.transferForm.get('amount')?.value;
       const recipient = this.transferForm.get('recipient')?.value;
       const transName = this.transferForm.get('transName')?.value;
@@ -120,7 +216,7 @@ export class TransferComponent implements OnInit, OnDestroy {
       }
 
       this.confirmationService.confirm({
-        message: `Bạn có chắc chắn muốn chuyển ${amount.toLocaleString('vi-VN')} ₫ đến tài khoản ${recipient}?`,
+        message: `Bạn có chắc chắn muốn chuyển ${amount.toLocaleString('vi-VN')} ₫ đến ${this.recipientInfo.name} (${recipient})?`,
         header: 'Xác nhận chuyển khoản',
         icon: 'pi pi-exclamation-triangle',
         acceptLabel: 'Xác nhận',

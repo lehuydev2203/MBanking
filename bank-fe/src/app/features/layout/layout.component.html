@@ -71,15 +71,16 @@
           <i class="pi pi-user"></i>
           <span>Hồ sơ</span>
         </a>
-        <a
-          *ngIf="isAdmin"
-          routerLink="/app/admin"
-          routerLinkActive="active"
-          class="nav-link admin-link"
-        >
-          <i class="pi pi-cog"></i>
-          <span>Quản trị</span>
-        </a>
+        @if (isAdmin) {
+          <a
+            routerLink="/app/admin"
+            routerLinkActive="active"
+            class="nav-link admin-link"
+          >
+            <i class="pi pi-cog"></i>
+            <span>Quản trị</span>
+          </a>
+        }
       </nav>
     </div>
   </header>

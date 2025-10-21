@@ -39,6 +39,8 @@ export class AdminService {
       filter.$or = [
         { name: { $regex: q, $options: 'i' } },
         { email: { $regex: q, $options: 'i' } },
+        { accountNumber: { $regex: q, $options: 'i' } },
+        { nickname: { $regex: q, $options: 'i' } },
       ];
     }
 

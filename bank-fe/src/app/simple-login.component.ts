@@ -52,15 +52,14 @@ import { Router, RouterLink } from '@angular/router';
                   loginForm.get('email')?.touched
                 "
               />
-              <small
-                style="color: #ef4444;"
-                *ngIf="
-                  loginForm.get('email')?.invalid &&
-                  loginForm.get('email')?.touched
-                "
-              >
-                Vui lòng nhập email hợp lệ
-              </small>
+              @if (
+                loginForm.get('email')?.invalid &&
+                loginForm.get('email')?.touched
+              ) {
+                <small style="color: #ef4444;">
+                  Vui lòng nhập email hợp lệ
+                </small>
+              }
             </div>
 
             <div>
@@ -81,15 +80,12 @@ import { Router, RouterLink } from '@angular/router';
                   loginForm.get('password')?.touched
                 "
               />
-              <small
-                style="color: #ef4444;"
-                *ngIf="
-                  loginForm.get('password')?.invalid &&
-                  loginForm.get('password')?.touched
-                "
-              >
-                Vui lòng nhập mật khẩu
-              </small>
+              @if (
+                loginForm.get('password')?.invalid &&
+                loginForm.get('password')?.touched
+              ) {
+                <small style="color: #ef4444;"> Vui lòng nhập mật khẩu </small>
+              }
             </div>
 
             <button

@@ -4,6 +4,7 @@ import { BehaviorSubject, Observable, timer } from 'rxjs';
 import { map, tap } from 'rxjs/operators';
 import { jwtDecode } from 'jwt-decode';
 import { ApiService } from './api.service';
+import { API_ENDPOINTS } from '../constants/api.constants';
 
 export interface LoginRequest {
   email: string;
@@ -23,18 +24,15 @@ export interface ChangePasswordRequest {
 }
 
 export interface AuthResponse {
-  success: boolean;
-  data: {
-    accessToken: string;
-    expiresIn: number;
-    user: {
-      id: string;
-      name: string;
-      email: string;
-      phone?: string;
-      role: string;
-      status: string;
-    };
+  accessToken: string;
+  expiresIn: number;
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    phone?: string;
+    role: string;
+    status: string;
   };
 }
 
@@ -88,34 +86,38 @@ export class AuthService {
   }
 
   register(body: RegisterRequest): Observable<any> {
-    return this.apiService.post('/auth/register', body);
+    return this.apiService.post(API_ENDPOINTS.AUTH.REGISTER, body);
   }
 
   verifyEmail(code: string): Observable<any> {
-    return this.apiService.post('/auth/verify-email', { code });
+    return this.apiService.post(API_ENDPOINTS.AUTH.VERIFY, { code });
   }
 
   resendVerification(email: string): Observable<any> {
-    return this.apiService.post('/auth/resend-verification', { email });
+    return this.apiService.post(API_ENDPOINTS.AUTH.RESEND_VERIFICATION, {
+      email,
+    });
   }
 
   login(body: LoginRequest): Observable<AuthResponse> {
-    return this.apiService.post<AuthResponse>('/auth/login', body).pipe(
-      tap((response) => {
-        if (response.success && response.data) {
-          this.setAuth({
-            token: response.data.accessToken,
-            user: response.data.user,
-            expiresIn: response.data.expiresIn,
-          });
-          this.setupAutoLogout();
-        }
-      }),
-    );
+    return this.apiService
+      .post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, body)
+      .pipe(
+        tap((authData) => {
+          if (authData) {
+            this.setAuth({
+              token: authData.accessToken,
+              user: authData.user,
+              expiresIn: authData.expiresIn,
+            });
+            this.setupAutoLogout();
+          }
+        }),
+      );
   }
 
   changePassword(body: ChangePasswordRequest): Observable<any> {
-    return this.apiService.post('/auth/change-password', body);
+    return this.apiService.post(API_ENDPOINTS.AUTH.CHANGE_PASSWORD, body);
   }
 
   logout(): void {

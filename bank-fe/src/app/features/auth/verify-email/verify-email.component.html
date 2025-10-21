@@ -7,111 +7,99 @@
             <i class="pi pi-envelope icon-email"></i>
           </div>
           <h1 class="card-title">Xác thực email</h1>
-          <p class="card-subtitle">Vui lòng xác thực email để hoàn tất đăng ký</p>
+          <p class="card-subtitle">
+            Vui lòng xác thực email để hoàn tất đăng ký
+          </p>
         </div>
       </ng-template>
 
       <div class="card-content">
         <div class="text-center">
           <!-- Loading State -->
-          <div
-            *ngIf="isLoading"
-            class="flex flex-column align-items-center gap-3"
-          >
-            <p-progressSpinner
-              [style]="{ width: '50px', height: '50px' }"
-            ></p-progressSpinner>
-            <p class="loading-text">Đang xác thực email...</p>
-          </div>
+          @if (isLoading) {
+            <div class="flex flex-column align-items-center gap-3">
+              <p-progressSpinner
+                [style]="{ width: '50px', height: '50px' }"
+              ></p-progressSpinner>
+              <p class="loading-text">Đang xác thực email...</p>
+            </div>
+          }
 
           <!-- Pending Verification -->
-          <div
-            *ngIf="!isLoading && !isVerified && !error"
-            class="verify-pending"
-          >
-            <div class="status-icon">
-              <i class="pi pi-envelope"></i>
-            </div>
-            <h3 class="status-title">Email đã được gửi</h3>
-            <p class="status-message">
-              Chúng tôi đã gửi email xác thực đến
-              <strong>{{ email }}</strong>
-            </p>
-            <p class="status-description">
-              Vui lòng kiểm tra hộp thư và nhấp vào liên kết để xác thực tài khoản.
-            </p>
+          @if (!isLoading && !isVerified && !error) {
+            <div class="verify-pending">
+              <div class="status-icon">
+                <i class="pi pi-envelope"></i>
+              </div>
+              <h3 class="status-title">Email đã được gửi</h3>
+              <p class="status-message">
+                Chúng tôi đã gửi email xác thực đến
+                <strong>{{ email }}</strong>
+              </p>
+              <p class="status-description">
+                Vui lòng kiểm tra hộp thư và nhấp vào liên kết để xác thực tài
+                khoản.
+              </p>
 
-            <div class="action-buttons">
-              <button
-                class="resend-button"
-                (click)="resendVerification()"
-                [disabled]="isResending"
-              >
-                <i class="pi pi-refresh"></i>
-                <span>Gửi lại email xác thực</span>
-              </button>
+              <div class="action-buttons">
+                <button
+                  class="resend-button"
+                  (click)="resendVerification()"
+                  [disabled]="isResending"
+                >
+                  <i class="pi pi-refresh"></i>
+                  <span>Gửi lại email xác thực</span>
+                </button>
 
-              <button
-                class="back-button"
-                (click)="goToRegister()"
-              >
-                <i class="pi pi-arrow-left"></i>
-                <span>Về trang đăng ký</span>
-              </button>
+                <button class="back-button" (click)="goToRegister()">
+                  <i class="pi pi-arrow-left"></i>
+                  <span>Về trang đăng ký</span>
+                </button>
+              </div>
             </div>
-          </div>
+          }
 
           <!-- Success State -->
-          <div
-            *ngIf="isVerified"
-            class="verify-success"
-          >
-            <div class="status-icon success">
-              <i class="pi pi-check-circle"></i>
+          @if (isVerified) {
+            <div class="verify-success">
+              <div class="status-icon success">
+                <i class="pi pi-check-circle"></i>
+              </div>
+              <h3 class="status-title success">Xác thực thành công!</h3>
+              <p class="status-message">
+                Email của bạn đã được xác thực thành công. Bạn có thể đăng nhập
+                vào tài khoản ngay bây giờ.
+              </p>
+              <button class="login-button" (click)="goToLogin()">
+                <i class="pi pi-sign-in"></i>
+                <span>Đăng nhập ngay</span>
+              </button>
             </div>
-            <h3 class="status-title success">Xác thực thành công!</h3>
-            <p class="status-message">
-              Email của bạn đã được xác thực thành công. Bạn có thể đăng nhập vào tài khoản ngay bây giờ.
-            </p>
-            <button
-              class="login-button"
-              (click)="goToLogin()"
-            >
-              <i class="pi pi-sign-in"></i>
-              <span>Đăng nhập ngay</span>
-            </button>
-          </div>
+          }
 
           <!-- Error State -->
-          <div
-            *ngIf="error"
-            class="verify-error"
-          >
-            <div class="status-icon error">
-              <i class="pi pi-times-circle"></i>
-            </div>
-            <h3 class="status-title error">Xác thực thất bại</h3>
-            <p class="status-message error">
-              {{ error }}
-            </p>
-            <div class="action-buttons">
-              <button
-                class="retry-button"
-                (click)="retryVerification()"
-              >
-                <i class="pi pi-refresh"></i>
-                <span>Thử lại</span>
-              </button>
+          @if (error) {
+            <div class="verify-error">
+              <div class="status-icon error">
+                <i class="pi pi-times-circle"></i>
+              </div>
+              <h3 class="status-title error">Xác thực thất bại</h3>
+              <p class="status-message error">
+                {{ error }}
+              </p>
+              <div class="action-buttons">
+                <button class="retry-button" (click)="retryVerification()">
+                  <i class="pi pi-refresh"></i>
+                  <span>Thử lại</span>
+                </button>
 
-              <button
-                class="back-button"
-                (click)="goToRegister()"
-              >
-                <i class="pi pi-arrow-left"></i>
-                <span>Về trang đăng ký</span>
-              </button>
+                <button class="back-button" (click)="goToRegister()">
+                  <i class="pi pi-arrow-left"></i>
+                  <span>Về trang đăng ký</span>
+                </button>
+              </div>
             </div>
-          </div>
+          }
         </div>
       </div>
     </p-card>

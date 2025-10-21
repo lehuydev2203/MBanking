@@ -97,6 +97,12 @@ export class AuthService {
       });
     }
 
+    // Get account details before updating
+    const account = await this.accountModel.findById(verification.accountId);
+    if (!account) {
+      throw new NotFoundException('Account not found');
+    }
+
     // Update account verification status
     await this.accountModel.findByIdAndUpdate(verification.accountId, {
       isEmailVerified: true,
@@ -106,6 +112,12 @@ export class AuthService {
     // Mark verification as used
     verification.usedAt = new Date();
     await verification.save();
+
+    // Send welcome email with account number
+    await this.emailService.sendWelcomeEmail(account.email, {
+      name: account.name,
+      accountNumber: account.accountNumber,
+    });
 
     return { message: 'VERIFIED' };
   }

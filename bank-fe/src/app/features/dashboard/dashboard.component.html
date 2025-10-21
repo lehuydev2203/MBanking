@@ -96,23 +96,78 @@
           <p class="stat-description">Chi tiết tài khoản của bạn</p>
         </div>
       </div>
-      <div class="account-info">
+      <div
+        class="account-info"
+        *ngIf="currentProfile && !isLoadingProfile; else profileLoading"
+      >
         <div class="info-item">
           <span class="info-label">Trạng thái:</span>
-          <div class="status-badge active">
-            <i class="pi pi-check-circle"></i>
-            <span>Hoạt động</span>
+          <div
+            class="status-badge"
+            [ngClass]="
+              currentProfile?.status === 'active' ? 'active' : 'inactive'
+            "
+          >
+            <i
+              class="pi"
+              [ngClass]="
+                currentProfile?.status === 'active'
+                  ? 'pi-check-circle'
+                  : 'pi-times-circle'
+              "
+            ></i>
+            <span>{{
+              currentProfile?.status === "active" ? "Hoạt động" : "Bị khóa"
+            }}</span>
           </div>
+        </div>
+
+        <div class="info-item">
+          <span class="info-label">Số Tài Khoản:</span>
+          <span class="info-value">{{
+            currentProfile?.accountNumber || "Chưa có"
+          }}</span>
+        </div>
+
+        @if (currentProfile?.phone) {
+          <div class="info-item">
+            <span class="info-label">Số điện thoại:</span>
+            <span class="info-value">{{
+              currentProfile?.phone || "Chưa cập nhật"
+            }}</span>
+          </div>
+        }
+
+        @if (currentProfile?.nickname) {
+          <div class="info-item">
+            <span class="info-label">Biệt danh:</span>
+            <span class="info-value">{{
+              currentProfile?.nickname || "Chưa đặt"
+            }}</span>
+          </div>
+        }
+        <div class="info-item">
+          <span class="info-label">Email:</span>
+          <span class="info-value">{{ currentProfile?.email }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Loại tài khoản:</span>
-          <span class="info-value">Cá nhân</span>
-        </div>
-        <div class="info-item">
-          <span class="info-label">Ngày tạo:</span>
-          <span class="info-value">{{ currentDate | date: "dd/MM/yyyy" }}</span>
+          <span class="info-value">{{
+            getAccountTypeLabel(currentProfile?.role)
+          }}</span>
         </div>
       </div>
+
+      <ng-template #profileLoading>
+        <div class="account-info loading">
+          <div class="loading-spinner">
+            <p-progressSpinner
+              [style]="{ width: '50px', height: '50px' }"
+            ></p-progressSpinner>
+            <p>Đang tải thông tin tài khoản...</p>
+          </div>
+        </div>
+      </ng-template>
     </div>
   </div>
 
@@ -140,55 +195,53 @@
           <div class="table-header">
             <div class="header-cell">Loại</div>
             <div class="header-cell">Số tiền</div>
-            <div class="header-cell">Số dư</div>
             <div class="header-cell">Trạng thái</div>
             <div class="header-cell">Thời gian</div>
           </div>
 
           <div class="table-body">
-            <div
-              *ngFor="let transaction of recentTransactions"
-              class="table-row"
-            >
-              <div class="table-cell">
-                <div class="transaction-type">
-                  <i
-                    [class]="getTransactionIcon(transaction.type)"
-                    [class]="getTransactionColor(transaction.type)"
-                  ></i>
-                  <span class="capitalize">{{
-                    getTransactionTypeLabel(transaction.type)
-                  }}</span>
+            @for (transaction of recentTransactions; track transaction._id) {
+              <div class="table-row">
+                <div class="table-cell">
+                  <div class="transaction-type">
+                    <i
+                      [class]="
+                        getTransactionIcon(transaction.transType) +
+                        ' ' +
+                        getTransactionColor(transaction.transType)
+                      "
+                    ></i>
+                    <span class="capitalize">{{
+                      getTransactionTypeLabel(transaction.transType)
+                    }}</span>
+                  </div>
+                </div>
+                <div class="table-cell amount-cell">
+                  <span [class]="getAmountClass(transaction.transType)">
+                    {{ getAmountPrefix(transaction.transType)
+                    }}{{ transaction.transMoney | currencyVnd }}
+                  </span>
+                </div>
+                <div class="table-cell">
+                  <div class="status-badge completed">Hoàn thành</div>
+                </div>
+                <div class="table-cell time-cell">
+                  {{ transaction.createdAt | date: "dd/MM/yyyy HH:mm" }}
                 </div>
               </div>
-              <div class="table-cell">
-                <span [class]="getAmountClass(transaction.type)">
-                  {{ getAmountPrefix(transaction.type)
-                  }}{{ transaction.amount | currencyVnd }}
-                </span>
-              </div>
-              <div class="table-cell">
-                {{ transaction.balance | currencyVnd }}
-              </div>
-              <div class="table-cell">
-                <div
-                  class="status-badge"
-                  [class]="getStatusClass(transaction.status)"
-                >
-                  {{ getStatusLabel(transaction.status) }}
-                </div>
-              </div>
-              <div class="table-cell">
-                {{ transaction.createdAt | date: "dd/MM/yyyy HH:mm" }}
-              </div>
-            </div>
+            }
 
-            <div *ngIf="recentTransactions.length === 0" class="empty-state">
-              <div class="empty-icon">
-                <i class="pi pi-inbox"></i>
+            @if (
+              !recentTransactions ||
+              (recentTransactions && recentTransactions.length === 0)
+            ) {
+              <div class="empty-state">
+                <div class="empty-icon">
+                  <i class="pi pi-inbox"></i>
+                </div>
+                <p class="empty-text">Chưa có giao dịch nào</p>
               </div>
-              <p class="empty-text">Chưa có giao dịch nào</p>
-            </div>
+            }
           </div>
         </div>
       </div>

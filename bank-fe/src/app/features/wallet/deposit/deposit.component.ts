@@ -98,6 +98,10 @@ export class DepositComponent implements OnInit, OnDestroy {
         transName: this.depositForm.value.transName || undefined,
         clientRequestId: uuidv4(), // Generate unique ID for idempotency
       };
+      console.log(
+        '🚀 ~ DepositComponent ~ onSubmit ~ depositData:',
+        depositData,
+      );
 
       this.transactionsService.deposit(depositData).subscribe({
         next: (transaction) => {
@@ -105,7 +109,7 @@ export class DepositComponent implements OnInit, OnDestroy {
           this.messageService.add({
             severity: 'success',
             summary: 'Nạp tiền thành công',
-            detail: `Đã nạp ${transaction.amount.toLocaleString('vi-VN')} ₫ vào tài khoản`,
+            detail: `Đã nạp ${transaction.transMoney.toLocaleString('vi-VN')} ₫ vào tài khoản`,
             life: 5000,
           });
 

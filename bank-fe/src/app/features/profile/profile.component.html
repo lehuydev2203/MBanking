@@ -23,18 +23,16 @@
         </div>
 
         <div class="card-body">
-          <div
-            *ngIf="isLoadingProfile; else profileContent"
-            class="loading-container"
-          >
-            <p-progressSpinner
-              [style]="{ width: '50px', height: '50px' }"
-            ></p-progressSpinner>
-          </div>
-
-          <ng-template #profileContent>
+          @if (isLoadingProfile) {
+            <div class="loading-container">
+              <p-progressSpinner
+                [style]="{ width: '50px', height: '50px' }"
+              ></p-progressSpinner>
+            </div>
+          } @else {
             <!-- Display Mode -->
-            <div *ngIf="!isEditing; else editMode" class="profile-display">
+            @if (!isEditing) {
+              <div class="profile-display">
               <div class="info-item">
                 <label class="info-label">Họ và tên</label>
                 <div class="info-value">
@@ -50,6 +48,13 @@
               </div>
 
               <div class="info-item">
+                <label class="info-label">Số tài khoản</label>
+                <div class="info-value">
+                  {{ currentProfile?.accountNumber || "Chưa có" }}
+                </div>
+              </div>
+
+              <div class="info-item">
                 <label class="info-label">Số điện thoại</label>
                 <div class="info-value">
                   {{ currentProfile?.phone || "Chưa cập nhật" }}
@@ -58,9 +63,15 @@
 
               <div class="info-item">
                 <label class="info-label">Biệt danh</label>
-                <div class="info-value">
-                  {{ currentProfile?.nickname || "Chưa đặt" }}
-                </div>
+                @if (currentProfile?.nickname) {
+                  <div class="info-value">
+                    <span>@{{ currentProfile?.nickname }}</span>
+                  </div>
+                } @else {
+                  <div class="info-value">
+                    <span class="text-muted">Chưa đặt</span>
+                  </div>
+                }
               </div>
 
               <button
@@ -71,10 +82,9 @@
                 <i class="pi pi-pencil"></i>
                 <span>Chỉnh sửa</span>
               </button>
-            </div>
-
-            <!-- Edit Mode -->
-            <ng-template #editMode>
+              </div>
+            } @else {
+              <!-- Edit Mode -->
               <form
                 [formGroup]="profileForm"
                 (ngSubmit)="updateProfile()"
@@ -95,6 +105,13 @@
                 </div>
 
                 <div class="form-group">
+                  <label class="form-label">Số tài khoản</label>
+                  <div class="readonly-field">
+                    {{ currentProfile?.accountNumber || "Chưa có" }}
+                  </div>
+                </div>
+
+                <div class="form-group">
                   <label for="phone" class="form-label">Số điện thoại</label>
                   <input
                     id="phone"
@@ -104,38 +121,13 @@
                     placeholder="Nhập số điện thoại"
                     class="form-input"
                   />
-                  <small
-                    *ngIf="
-                      profileForm.get('phone')?.invalid &&
-                      profileForm.get('phone')?.touched
-                    "
-                    class="form-error"
-                  >
-                    Số điện thoại là bắt buộc
-                  </small>
+                  @if (profileForm.get('phone')?.invalid && profileForm.get('phone')?.touched) {
+                    <small class="form-error">
+                      Số điện thoại là bắt buộc
+                    </small>
+                  }
                 </div>
 
-                <div class="form-group">
-                  <label for="nickname" class="form-label">Biệt danh</label>
-                  <input
-                    id="nickname"
-                    type="text"
-                    pInputText
-                    formControlName="nickname"
-                    placeholder="Nhập biệt danh (3-20 ký tự)"
-                    class="form-input"
-                    maxlength="20"
-                  />
-                  <small class="form-help">
-                    Biệt danh giúp người khác dễ dàng chuyển tiền cho bạn
-                  </small>
-                  <small
-                    class="form-help error"
-                    *ngIf="profileForm.get('nickname')?.errors?.['pattern']"
-                  >
-                    Biệt danh chỉ được chứa chữ cái, số và dấu gạch dưới
-                  </small>
-                </div>
 
                 <div class="form-group">
                   <label for="newPassword" class="form-label"
@@ -150,15 +142,11 @@
                     class="form-password"
                   >
                   </p-password>
-                  <small
-                    *ngIf="
-                      profileForm.get('newPassword')?.invalid &&
-                      profileForm.get('newPassword')?.touched
-                    "
-                    class="form-error"
-                  >
-                    Mật khẩu mới phải có ít nhất 6 ký tự
-                  </small>
+                  @if (profileForm.get('newPassword')?.invalid && profileForm.get('newPassword')?.touched) {
+                    <small class="form-error">
+                      Mật khẩu mới phải có ít nhất 6 ký tự
+                    </small>
+                  }
                 </div>
 
                 <div class="form-actions">
@@ -178,17 +166,84 @@
                   >
                     <i class="pi pi-save"></i>
                     <span>Cập nhật</span>
-                    <p-progressSpinner
-                      *ngIf="isUpdatingProfile"
-                      [style]="{ width: '20px', height: '20px' }"
-                    ></p-progressSpinner>
+                    @if (isUpdatingProfile) {
+                      <p-progressSpinner
+                        [style]="{ width: '20px', height: '20px' }"
+                      ></p-progressSpinner>
+                    }
                   </button>
                 </div>
               </form>
-            </ng-template>
-          </ng-template>
+            }
+          }
         </div>
       </div>
+
+      <!-- Nickname Card -->
+      @if (!currentProfile?.nickname) {
+        <div class="nickname-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="pi pi-at"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Tạo biệt danh</h3>
+            <p class="header-subtitle">Tạo nickname để dễ dàng nhận tiền</p>
+          </div>
+        </div>
+
+        <div class="card-body">
+          <div class="nickname-info">
+            <p class="nickname-description">
+              Biệt danh giúp người khác dễ dàng chuyển tiền cho bạn thay vì nhớ số tài khoản dài.
+              <strong>Lưu ý: Biệt danh chỉ có thể tạo 1 lần duy nhất và không thể thay đổi.</strong>
+            </p>
+
+            <form [formGroup]="nicknameForm" (ngSubmit)="setNickname()" class="nickname-form">
+              <div class="form-group">
+                <label for="nickname" class="form-label">Biệt danh</label>
+                <input
+                  id="nickname"
+                  type="text"
+                  pInputText
+                  formControlName="nickname"
+                  placeholder="Nhập biệt danh (3-20 ký tự)"
+                  class="form-input"
+                  maxlength="20"
+                />
+                <small class="form-help">
+                  Chỉ được chứa chữ cái, số và dấu gạch dưới
+                </small>
+                @if (nicknameForm.get('nickname')?.invalid && nicknameForm.get('nickname')?.touched) {
+                  <small class="form-error">
+                    @if (nicknameForm.get('nickname')?.errors?.['required']) {
+                      <span>Biệt danh là bắt buộc</span>
+                    }
+                    @if (nicknameForm.get('nickname')?.errors?.['pattern']) {
+                      <span>Biệt danh chỉ được chứa chữ cái, số và dấu gạch dưới</span>
+                    }
+                  </small>
+                }
+              </div>
+
+              <button
+                type="submit"
+                class="form-button primary"
+                [disabled]="nicknameForm.invalid || isSettingNickname"
+              >
+                <i class="pi pi-check"></i>
+                <span>Tạo biệt danh</span>
+                @if (isSettingNickname) {
+                  <p-progressSpinner
+                    [style]="{ width: '20px', height: '20px' }"
+                  ></p-progressSpinner>
+                }
+              </button>
+            </form>
+          </div>
+        </div>
+        </div>
+      }
 
       <!-- Logout Card -->
       <div class="logout-card">

@@ -43,6 +43,23 @@ export class TransformInterceptor<T>
       return parseFloat(obj.toString());
     }
 
+    // Handle Mongoose documents
+    if (obj && typeof obj === 'object' && obj._doc) {
+      return this.transformDecimal128(obj._doc);
+    }
+
+    // Handle Mongoose documents with toJSON method (but not if it's already a plain object)
+    if (
+      obj &&
+      typeof obj === 'object' &&
+      typeof obj.toJSON === 'function' &&
+      !obj._id &&
+      !obj.accountId &&
+      !obj.transMoney
+    ) {
+      return this.transformDecimal128(obj.toJSON());
+    }
+
     if (Array.isArray(obj)) {
       return obj.map((item) => this.transformDecimal128(item));
     }

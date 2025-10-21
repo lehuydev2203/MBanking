@@ -29,15 +29,14 @@
               loginForm.get('email')?.invalid && loginForm.get('email')?.touched
             "
           />
-          <div
-            class="error-message"
-            *ngIf="
-              loginForm.get('email')?.invalid && loginForm.get('email')?.touched
-            "
-          >
-            <i class="pi pi-exclamation-triangle"></i>
-            Vui lòng nhập email hợp lệ
-          </div>
+          @if (
+            loginForm.get("email")?.invalid && loginForm.get("email")?.touched
+          ) {
+            <div class="error-message">
+              <i class="pi pi-exclamation-triangle"></i>
+              Vui lòng nhập email hợp lệ
+            </div>
+          }
         </div>
 
         <!-- Password Field -->
@@ -59,16 +58,15 @@
             styleClass="custom-password"
           >
           </p-password>
-          <div
-            class="error-message"
-            *ngIf="
-              loginForm.get('password')?.invalid &&
-              loginForm.get('password')?.touched
-            "
-          >
-            <i class="pi pi-exclamation-triangle"></i>
-            Vui lòng nhập mật khẩu
-          </div>
+          @if (
+            loginForm.get("password")?.invalid &&
+            loginForm.get("password")?.touched
+          ) {
+            <div class="error-message">
+              <i class="pi pi-exclamation-triangle"></i>
+              Vui lòng nhập mật khẩu
+            </div>
+          }
         </div>
 
         <!-- Submit Button -->

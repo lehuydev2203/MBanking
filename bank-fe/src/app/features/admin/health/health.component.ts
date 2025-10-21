@@ -46,185 +46,185 @@ import {
           </ng-template>
 
           <div class="p-4">
-            <div *ngIf="isLoading && !healthStatus; else healthContent">
+            @if (isLoading && !healthStatus) {
               <div class="flex justify-content-center p-4">
                 <p-progressSpinner
                   [style]="{ width: '50px', height: '50px' }"
                 ></p-progressSpinner>
               </div>
-            </div>
-
-            <ng-template #healthContent>
-              <div *ngIf="healthStatus" class="grid">
-                <!-- Overall Status -->
-                <div class="col-12 md:col-6 lg:col-3">
-                  <div
-                    class="p-4 bg-gray-800 rounded-lg border border-gray-700"
-                  >
+            } @else {
+              @if (healthStatus) {
+                <div class="grid">
+                  <!-- Overall Status -->
+                  <div class="col-12 md:col-6 lg:col-3">
                     <div
-                      class="flex align-items-center justify-content-between mb-3"
+                      class="p-4 bg-gray-800 rounded-lg border border-gray-700"
                     >
-                      <h3 class="text-lg font-semibold">Tổng quan</h3>
-                      <p-tag
-                        [value]="
-                          healthStatus.status === 'healthy'
-                            ? 'Khỏe mạnh'
-                            : 'Có vấn đề'
-                        "
-                        [severity]="
-                          healthStatus.status === 'healthy'
-                            ? 'success'
-                            : 'danger'
-                        "
+                      <div
+                        class="flex align-items-center justify-content-between mb-3"
                       >
-                      </p-tag>
-                    </div>
-                    <div class="text-sm text-gray-400">
-                      <div>Phiên bản: {{ healthStatus.version }}</div>
-                      <div>
-                        Thời gian hoạt động:
-                        {{ formatUptime(healthStatus.uptime) }}
+                        <h3 class="text-lg font-semibold">Tổng quan</h3>
+                        <p-tag
+                          [value]="
+                            healthStatus.status === 'healthy'
+                              ? 'Khỏe mạnh'
+                              : 'Có vấn đề'
+                          "
+                          [severity]="
+                            healthStatus.status === 'healthy'
+                              ? 'success'
+                              : 'danger'
+                          "
+                        >
+                        </p-tag>
                       </div>
-                      <div>
-                        Cập nhật:
-                        {{
-                          healthStatus.timestamp | date: 'dd/MM/yyyy HH:mm:ss'
-                        }}
+                      <div class="text-sm text-gray-400">
+                        <div>Phiên bản: {{ healthStatus.version }}</div>
+                        <div>
+                          Thời gian hoạt động:
+                          {{ formatUptime(healthStatus.uptime) }}
+                        </div>
+                        <div>
+                          Cập nhật:
+                          {{
+                            healthStatus.timestamp | date: 'dd/MM/yyyy HH:mm:ss'
+                          }}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Database Status -->
+                  <div class="col-12 md:col-6 lg:col-3">
+                    <div
+                      class="p-4 bg-gray-800 rounded-lg border border-gray-700"
+                    >
+                      <div
+                        class="flex align-items-center justify-content-between mb-3"
+                      >
+                        <h3 class="text-lg font-semibold">Cơ sở dữ liệu</h3>
+                        <p-tag
+                          [value]="
+                            healthStatus.services.database === 'up'
+                              ? 'Hoạt động'
+                              : 'Lỗi'
+                          "
+                          [severity]="
+                            healthStatus.services.database === 'up'
+                              ? 'success'
+                              : 'danger'
+                          "
+                        >
+                        </p-tag>
+                      </div>
+                      <div class="flex align-items-center gap-2">
+                        <i
+                          [class]="
+                            healthStatus.services.database === 'up'
+                              ? 'pi pi-check-circle text-green-400'
+                              : 'pi pi-times-circle text-red-400'
+                          "
+                        >
+                        </i>
+                        <span class="text-sm">
+                          {{
+                            healthStatus.services.database === 'up'
+                              ? 'Kết nối bình thường'
+                              : 'Mất kết nối'
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Redis Status -->
+                  <div class="col-12 md:col-6 lg:col-3">
+                    <div
+                      class="p-4 bg-gray-800 rounded-lg border border-gray-700"
+                    >
+                      <div
+                        class="flex align-items-center justify-content-between mb-3"
+                      >
+                        <h3 class="text-lg font-semibold">Redis Cache</h3>
+                        <p-tag
+                          [value]="
+                            healthStatus.services.redis === 'up'
+                              ? 'Hoạt động'
+                              : 'Lỗi'
+                          "
+                          [severity]="
+                            healthStatus.services.redis === 'up'
+                              ? 'success'
+                              : 'danger'
+                          "
+                        >
+                        </p-tag>
+                      </div>
+                      <div class="flex align-items-center gap-2">
+                        <i
+                          [class]="
+                            healthStatus.services.redis === 'up'
+                              ? 'pi pi-check-circle text-green-400'
+                              : 'pi pi-times-circle text-red-400'
+                          "
+                        >
+                        </i>
+                        <span class="text-sm">
+                          {{
+                            healthStatus.services.redis === 'up'
+                              ? 'Kết nối bình thường'
+                              : 'Mất kết nối'
+                          }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- External Services Status -->
+                  <div class="col-12 md:col-6 lg:col-3">
+                    <div
+                      class="p-4 bg-gray-800 rounded-lg border border-gray-700"
+                    >
+                      <div
+                        class="flex align-items-center justify-content-between mb-3"
+                      >
+                        <h3 class="text-lg font-semibold">Dịch vụ bên ngoài</h3>
+                        <p-tag
+                          [value]="
+                            healthStatus.services.external === 'up'
+                              ? 'Hoạt động'
+                              : 'Lỗi'
+                          "
+                          [severity]="
+                            healthStatus.services.external === 'up'
+                              ? 'success'
+                              : 'danger'
+                          "
+                        >
+                        </p-tag>
+                      </div>
+                      <div class="flex align-items-center gap-2">
+                        <i
+                          [class]="
+                            healthStatus.services.external === 'up'
+                              ? 'pi pi-check-circle text-green-400'
+                              : 'pi pi-times-circle text-red-400'
+                          "
+                        >
+                        </i>
+                        <span class="text-sm">
+                          {{
+                            healthStatus.services.external === 'up'
+                              ? 'Kết nối bình thường'
+                              : 'Mất kết nối'
+                          }}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
-
-                <!-- Database Status -->
-                <div class="col-12 md:col-6 lg:col-3">
-                  <div
-                    class="p-4 bg-gray-800 rounded-lg border border-gray-700"
-                  >
-                    <div
-                      class="flex align-items-center justify-content-between mb-3"
-                    >
-                      <h3 class="text-lg font-semibold">Cơ sở dữ liệu</h3>
-                      <p-tag
-                        [value]="
-                          healthStatus.services.database === 'up'
-                            ? 'Hoạt động'
-                            : 'Lỗi'
-                        "
-                        [severity]="
-                          healthStatus.services.database === 'up'
-                            ? 'success'
-                            : 'danger'
-                        "
-                      >
-                      </p-tag>
-                    </div>
-                    <div class="flex align-items-center gap-2">
-                      <i
-                        [class]="
-                          healthStatus.services.database === 'up'
-                            ? 'pi pi-check-circle text-green-400'
-                            : 'pi pi-times-circle text-red-400'
-                        "
-                      >
-                      </i>
-                      <span class="text-sm">
-                        {{
-                          healthStatus.services.database === 'up'
-                            ? 'Kết nối bình thường'
-                            : 'Mất kết nối'
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Redis Status -->
-                <div class="col-12 md:col-6 lg:col-3">
-                  <div
-                    class="p-4 bg-gray-800 rounded-lg border border-gray-700"
-                  >
-                    <div
-                      class="flex align-items-center justify-content-between mb-3"
-                    >
-                      <h3 class="text-lg font-semibold">Redis Cache</h3>
-                      <p-tag
-                        [value]="
-                          healthStatus.services.redis === 'up'
-                            ? 'Hoạt động'
-                            : 'Lỗi'
-                        "
-                        [severity]="
-                          healthStatus.services.redis === 'up'
-                            ? 'success'
-                            : 'danger'
-                        "
-                      >
-                      </p-tag>
-                    </div>
-                    <div class="flex align-items-center gap-2">
-                      <i
-                        [class]="
-                          healthStatus.services.redis === 'up'
-                            ? 'pi pi-check-circle text-green-400'
-                            : 'pi pi-times-circle text-red-400'
-                        "
-                      >
-                      </i>
-                      <span class="text-sm">
-                        {{
-                          healthStatus.services.redis === 'up'
-                            ? 'Kết nối bình thường'
-                            : 'Mất kết nối'
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- External Services Status -->
-                <div class="col-12 md:col-6 lg:col-3">
-                  <div
-                    class="p-4 bg-gray-800 rounded-lg border border-gray-700"
-                  >
-                    <div
-                      class="flex align-items-center justify-content-between mb-3"
-                    >
-                      <h3 class="text-lg font-semibold">Dịch vụ bên ngoài</h3>
-                      <p-tag
-                        [value]="
-                          healthStatus.services.external === 'up'
-                            ? 'Hoạt động'
-                            : 'Lỗi'
-                        "
-                        [severity]="
-                          healthStatus.services.external === 'up'
-                            ? 'success'
-                            : 'danger'
-                        "
-                      >
-                      </p-tag>
-                    </div>
-                    <div class="flex align-items-center gap-2">
-                      <i
-                        [class]="
-                          healthStatus.services.external === 'up'
-                            ? 'pi pi-check-circle text-green-400'
-                            : 'pi pi-times-circle text-red-400'
-                        "
-                      >
-                      </i>
-                      <span class="text-sm">
-                        {{
-                          healthStatus.services.external === 'up'
-                            ? 'Kết nối bình thường'
-                            : 'Mất kết nối'
-                        }}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </ng-template>
+              }
+            }
           </div>
         </p-card>
       </div>

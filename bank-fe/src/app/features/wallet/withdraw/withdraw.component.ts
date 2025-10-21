@@ -14,8 +14,12 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
-import { ConfirmDialogModule } from 'primeng/confirmdialog';
-import { MessageService, ConfirmationService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
+import { MessageService } from 'primeng/api';
+import {
+  CustomConfirmDialogComponent,
+  ConfirmDialogData,
+} from '../../../core/components/custom-confirm-dialog/custom-confirm-dialog.component';
 
 import {
   TransactionsService,
@@ -23,6 +27,7 @@ import {
   WithdrawCheckResponse,
 } from '../../../core/services/transactions.service';
 import { AccountsService } from '../../../core/services/accounts.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
 
 @Component({
@@ -37,10 +42,11 @@ import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
     InputNumberModule,
     MessageModule,
     ProgressSpinnerModule,
-    ConfirmDialogModule,
+    ToastModule,
+    CustomConfirmDialogComponent,
     CurrencyVndPipe,
   ],
-  providers: [MessageService, ConfirmationService],
+  providers: [MessageService],
   templateUrl: './withdraw.component.html',
   styleUrl: './withdraw.component.scss',
 })
@@ -50,6 +56,15 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   isChecking = false;
   currentBalance: any = null;
   withdrawalCheck: WithdrawCheckResponse | null = null;
+  showConfirmDialog = false;
+  confirmDialogData: ConfirmDialogData = {
+    title: 'Xác nhận rút tiền',
+    message: '',
+    icon: 'pi pi-exclamation-triangle',
+    confirmText: 'Xác nhận',
+    cancelText: 'Hủy',
+    confirmButtonClass: 'danger-btn',
+  };
 
   private destroy$ = new Subject<void>();
 
@@ -57,8 +72,8 @@ export class WithdrawComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private transactionsService: TransactionsService,
     private accountsService: AccountsService,
+    private authService: AuthService,
     private messageService: MessageService,
-    private confirmationService: ConfirmationService,
   ) {
     this.withdrawForm = this.fb.group({
       amount: [
@@ -70,6 +85,10 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    console.log('WithdrawComponent ngOnInit');
+    console.log('User authenticated:', this.authService.isAuthenticated);
+    console.log('Current user:', this.authService.currentUser);
+    console.log('Token:', this.authService.getToken());
     this.loadBalance();
   }
 
@@ -97,10 +116,24 @@ export class WithdrawComponent implements OnInit, OnDestroy {
       });
   }
 
-  onSubmit(): void {
+  onSubmit(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+
+    console.log('onSubmit called');
+    console.log('Form valid:', this.withdrawForm.valid);
+    console.log('Form value:', this.withdrawForm.value);
+    console.log('Form errors:', this.withdrawForm.errors);
+
     if (this.withdrawForm.valid) {
       const amount = this.withdrawForm.get('amount')?.value;
       const transName = this.withdrawForm.get('transName')?.value;
+
+      console.log('Amount:', amount);
+      console.log('TransName:', transName);
+      console.log('Current balance:', this.currentBalance);
 
       // Check if sufficient balance
       if (this.currentBalance && amount > this.currentBalance.balance) {
@@ -113,17 +146,14 @@ export class WithdrawComponent implements OnInit, OnDestroy {
         return;
       }
 
-      this.confirmationService.confirm({
+      console.log('Showing confirmation dialog');
+      this.confirmDialogData = {
+        ...this.confirmDialogData,
         message: `Bạn có chắc chắn muốn rút ${amount.toLocaleString('vi-VN')} ₫ từ tài khoản?`,
-        header: 'Xác nhận rút tiền',
-        icon: 'pi pi-exclamation-triangle',
-        acceptLabel: 'Xác nhận',
-        rejectLabel: 'Hủy',
-        accept: () => {
-          this.processWithdrawal(amount, transName);
-        },
-      });
+      };
+      this.showConfirmDialog = true;
     } else {
+      console.log('Form is invalid, marking all as touched');
       this.withdrawForm.markAllAsTouched();
       this.messageService.add({
         severity: 'warn',
@@ -133,7 +163,25 @@ export class WithdrawComponent implements OnInit, OnDestroy {
     }
   }
 
+  onConfirmDialog(): void {
+    console.log('User confirmed withdrawal');
+    const amount = this.withdrawForm.get('amount')?.value;
+    const transName = this.withdrawForm.get('transName')?.value;
+    this.processWithdrawal(amount, transName);
+    this.showConfirmDialog = false;
+  }
+
+  onCancelDialog(): void {
+    console.log('User cancelled withdrawal');
+    this.showConfirmDialog = false;
+  }
+
+  onCloseDialog(): void {
+    this.showConfirmDialog = false;
+  }
+
   private processWithdrawal(amount: number, transName: string): void {
+    console.log('processWithdrawal called with:', { amount, transName });
     this.isLoading = true;
 
     const withdrawRequest: WithdrawRequest = {
@@ -142,11 +190,15 @@ export class WithdrawComponent implements OnInit, OnDestroy {
       clientRequestId: uuidv4(),
     };
 
+    console.log('Withdraw request:', withdrawRequest);
+    console.log('Calling transactionsService.withdraw...');
+
     this.transactionsService
       .withdraw(withdrawRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Withdraw success:', response);
           this.isLoading = false;
           this.messageService.add({
             severity: 'success',
@@ -157,6 +209,7 @@ export class WithdrawComponent implements OnInit, OnDestroy {
           this.loadBalance(); // Reload balance
         },
         error: (error) => {
+          console.error('Withdraw error:', error);
           this.isLoading = false;
           this.messageService.add({
             severity: 'error',

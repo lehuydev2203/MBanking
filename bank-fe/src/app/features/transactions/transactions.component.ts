@@ -15,8 +15,14 @@ import { MessageService } from 'primeng/api';
 
 import {
   TransactionsService,
-  Transaction,
+  TransactionData,
   TransactionFilters,
+  TransactionType,
+  getTransactionTypeLabel,
+  getTransactionTypeIcon,
+  getTransactionTypeColor,
+  isIncomingTransaction,
+  isOutgoingTransaction,
 } from '../../core/services/transactions.service';
 import { CurrencyVndPipe } from '../../shared/pipes/currency-vnd.pipe';
 
@@ -43,7 +49,7 @@ import { CurrencyVndPipe } from '../../shared/pipes/currency-vnd.pipe';
 })
 export class TransactionsComponent implements OnInit, OnDestroy {
   filterForm: FormGroup;
-  transactions: Transaction[] = [];
+  transactions: TransactionData[] = [];
   totalRecords = 0;
   pageSize = 10;
   currentPage = 1;
@@ -55,9 +61,10 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   transactionTypes = [
     { label: 'Tất cả', value: null },
-    { label: 'Nạp tiền', value: 'deposit' },
-    { label: 'Rút tiền', value: 'withdraw' },
-    { label: 'Chuyển khoản', value: 'transfer' },
+    { label: 'Nạp tiền', value: TransactionType.DEPOSIT },
+    { label: 'Rút tiền', value: TransactionType.WITHDRAW },
+    { label: 'Chuyển khoản', value: TransactionType.TRANSFER_SEND },
+    { label: 'Nhận tiền', value: TransactionType.TRANSFER_RECEIVE },
   ];
 
   statusOptions = [
@@ -154,44 +161,29 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     });
   }
 
-  getTransactionIcon(type: string): string {
-    const icons: Record<string, string> = {
-      deposit: 'pi pi-plus-circle',
-      withdraw: 'pi pi-minus-circle',
-      transfer: 'pi pi-arrow-right-arrow-left',
-    };
-    return icons[type] || 'pi pi-circle';
+  getTransactionIcon(type: number): string {
+    return getTransactionTypeIcon(type);
   }
 
-  getTransactionColor(type: string): string {
-    const colors: Record<string, string> = {
-      deposit: 'text-brand-success',
-      withdraw: 'text-brand-danger',
-      transfer: 'text-brand-info',
-    };
-    return colors[type] || 'text-gray-400';
+  getTransactionColor(type: number): string {
+    return getTransactionTypeColor(type);
   }
 
-  getTransactionTypeLabel(type: string): string {
-    const labels: Record<string, string> = {
-      deposit: 'Nạp tiền',
-      withdraw: 'Rút tiền',
-      transfer: 'Chuyển khoản',
-    };
-    return labels[type] || type;
+  getTransactionTypeLabel(type: number): string {
+    return getTransactionTypeLabel(type);
   }
 
-  getAmountPrefix(type: string): string {
-    return type === 'deposit' ? '+' : type === 'withdraw' ? '-' : '';
+  getAmountPrefix(type: number): string {
+    return isIncomingTransaction(type)
+      ? '+'
+      : isOutgoingTransaction(type)
+        ? '-'
+        : '';
   }
 
-  getAmountClass(type: string): string {
-    const classes: Record<string, string> = {
-      deposit: 'text-brand-success font-semibold',
-      withdraw: 'text-brand-danger font-semibold',
-      transfer: 'text-brand-info font-semibold',
-    };
-    return classes[type] || 'font-semibold';
+  getAmountClass(type: number): string {
+    const color = getTransactionTypeColor(type);
+    return `${color} font-semibold`;
   }
 
   getStatusLabel(status: string): string {

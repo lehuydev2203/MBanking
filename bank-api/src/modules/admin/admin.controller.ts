@@ -37,7 +37,7 @@ export class AdminController {
   @ApiOperation({
     summary: 'Get users list',
     description:
-      'Retrieves paginated list of users with search and filter options (Admin/Superadmin only)',
+      'Retrieves paginated list of users with search and filter options. Search supports name, email, account number, and nickname (Admin/Superadmin only)',
   })
   @ApiResponse({
     status: 200,

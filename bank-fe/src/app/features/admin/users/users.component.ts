@@ -108,15 +108,13 @@ import {
 
           <!-- Users Table -->
           <div class="p-4">
-            <div *ngIf="isLoading; else usersContent">
+            @if (isLoading) {
               <div class="flex justify-content-center p-4">
                 <p-progressSpinner
                   [style]="{ width: '50px', height: '50px' }"
                 ></p-progressSpinner>
               </div>
-            </div>
-
-            <ng-template #usersContent>
+            } @else {
               <p-table
                 [value]="users"
                 [paginator]="true"
@@ -192,7 +190,7 @@ import {
                   </tr>
                 </ng-template>
               </p-table>
-            </ng-template>
+            }
           </div>
         </p-card>
       </div>

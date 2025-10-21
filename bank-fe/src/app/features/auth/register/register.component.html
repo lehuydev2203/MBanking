@@ -10,7 +10,6 @@
           <p class="card-subtitle">Tạo tài khoản mới để bắt đầu</p>
         </div>
       </ng-template>
-      
 
       <div class="card-content">
         <form
@@ -36,16 +35,15 @@
                 "
               />
             </div>
-            <div
-              class="error-message"
-              *ngIf="
-                registerForm.get('name')?.invalid &&
-                registerForm.get('name')?.touched
-              "
-            >
-              <i class="pi pi-exclamation-triangle"></i>
-              Vui lòng nhập họ và tên
-            </div>
+            @if (
+              registerForm.get("name")?.invalid &&
+              registerForm.get("name")?.touched
+            ) {
+              <div class="error-message">
+                <i class="pi pi-exclamation-triangle"></i>
+                Vui lòng nhập họ và tên
+              </div>
+            }
           </div>
 
           <div class="form-field">
@@ -67,16 +65,15 @@
                 "
               />
             </div>
-            <div
-              class="error-message"
-              *ngIf="
-                registerForm.get('email')?.invalid &&
-                registerForm.get('email')?.touched
-              "
-            >
-              <i class="pi pi-exclamation-triangle"></i>
-              Vui lòng nhập email hợp lệ
-            </div>
+            @if (
+              registerForm.get("email")?.invalid &&
+              registerForm.get("email")?.touched
+            ) {
+              <div class="error-message">
+                <i class="pi pi-exclamation-triangle"></i>
+                Vui lòng nhập email hợp lệ
+              </div>
+            }
           </div>
 
           <div class="form-field">
@@ -123,16 +120,15 @@
               >
               </p-password>
             </div>
-            <div
-              class="error-message"
-              *ngIf="
-                registerForm.get('password')?.invalid &&
-                registerForm.get('password')?.touched
-              "
-            >
-              <i class="pi pi-exclamation-triangle"></i>
-              Mật khẩu phải có ít nhất 8 ký tự
-            </div>
+            @if (
+              registerForm.get("password")?.invalid &&
+              registerForm.get("password")?.touched
+            ) {
+              <div class="error-message">
+                <i class="pi pi-exclamation-triangle"></i>
+                Mật khẩu phải có ít nhất 8 ký tự
+              </div>
+            }
           </div>
 
           <!-- Submit Button -->

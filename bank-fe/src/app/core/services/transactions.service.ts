@@ -2,6 +2,39 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import { components, operations } from '../api-types';
+import { API_ENDPOINTS } from '../constants/api.constants';
+
+// Import transaction types
+import {
+  TransactionType,
+  TRANSACTION_TYPE_LABELS,
+  TRANSACTION_TYPE_ICONS,
+  TRANSACTION_TYPE_COLORS,
+  getTransactionTypeLabel,
+  getTransactionTypeIcon,
+  getTransactionTypeColor,
+  isIncomingTransaction,
+  isOutgoingTransaction,
+  Transaction as TransactionData,
+  TransactionWithTypeInfo,
+  addTransactionTypeInfo,
+} from '../types/transaction.types';
+
+// Re-export transaction types
+export {
+  TransactionType,
+  TRANSACTION_TYPE_LABELS,
+  TRANSACTION_TYPE_ICONS,
+  TRANSACTION_TYPE_COLORS,
+  getTransactionTypeLabel,
+  getTransactionTypeIcon,
+  getTransactionTypeColor,
+  isIncomingTransaction,
+  isOutgoingTransaction,
+  addTransactionTypeInfo,
+};
+
+export type { TransactionData, TransactionWithTypeInfo };
 
 // Re-export types from generated API types
 export type TransactionListResponse =
@@ -22,7 +55,7 @@ export type TransferConfirmResponse =
 export type SetNicknameRequest = components['schemas']['SetNicknameDto'];
 
 // Legacy types for backward compatibility
-export interface Transaction {
+export interface LegacyTransaction {
   id: string;
   type: 'deposit' | 'withdraw' | 'transfer';
   amount: number;
@@ -53,32 +86,43 @@ export class TransactionsService {
 
   list(filters: TransactionFilters = {}): Observable<TransactionListResponse> {
     return this.apiService.get<TransactionListResponse>(
-      '/transactions',
+      API_ENDPOINTS.TRANSACTIONS.LIST,
       filters,
     );
   }
 
-  deposit(body: DepositRequest): Observable<Transaction> {
-    return this.apiService.post<Transaction>('/transactions/deposit', body);
+  deposit(body: DepositRequest): Observable<TransactionData> {
+    return this.apiService.post<TransactionData>(
+      API_ENDPOINTS.TRANSACTIONS.DEPOSIT,
+      body,
+    );
   }
 
   canWithdraw(amount: number): Observable<WithdrawCheckResponse> {
     return this.apiService.get<WithdrawCheckResponse>(
-      '/transactions/can-withdraw',
+      API_ENDPOINTS.TRANSACTIONS.CAN_WITHDRAW,
       { amount },
     );
   }
 
-  withdraw(body: WithdrawRequest): Observable<Transaction> {
-    return this.apiService.post<Transaction>('/transactions/withdraw', body);
+  withdraw(body: WithdrawRequest): Observable<TransactionData> {
+    return this.apiService.post<TransactionData>(
+      API_ENDPOINTS.TRANSACTIONS.WITHDRAW,
+      body,
+    );
   }
 
   exportCsv(filters: TransactionFilters = {}): Observable<Blob> {
-    return this.apiService.postBlob('/transactions/export', filters);
+    return this.apiService.getBlob(
+      API_ENDPOINTS.TRANSACTIONS.EXPORT_CSV,
+      filters,
+    );
   }
 
-  getTransaction(id: string): Observable<Transaction> {
-    return this.apiService.get<Transaction>(`/transactions/${id}`);
+  getTransaction(id: string): Observable<TransactionData> {
+    return this.apiService.get<TransactionData>(
+      API_ENDPOINTS.TRANSACTIONS.GET_BY_ID(id),
+    );
   }
 
   // Transfer methods
@@ -86,7 +130,7 @@ export class TransactionsService {
     body: TransferRequest,
   ): Observable<TransferInitiateResponse> {
     return this.apiService.post<TransferInitiateResponse>(
-      '/transfers/initiate',
+      API_ENDPOINTS.TRANSFERS.INITIATE,
       body,
     );
   }
@@ -95,17 +139,23 @@ export class TransactionsService {
     body: TransferConfirmRequest,
   ): Observable<TransferConfirmResponse> {
     return this.apiService.post<TransferConfirmResponse>(
-      '/transfers/confirm',
+      API_ENDPOINTS.TRANSFERS.CONFIRM,
       body,
     );
   }
 
   setNickname(body: SetNicknameRequest): Observable<any> {
-    return this.apiService.post<any>('/transfers/nickname', body);
+    return this.apiService.post<any>(
+      API_ENDPOINTS.TRANSFERS.SET_NICKNAME,
+      body,
+    );
   }
 
   // Legacy transfer history (deprecated)
   getTransferHistory(page: number = 1, pageSize: number = 10): Observable<any> {
-    return this.apiService.get<any>('/transfers/history', { page, pageSize });
+    return this.apiService.get<any>(API_ENDPOINTS.TRANSFERS.HISTORY, {
+      page,
+      pageSize,
+    });
   }
 }

@@ -29,29 +29,31 @@
 
           <div class="card-content">
             <!-- Transfer Summary -->
-            <div class="transfer-summary" *ngIf="transferData">
-              <h3 class="summary-title">Thông tin giao dịch</h3>
-              <div class="summary-content">
-                <div class="summary-item">
-                  <span class="summary-label">Người nhận:</span>
-                  <span class="summary-value">{{
-                    transferData.recipientIdentifier
-                  }}</span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">Số tiền:</span>
-                  <span class="summary-value negative">
-                    -{{ transferData.amount | currencyVnd }}
-                  </span>
-                </div>
-                <div class="summary-item">
-                  <span class="summary-label">Nội dung:</span>
-                  <span class="summary-value">{{
-                    transferData.transName
-                  }}</span>
+            @if (transferData) {
+              <div class="transfer-summary">
+                <h3 class="summary-title">Thông tin giao dịch</h3>
+                <div class="summary-content">
+                  <div class="summary-item">
+                    <span class="summary-label">Người nhận:</span>
+                    <span class="summary-value">{{
+                      transferData.recipientIdentifier
+                    }}</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Số tiền:</span>
+                    <span class="summary-value negative">
+                      -{{ transferData.amount | currencyVnd }}
+                    </span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-label">Nội dung:</span>
+                    <span class="summary-value">{{
+                      transferData.transName
+                    }}</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            }
 
             <form
               [formGroup]="confirmForm"
@@ -77,44 +79,47 @@
                     "
                   />
                 </div>
-                <div
-                  class="error-message"
-                  *ngIf="
-                    confirmForm.get('code')?.invalid &&
-                    confirmForm.get('code')?.touched
-                  "
-                >
-                  <i class="pi pi-exclamation-triangle"></i>
-                  <span *ngIf="confirmForm.get('code')?.errors?.['required']">
-                    Vui lòng nhập mã xác nhận
-                  </span>
-                  <span *ngIf="confirmForm.get('code')?.errors?.['pattern']">
-                    Mã xác nhận phải có đúng 6 chữ số
-                  </span>
-                </div>
+                @if (
+                  confirmForm.get("code")?.invalid &&
+                  confirmForm.get("code")?.touched
+                ) {
+                  <div class="error-message">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    @if (confirmForm.get("code")?.errors?.["required"]) {
+                      <span>Vui lòng nhập mã xác nhận</span>
+                    }
+                    @if (confirmForm.get("code")?.errors?.["pattern"]) {
+                      <span>Mã xác nhận phải có đúng 6 chữ số</span>
+                    }
+                  </div>
+                }
               </div>
 
               <!-- Timer -->
-              <div class="timer-section" *ngIf="timeLeft > 0">
-                <div class="timer-info">
-                  <i class="pi pi-clock"></i>
-                  <span
-                    >Mã xác nhận còn hiệu lực trong:
-                    <strong>{{ formatTime(timeLeft) }}</strong></span
-                  >
+              @if (timeLeft > 0) {
+                <div class="timer-section">
+                  <div class="timer-info">
+                    <i class="pi pi-clock"></i>
+                    <span
+                      >Mã xác nhận còn hiệu lực trong:
+                      <strong>{{ formatTime(timeLeft) }}</strong></span
+                    >
+                  </div>
                 </div>
-              </div>
+              }
 
               <!-- Expired Message -->
-              <div class="expired-section" *ngIf="timeLeft <= 0">
-                <div class="expired-info">
-                  <i class="pi pi-exclamation-triangle"></i>
-                  <span
-                    >Mã xác nhận đã hết hạn. Vui lòng thực hiện lại giao
-                    dịch.</span
-                  >
+              @if (timeLeft <= 0) {
+                <div class="expired-section">
+                  <div class="expired-info">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span
+                      >Mã xác nhận đã hết hạn. Vui lòng thực hiện lại giao
+                      dịch.</span
+                    >
+                  </div>
                 </div>
-              </div>
+              }
 
               <!-- Submit Button -->
               <button
@@ -122,8 +127,12 @@
                 class="confirm-button"
                 [disabled]="confirmForm.invalid || isLoading || timeLeft <= 0"
               >
-                <i class="pi pi-check" *ngIf="!isLoading"></i>
-                <i class="pi pi-spin pi-spinner" *ngIf="isLoading"></i>
+                @if (!isLoading) {
+                  <i class="pi pi-check"></i>
+                }
+                @if (isLoading) {
+                  <i class="pi pi-spin pi-spinner"></i>
+                }
                 <span>{{
                   isLoading ? "Đang xử lý..." : "Xác nhận chuyển khoản"
                 }}</span>
@@ -162,8 +171,12 @@
               (click)="resendCode()"
               [disabled]="isResending || timeLeft > 0"
             >
-              <i class="pi pi-refresh" *ngIf="!isResending"></i>
-              <i class="pi pi-spin pi-spinner" *ngIf="isResending"></i>
+              @if (!isResending) {
+                <i class="pi pi-refresh"></i>
+              }
+              @if (isResending) {
+                <i class="pi pi-spin pi-spinner"></i>
+              }
               <span>{{ isResending ? "Đang gửi..." : "Gửi lại mã" }}</span>
             </button>
           </div>

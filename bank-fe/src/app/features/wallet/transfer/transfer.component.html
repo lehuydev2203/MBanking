@@ -51,26 +51,23 @@
                     "
                   />
                 </div>
-                <div
-                  class="error-message"
-                  *ngIf="
-                    transferForm.get('recipient')?.invalid &&
-                    transferForm.get('recipient')?.touched
-                  "
-                >
-                  <i class="pi pi-exclamation-triangle"></i>
-                  <span
-                    *ngIf="transferForm.get('recipient')?.errors?.['required']"
-                  >
-                    Vui lòng nhập tài khoản người nhận
-                  </span>
-                  <span
-                    *ngIf="transferForm.get('recipient')?.errors?.['pattern']"
-                  >
-                    Vui lòng nhập số tài khoản 10 chữ số hoặc nickname 3-20 ký
-                    tự
-                  </span>
-                </div>
+                @if (
+                  transferForm.get("recipient")?.invalid &&
+                  transferForm.get("recipient")?.touched
+                ) {
+                  <div class="error-message">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    @if (transferForm.get("recipient")?.errors?.["required"]) {
+                      <span>Vui lòng nhập tài khoản người nhận</span>
+                    }
+                    @if (transferForm.get("recipient")?.errors?.["pattern"]) {
+                      <span
+                        >Vui lòng nhập số tài khoản 10 chữ số hoặc nickname 3-20
+                        ký tự</span
+                      >
+                    }
+                  </div>
+                }
               </div>
 
               <div class="form-field">
@@ -85,9 +82,6 @@
                     mode="currency"
                     currency="VND"
                     locale="vi-VN"
-                    [min]="1000"
-                    [max]="100000000"
-                    [step]="1000"
                     placeholder="Nhập số tiền"
                     class="amount-input"
                     [class.error]="
@@ -97,31 +91,26 @@
                   >
                   </p-inputNumber>
                 </div>
-                <div
-                  class="error-message"
-                  *ngIf="
-                    transferForm.get('amount')?.invalid &&
-                    transferForm.get('amount')?.touched
-                  "
-                >
-                  <i class="pi pi-exclamation-triangle"></i>
-                  <span
-                    *ngIf="transferForm.get('amount')?.errors?.['required']"
-                  >
-                    Vui lòng nhập số tiền
-                  </span>
-                  <span *ngIf="transferForm.get('amount')?.errors?.['min']">
-                    Số tiền tối thiểu là 1,000 ₫
-                  </span>
-                  <span *ngIf="transferForm.get('amount')?.errors?.['max']">
-                    Số tiền tối đa là 100,000,000 ₫
-                  </span>
-                  <span
-                    *ngIf="transferForm.get('amount')?.errors?.['insufficient']"
-                  >
-                    Số dư không đủ để thực hiện giao dịch
-                  </span>
-                </div>
+                @if (
+                  transferForm.get("amount")?.invalid &&
+                  transferForm.get("amount")?.touched
+                ) {
+                  <div class="error-message">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    @if (transferForm.get("amount")?.errors?.["required"]) {
+                      <span>Vui lòng nhập số tiền</span>
+                    }
+                    @if (transferForm.get("amount")?.errors?.["min"]) {
+                      <span>Số tiền tối thiểu là 1,000 ₫</span>
+                    }
+                    @if (transferForm.get("amount")?.errors?.["max"]) {
+                      <span>Số tiền tối đa là 100,000,000 ₫</span>
+                    }
+                    @if (transferForm.get("amount")?.errors?.["insufficient"]) {
+                      <span>Số dư không đủ để thực hiện giao dịch</span>
+                    }
+                  </div>
+                }
               </div>
 
               <div class="form-field">
@@ -146,31 +135,30 @@
               </div>
 
               <!-- Transaction Summary -->
-              <div
-                class="transaction-summary"
-                *ngIf="transferForm.get('amount')?.value"
-              >
-                <h3 class="summary-title">Tóm tắt giao dịch</h3>
-                <div class="summary-content">
-                  <div class="summary-item">
-                    <span class="summary-label">Số tiền chuyển:</span>
-                    <span class="summary-value negative">
-                      -{{ transferForm.get("amount")?.value | currencyVnd }}
-                    </span>
-                  </div>
-                  <div class="summary-item">
-                    <span class="summary-label">Phí giao dịch:</span>
-                    <span class="summary-value">0 ₫</span>
-                  </div>
-                  <div class="summary-divider"></div>
-                  <div class="summary-item total">
-                    <span class="summary-label">Tổng cộng:</span>
-                    <span class="summary-value negative">
-                      -{{ transferForm.get("amount")?.value | currencyVnd }}
-                    </span>
+              @if (transferForm.get("amount")?.value) {
+                <div class="transaction-summary">
+                  <h3 class="summary-title">Tóm tắt giao dịch</h3>
+                  <div class="summary-content">
+                    <div class="summary-item">
+                      <span class="summary-label">Số tiền chuyển:</span>
+                      <span class="summary-value negative">
+                        -{{ transferForm.get("amount")?.value | currencyVnd }}
+                      </span>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label">Phí giao dịch:</span>
+                      <span class="summary-value">0 ₫</span>
+                    </div>
+                    <div class="summary-divider"></div>
+                    <div class="summary-item total">
+                      <span class="summary-label">Tổng cộng:</span>
+                      <span class="summary-value negative">
+                        -{{ transferForm.get("amount")?.value | currencyVnd }}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              }
 
               <!-- Submit Button -->
               <button
@@ -178,8 +166,12 @@
                 class="transfer-button"
                 [disabled]="transferForm.invalid || isLoading"
               >
-                <i class="pi pi-check" *ngIf="!isLoading"></i>
-                <i class="pi pi-spin pi-spinner" *ngIf="isLoading"></i>
+                @if (!isLoading) {
+                  <i class="pi pi-check"></i>
+                }
+                @if (isLoading) {
+                  <i class="pi pi-spin pi-spinner"></i>
+                }
                 <span>{{
                   isLoading ? "Đang xử lý..." : "Khởi tạo chuyển khoản"
                 }}</span>
@@ -275,4 +267,3 @@
     </div>
   </div>
 </div>
-

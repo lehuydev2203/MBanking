@@ -42,10 +42,12 @@ import { AuthService } from '../../core/services/auth.service';
 })
 export class ProfileComponent implements OnInit, OnDestroy {
   profileForm: FormGroup;
+  nicknameForm: FormGroup;
   currentProfile: UserProfile | null = null;
   isLoadingProfile = false;
   isUpdatingProfile = false;
   isEditing = false;
+  isSettingNickname = false;
 
   private destroy$ = new Subject<void>();
 
@@ -58,8 +60,14 @@ export class ProfileComponent implements OnInit, OnDestroy {
   ) {
     this.profileForm = this.fb.group({
       phone: ['', [Validators.required]],
-      nickname: ['', [Validators.pattern(/^[a-zA-Z0-9_]{3,20}$/)]],
       newPassword: ['', [Validators.minLength(6)]],
+    });
+
+    this.nicknameForm = this.fb.group({
+      nickname: [
+        '',
+        [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,20}$/)],
+      ],
     });
   }
 
@@ -82,7 +90,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
           this.currentProfile = profile;
           this.profileForm.patchValue({
             phone: profile.phone,
-            nickname: profile.nickname || '',
           });
           this.isLoadingProfile = false;
         },
@@ -96,7 +103,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
     this.isEditing = true;
     this.profileForm.patchValue({
       phone: this.currentProfile?.phone || '',
-      nickname: this.currentProfile?.nickname || '',
       newPassword: '',
     });
   }
@@ -114,7 +120,6 @@ export class ProfileComponent implements OnInit, OnDestroy {
       const updateData: UpdateProfileRequest = {
         name: this.currentProfile?.name || '',
         phone: this.profileForm.value.phone,
-        nickname: this.profileForm.value.nickname || undefined,
       };
 
       this.accountsService
@@ -171,6 +176,51 @@ export class ProfileComponent implements OnInit, OnDestroy {
               severity: 'error',
               summary: 'Lỗi cập nhật',
               detail: 'Không thể cập nhật thông tin cá nhân',
+              life: 5000,
+            });
+          },
+        });
+    }
+  }
+
+  setNickname(): void {
+    if (this.nicknameForm.valid) {
+      this.isSettingNickname = true;
+      const nickname = this.nicknameForm.value.nickname;
+
+      this.accountsService
+        .setNickname(nickname)
+        .pipe(takeUntil(this.destroy$))
+        .subscribe({
+          next: (response) => {
+            this.isSettingNickname = false;
+            this.nicknameForm.reset();
+            this.loadProfile(); // Reload profile to get updated nickname
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Tạo nickname thành công',
+              detail: `Nickname @${nickname} đã được tạo thành công. Bạn sẽ nhận được email xác nhận.`,
+              life: 5000,
+            });
+          },
+          error: (error) => {
+            this.isSettingNickname = false;
+            let errorMessage = 'Không thể tạo nickname';
+
+            if (error.error?.code === 'NICKNAME_ALREADY_SET') {
+              errorMessage =
+                'Nickname chỉ có thể tạo 1 lần duy nhất và không thể thay đổi';
+            } else if (error.error?.code === 'NICKNAME_TAKEN') {
+              errorMessage = 'Nickname này đã được sử dụng bởi tài khoản khác';
+            } else if (error.error?.code === 'INVALID_NICKNAME_FORMAT') {
+              errorMessage =
+                'Nickname phải có 3-20 ký tự và chỉ chứa chữ cái, số và dấu gạch dưới';
+            }
+
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Lỗi tạo nickname',
+              detail: errorMessage,
               life: 5000,
             });
           },

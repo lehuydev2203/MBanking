@@ -97,92 +97,50 @@ export class TransactionsService {
       }
     }
 
-    const session: ClientSession =
-      await this.transactionModel.db.startSession();
+    // Simple deposit without transactions (MongoDB standalone)
+    // 1. Create transaction record
+    const transaction = new this.transactionModel({
+      accountId: userId,
+      transName: transName || 'Deposit',
+      transMoney: Decimal128.fromString(amount.toString()),
+      transType: TransactionType.DEPOSIT,
+      clientRequestId,
+    });
 
-    try {
-      await session.withTransaction(async () => {
-        // Create transaction record
-        const transaction = new this.transactionModel({
-          accountId: userId,
-          transName: transName || 'Deposit',
-          transMoney: Decimal128.fromString(amount.toString()),
-          transType: TransactionType.DEPOSIT,
-          clientRequestId,
-        });
+    await transaction.save();
 
-        await transaction.save({ session });
+    // 2. Update account balance
+    await this.accountModel.findByIdAndUpdate(userId, {
+      $inc: { balance: Decimal128.fromString(amount.toString()) },
+    });
 
-        // Update account balance
-        await this.accountModel.findByIdAndUpdate(
-          userId,
-          { $inc: { balance: Decimal128.fromString(amount.toString()) } },
-          { session },
-        );
-
-        // Log audit
-        await this.auditService.log({
-          actorId: userId,
-          action: 'DEPOSIT',
-          resource: 'transaction',
-          meta: {
-            transactionId: (transaction as any)._id.toString(),
-            amount,
-            clientRequestId,
-          },
-        });
-      });
-
-      // Return the transaction without session
-      const transaction = await this.transactionModel.findOne({
-        accountId: userId,
+    // 3. Log audit
+    await this.auditService.log({
+      actorId: userId,
+      action: 'DEPOSIT',
+      resource: 'transaction',
+      meta: {
+        transactionId: (transaction as any)._id.toString(),
+        amount,
         clientRequestId,
-        transType: TransactionType.DEPOSIT,
-      });
+      },
+    });
 
-      return transaction;
-    } finally {
-      await session.endSession();
-    }
+    // Return clean transaction object
+    return {
+      _id: (transaction as any)._id,
+      accountId: transaction.accountId,
+      transName: transaction.transName,
+      transMoney: transaction.transMoney, // Keep original field name
+      transType: transaction.transType,
+      clientRequestId: transaction.clientRequestId,
+      createdAt: (transaction as any).createdAt,
+      updatedAt: (transaction as any).updatedAt,
+    };
   }
 
   async withdraw(userId: string, withdrawDto: WithdrawDto) {
     const { amount, transName, clientRequestId } = withdrawDto;
-
-    // Check withdrawal constraints
-    const canWithdrawResult = await this.canWithdraw(userId, amount);
-    if (!canWithdrawResult.allowed) {
-      if (
-        canWithdrawResult.reasons.some((r) =>
-          r.includes('Insufficient account balance'),
-        )
-      ) {
-        throw new ForbiddenException({
-          code: 'INSUFFICIENT_FUNDS',
-          message: 'Insufficient account balance',
-        });
-      }
-      if (
-        canWithdrawResult.reasons.some((r) =>
-          r.includes('per-transaction limit'),
-        )
-      ) {
-        throw new ForbiddenException({
-          code: 'LIMIT_PER_TRANSACTION',
-          message: `Amount exceeds per-transaction limit of ${transactionConfig().maxTransactionAmount.toLocaleString()} VND`,
-        });
-      }
-      if (
-        canWithdrawResult.reasons.some((r) =>
-          r.includes('daily withdrawal limit'),
-        )
-      ) {
-        throw new ForbiddenException({
-          code: 'DAILY_LIMIT_EXCEEDED',
-          message: `Amount would exceed daily withdrawal limit of ${transactionConfig().dailyWithdrawalLimit.toLocaleString()} VND`,
-        });
-      }
-    }
 
     // Check for idempotency
     if (clientRequestId) {
@@ -200,69 +158,60 @@ export class TransactionsService {
       }
     }
 
-    const session: ClientSession =
-      await this.transactionModel.db.startSession();
-
-    try {
-      await session.withTransaction(async () => {
-        // Double-check balance in transaction
-        const account = await this.accountModel.findById(userId, null, {
-          session,
-        });
-        if (!account) {
-          throw new BadRequestException('Account not found');
-        }
-
-        const currentBalance = parseFloat(account.balance.toString());
-        if (currentBalance < amount) {
-          throw new ForbiddenException({
-            code: 'INSUFFICIENT_FUNDS',
-            message: 'Insufficient account balance',
-          });
-        }
-
-        // Create transaction record
-        const transaction = new this.transactionModel({
-          accountId: userId,
-          transName: transName || 'Withdrawal',
-          transMoney: Decimal128.fromString(amount.toString()),
-          transType: TransactionType.WITHDRAW,
-          clientRequestId,
-        });
-
-        await transaction.save({ session });
-
-        // Update account balance
-        await this.accountModel.findByIdAndUpdate(
-          userId,
-          { $inc: { balance: Decimal128.fromString((-amount).toString()) } },
-          { session },
-        );
-
-        // Log audit
-        await this.auditService.log({
-          actorId: userId,
-          action: 'WITHDRAW',
-          resource: 'transaction',
-          meta: {
-            transactionId: (transaction as any)._id.toString(),
-            amount,
-            clientRequestId,
-          },
-        });
-      });
-
-      // Return the transaction without session
-      const transaction = await this.transactionModel.findOne({
-        accountId: userId,
-        clientRequestId,
-        transType: TransactionType.WITHDRAW,
-      });
-
-      return transaction;
-    } finally {
-      await session.endSession();
+    // Simple withdraw without transactions (MongoDB standalone)
+    // 1. Check current balance
+    const account = await this.accountModel.findById(userId);
+    if (!account) {
+      throw new BadRequestException('Account not found');
     }
+
+    const currentBalance = parseFloat(account.balance.toString());
+    if (currentBalance < amount) {
+      throw new ForbiddenException({
+        code: 'INSUFFICIENT_FUNDS',
+        message: 'Insufficient account balance',
+      });
+    }
+
+    // 2. Create transaction record
+    const transaction = new this.transactionModel({
+      accountId: userId,
+      transName: transName || 'Withdraw',
+      transMoney: Decimal128.fromString(amount.toString()),
+      transType: TransactionType.WITHDRAW,
+      clientRequestId,
+    });
+
+    await transaction.save();
+
+    // 3. Update account balance
+    await this.accountModel.findByIdAndUpdate(userId, {
+      $inc: { balance: Decimal128.fromString((-amount).toString()) },
+    });
+
+    // 4. Log audit
+    await this.auditService.log({
+      actorId: userId,
+      action: 'WITHDRAW',
+      resource: 'transaction',
+      meta: {
+        transactionId: (transaction as any)._id.toString(),
+        amount,
+        clientRequestId,
+      },
+    });
+
+    // Return clean transaction object
+    return {
+      _id: (transaction as any)._id,
+      accountId: transaction.accountId,
+      transName: transaction.transName,
+      transMoney: transaction.transMoney,
+      transType: transaction.transType,
+      clientRequestId: transaction.clientRequestId,
+      createdAt: (transaction as any).createdAt,
+      updatedAt: (transaction as any).updatedAt,
+    };
   }
 
   async getTransactions(userId: string, query: TransactionQueryDto) {
