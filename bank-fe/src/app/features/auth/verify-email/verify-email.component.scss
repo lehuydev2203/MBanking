@@ -1,17 +1,44 @@
-// Verify Email Page Styles - Tương tự Login/Register
+// Verify Email Page Styles - Dark Theme with Celebration Effects
 .verify-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem;
   position: relative;
   overflow: hidden;
-  color: var(--text-color);
+  color: #ffffff;
 
-  // Animated background elements
+  // Animated background - Dark theme
   &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(
+        circle at 20% 80%,
+        rgba(120, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(255, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 40%,
+        rgba(120, 219, 255, 0.2) 0%,
+        transparent 50%
+      );
+    animation: backgroundShift 20s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  &::after {
     content: "";
     position: absolute;
     top: -50%;
@@ -20,27 +47,35 @@
     height: 200%;
     background: radial-gradient(
       circle,
-      rgba(255, 255, 255, 0.1) 1px,
+      rgba(255, 255, 255, 0.05) 1px,
       transparent 1px
     );
     background-size: 50px 50px;
     animation: float 20s infinite linear;
+    z-index: 0;
   }
 
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.05) 50%,
-      transparent 70%
-    );
-    animation: shimmer 3s infinite;
+  // Celebration particles overlay (only when verified)
+  &.celebration {
+    &::before {
+      background:
+        radial-gradient(
+          circle at 20% 80%,
+          rgba(16, 185, 129, 0.4) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 80% 20%,
+          rgba(34, 211, 238, 0.4) 0%,
+          transparent 50%
+        ),
+        radial-gradient(
+          circle at 40% 40%,
+          rgba(168, 85, 247, 0.3) 0%,
+          transparent 50%
+        );
+      animation: celebrationShift 3s ease-in-out infinite;
+    }
   }
 }
 
@@ -53,12 +88,32 @@
   }
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
+@keyframes backgroundShift {
+  0%,
   100% {
-    transform: translateX(100%);
+    transform: translateX(0) translateY(0);
+  }
+  33% {
+    transform: translateX(-20px) translateY(-10px);
+  }
+  66% {
+    transform: translateX(20px) translateY(10px);
+  }
+}
+
+@keyframes celebrationShift {
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) scale(1);
+  }
+  25% {
+    transform: translateX(-30px) translateY(-15px) scale(1.1);
+  }
+  50% {
+    transform: translateX(30px) translateY(15px) scale(0.9);
+  }
+  75% {
+    transform: translateX(-15px) translateY(30px) scale(1.05);
   }
 }
 
@@ -67,6 +122,7 @@
   max-width: 480px;
   animation: fadeInUp 0.6s ease-out;
   z-index: 1;
+  position: relative;
 }
 
 @keyframes fadeInUp {
@@ -81,36 +137,42 @@
 }
 
 .verify-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3),
-    0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
 
   .p-card-header {
     padding: 0;
   }
 
   .card-header {
-    padding: 2rem 2rem 1rem 2rem;
-    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 3rem 2rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     text-align: center;
     position: relative;
     overflow: hidden;
+    border-radius: 24px 24px 0 0;
 
     .icon-wrapper {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50%;
-      margin: 0 auto 1rem auto;
+      margin: 0 auto 1.5rem auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 0 5px rgba(245, 158, 11, 0.3);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       animation: pulse 2s infinite;
     }
 
@@ -120,15 +182,19 @@
     }
 
     .card-title {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.025em;
       color: #ffffff;
     }
 
     .card-subtitle {
-      color: #b0b0b0;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      opacity: 0.9;
+      margin: 0;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -146,12 +212,12 @@
 
   .card-content {
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
   }
 
   // Loading State
   .loading-text {
-    color: #e0e0e0;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 1rem;
   }
 
@@ -166,20 +232,69 @@
     margin: 0 auto 1.5rem auto;
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.3);
+    position: relative;
 
     &.success {
       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
       box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.3);
+      animation:
+        successPulse 2s ease-in-out infinite,
+        successRotate 3s linear infinite;
+
+      // Celebration particles
+      &::before {
+        content: "";
+        position: absolute;
+        top: -10px;
+        left: -10px;
+        right: -10px;
+        bottom: -10px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          #10b981,
+          #34d399,
+          #6ee7b7,
+          #a7f3d0,
+          #d1fae5,
+          #10b981
+        );
+        animation: celebrationRotate 2s linear infinite;
+        z-index: -1;
+      }
+
+      &::after {
+        content: "";
+        position: absolute;
+        top: -20px;
+        left: -20px;
+        right: -20px;
+        bottom: -20px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 180deg,
+          #22d3ee,
+          #67e8f9,
+          #a5f3fc,
+          #cffafe,
+          #22d3ee
+        );
+        animation: celebrationRotate 3s linear infinite reverse;
+        z-index: -2;
+      }
     }
 
     &.error {
       background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
       box-shadow: 0 0 0 5px rgba(239, 68, 68, 0.3);
+      animation: errorShake 0.5s ease-in-out;
     }
 
     i {
       font-size: 2.5rem;
       color: white;
+      position: relative;
+      z-index: 1;
     }
   }
 
@@ -192,6 +307,7 @@
 
     &.success {
       color: #10b981;
+      animation: successGlow 2s ease-in-out infinite;
     }
 
     &.error {
@@ -200,7 +316,7 @@
   }
 
   .status-message {
-    color: #e0e0e0;
+    color: rgba(255, 255, 255, 0.7);
     font-size: 1rem;
     margin-bottom: 1rem;
     line-height: 1.5;
@@ -211,7 +327,7 @@
   }
 
   .status-description {
-    color: #b0b0b0;
+    color: rgba(255, 255, 255, 0.5);
     font-size: 0.9rem;
     margin-bottom: 2rem;
     line-height: 1.5;
@@ -243,14 +359,14 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    
+
     // Linear gradient background
     background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
     background-size: 200% 200%;
     animation: gradient-shift 3s ease infinite;
     color: white;
     box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4);
-    
+
     // Hiệu ứng ánh sáng
     &::before {
       content: "";
@@ -272,7 +388,7 @@
     &:hover {
       transform: translateY(-2px);
       box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5);
-      
+
       background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
       background-size: 200% 200%;
       animation: gradient-shift 1.5s ease infinite;
@@ -293,7 +409,8 @@
       box-shadow: none;
     }
 
-    i, span {
+    i,
+    span {
       position: relative;
       z-index: 2;
       color: white;
@@ -350,6 +467,62 @@
   }
   50% {
     background-position: 100% 50%;
+  }
+}
+
+// Celebration Animation Keyframes
+@keyframes successPulse {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(16, 185, 129, 0.2);
+  }
+}
+
+@keyframes successRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes celebrationRotate {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes successGlow {
+  0%,
+  100% {
+    text-shadow: 0 0 5px rgba(16, 185, 129, 0.5);
+  }
+  50% {
+    text-shadow:
+      0 0 20px rgba(16, 185, 129, 0.8),
+      0 0 30px rgba(16, 185, 129, 0.6);
+  }
+}
+
+@keyframes errorShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-5px);
+  }
+  75% {
+    transform: translateX(5px);
   }
 }
 

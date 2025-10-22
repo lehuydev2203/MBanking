@@ -11,7 +11,7 @@ export class EmailService {
     this.transporter = nodemailer.createTransport({
       host: this.configService.get<string>('email.host'),
       port: this.configService.get<number>('email.port'),
-      secure: false,
+      secure: true, // Use secure connection for Gmail (port 465)
       auth: {
         user: this.configService.get<string>('email.user'),
         pass: this.configService.get<string>('email.pass'),
@@ -61,9 +61,23 @@ export class EmailService {
     };
 
     try {
-      await this.transporter.sendMail(mailOptions);
+      console.log('Sending verification email to:', email);
+      console.log('Email config:', {
+        host: this.configService.get<string>('email.host'),
+        port: this.configService.get<number>('email.port'),
+        user: this.configService.get<string>('email.user'),
+        from: this.configService.get<string>('email.from'),
+      });
+      
+      const result = await this.transporter.sendMail(mailOptions);
+      console.log('Verification email sent successfully:', result.messageId);
     } catch (error) {
       console.error('Failed to send verification email:', error);
+      console.error('Error details:', {
+        message: error.message,
+        code: error.code,
+        command: error.command,
+      });
       // In production, you might want to throw an error or use a retry mechanism
       // For now, we'll just log the error to avoid breaking the registration flow
     }

@@ -1,4 +1,7 @@
 <div class="transactions-page">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
+
   <!-- Hero Section -->
   <div class="hero-section">
     <div class="hero-content">
@@ -20,72 +23,61 @@
           <div class="filters-grid">
             <div class="filter-group">
               <label class="filter-label">Loại giao dịch</label>
-              <p-select
-                formControlName="type"
-                [options]="transactionTypes"
-                placeholder="Tất cả"
-                class="filter-select"
-              >
-              </p-select>
-            </div>
-
-            <div class="filter-group">
-              <label class="filter-label">Trạng thái</label>
-              <p-select
-                formControlName="status"
-                [options]="statusOptions"
-                placeholder="Tất cả"
-                class="filter-select"
-              >
-              </p-select>
+              <select formControlName="type" class="filter-select">
+                <option value="">Tất cả</option>
+                <option [value]="TransactionType.DEPOSIT">Nạp tiền</option>
+                <option [value]="TransactionType.WITHDRAW">Rút tiền</option>
+                <option [value]="TransactionType.TRANSFER_SEND">
+                  Chuyển khoản
+                </option>
+                <option [value]="TransactionType.TRANSFER_RECEIVE">
+                  Nhận tiền
+                </option>
+              </select>
             </div>
 
             <div class="filter-group">
               <label class="filter-label">Từ ngày</label>
-              <p-datePicker
+              <input
+                type="date"
                 formControlName="from"
-                placeholder="Chọn ngày"
-                [showIcon]="true"
                 class="filter-date"
-              >
-              </p-datePicker>
+                (click)="openDatePicker($event)"
+              />
             </div>
 
             <div class="filter-group">
               <label class="filter-label">Đến ngày</label>
-              <p-datePicker
+              <input
+                type="date"
                 formControlName="to"
-                placeholder="Chọn ngày"
-                [showIcon]="true"
                 class="filter-date"
-              >
-              </p-datePicker>
+                (click)="openDatePicker($event)"
+              />
             </div>
 
             <div class="filter-group">
               <label class="filter-label">Số tiền tối thiểu</label>
-              <p-inputNumber
+              <input
+                type="number"
                 formControlName="min"
-                mode="currency"
-                currency="VND"
-                locale="vi-VN"
                 placeholder="0"
                 class="filter-input"
-              >
-              </p-inputNumber>
+                min="0"
+                step="1000"
+              />
             </div>
 
             <div class="filter-group">
               <label class="filter-label">Số tiền tối đa</label>
-              <p-inputNumber
+              <input
+                type="number"
                 formControlName="max"
-                mode="currency"
-                currency="VND"
-                locale="vi-VN"
                 placeholder="Không giới hạn"
                 class="filter-input"
-              >
-              </p-inputNumber>
+                min="0"
+                step="1000"
+              />
             </div>
           </div>
 
@@ -164,7 +156,6 @@
                     <i class="pi pi-sort-down"></i>
                   }
                 </div>
-                <div class="header-cell">Mô tả</div>
                 <div class="header-cell sortable" (click)="sortBy('status')">
                   Trạng thái
                   @if (sortField !== "status") {
@@ -189,6 +180,7 @@
                     <i class="pi pi-sort-down"></i>
                   }
                 </div>
+                <div class="header-cell">Mô tả</div>
               </div>
 
               <div class="table-body">
@@ -197,8 +189,11 @@
                     <div class="table-cell">
                       <div class="transaction-type">
                         <i
-                          [class]="getTransactionIcon(transaction.transType)"
-                          [class]="getTransactionColor(transaction.transType)"
+                          [class]="
+                            getTransactionIcon(transaction.transType) +
+                            ' ' +
+                            getTransactionColor(transaction.transType)
+                          "
                         ></i>
                         <span class="capitalize">{{
                           getTransactionTypeLabel(transaction.transType)
@@ -212,20 +207,13 @@
                       </span>
                     </div>
                     <div class="table-cell">
-                      <span class="text-gray-400">-</span>
-                    </div>
-                    <div class="table-cell">
-                      @if (transaction.transName) {
-                        <span>{{ transaction.transName }}</span>
-                      } @else {
-                        <span class="no-description">-</span>
-                      }
-                    </div>
-                    <div class="table-cell">
                       <div class="status-badge completed">Hoàn thành</div>
                     </div>
                     <div class="table-cell">
                       {{ transaction.createdAt | date: "dd/MM/yyyy HH:mm" }}
+                    </div>
+                    <div class="table-cell">
+                      <span>{{ getTransactionDescription(transaction) }}</span>
                     </div>
                   </div>
                 }

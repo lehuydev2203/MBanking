@@ -1,4 +1,111 @@
 // Transactions Component Styles - Modern Banking Theme
+
+// Custom HTML input styles
+.filter-select,
+.filter-date,
+.filter-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  transition: none;
+  position: relative;
+
+  &:focus {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: none;
+    color: #ffffff;
+    outline: none;
+  }
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  // Date input specific
+  &[type="date"] {
+    color-scheme: dark;
+    cursor: pointer;
+
+    &::-webkit-calendar-picker-indicator {
+      filter: invert(1);
+      cursor: pointer;
+      position: absolute;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 1.5rem;
+      height: 1.5rem;
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+
+    &:hover::-webkit-calendar-picker-indicator {
+      opacity: 1;
+    }
+
+    // Make the entire input clickable
+    &::-webkit-datetime-edit {
+      cursor: pointer;
+      width: 100%;
+    }
+
+    &::-webkit-datetime-edit-fields-wrapper {
+      cursor: pointer;
+    }
+
+    &::-webkit-datetime-edit-text {
+      cursor: pointer;
+    }
+
+    &::-webkit-datetime-edit-month-field,
+    &::-webkit-datetime-edit-day-field,
+    &::-webkit-datetime-edit-year-field {
+      cursor: pointer;
+    }
+
+    // Invalid state
+    &.ng-invalid {
+      border-color: #ef4444 !important;
+      background: rgba(239, 68, 68, 0.1) !important;
+    }
+  }
+
+  // Number input specific
+  &[type="number"] {
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+  }
+
+  // Select specific
+  option {
+    background: #1e293b;
+    color: #ffffff;
+  }
+
+  // Ensure select shows default value
+  &[formControlName="type"] {
+    color: #ffffff;
+
+    option:first-child {
+      color: #ffffff;
+      background: #1e293b;
+    }
+  }
+}
+
 .transactions-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
@@ -153,32 +260,102 @@
       .p-select-label,
       .p-inputtext,
       .p-inputnumber-input {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        color: #ffffff;
-        border-radius: 0.75rem;
-        padding: 0.75rem 1rem;
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        border-radius: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        transition: none !important;
 
         &:focus {
-          border-color: #667eea;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: none !important;
+          color: #ffffff !important;
+          outline: none !important;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
         }
 
         &::placeholder {
-          color: rgba(255, 255, 255, 0.5);
+          color: rgba(255, 255, 255, 0.5) !important;
         }
       }
 
       .p-select-trigger {
-        background: rgba(255, 255, 255, 0.1);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: 0.75rem;
-        color: #ffffff;
-        transition: all 0.3s ease;
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 0.75rem !important;
+        color: #ffffff !important;
+        transition: none !important;
 
         &:hover {
-          border-color: rgba(255, 255, 255, 0.3);
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        &:focus {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: none !important;
+          outline: none !important;
+        }
+      }
+
+      // Datepicker specific styles
+      .p-datepicker-input {
+        background: rgba(255, 255, 255, 0.1) !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        color: #ffffff !important;
+        border-radius: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        transition: none !important;
+
+        &:focus {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: none !important;
+          color: #ffffff !important;
+          outline: none !important;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.5) !important;
+        }
+      }
+
+      // Override PrimeNG default focus styles
+      .p-datepicker input {
+        background: rgba(255, 255, 255, 0.1) !important;
+        color: #ffffff !important;
+        border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        border-radius: 0.75rem !important;
+        padding: 0.75rem 1rem !important;
+        transition: none !important;
+
+        &:focus {
+          background: rgba(255, 255, 255, 0.1) !important;
+          color: #ffffff !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+          box-shadow: none !important;
+          outline: none !important;
+        }
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.1) !important;
+          border: 1px solid rgba(255, 255, 255, 0.2) !important;
+        }
+
+        &::placeholder {
+          color: rgba(255, 255, 255, 0.5) !important;
         }
       }
     }
@@ -347,7 +524,15 @@
   letter-spacing: 0.05em;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
+  text-align: center;
+
+  // Cột mô tả (cột cuối cùng) canh trái
+  &:last-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
 
   &.sortable {
     cursor: pointer;
@@ -393,27 +578,55 @@
 .table-cell {
   display: flex;
   align-items: center;
+  justify-content: center;
   color: #ffffff;
   font-size: 0.875rem;
+  text-align: center;
+
+  // Cột mô tả (cột cuối cùng) canh trái
+  &:last-child {
+    justify-content: flex-start;
+    text-align: left;
+  }
 }
 
 .transaction-type {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
 
   i {
     font-size: 1rem;
+
+    // Đảm bảo màu sắc Tailwind được áp dụng
+    &.text-green-500 {
+      color: #10b981 !important;
+    }
+
+    &.text-red-500 {
+      color: #ef4444 !important;
+    }
+
+    &.text-blue-500 {
+      color: #3b82f6 !important;
+    }
+
+    &.text-purple-500 {
+      color: #8b5cf6 !important;
+    }
   }
 }
 
 .status-badge {
   padding: 0.25rem 0.75rem;
-  border-radius: 1rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  display: inline-block;
+  text-align: center;
+  min-width: 80px;
+  margin: 0 auto;
 
   &.status-pending {
     background: rgba(251, 191, 36, 0.2);
@@ -421,10 +634,11 @@
     border: 1px solid rgba(251, 191, 36, 0.3);
   }
 
-  &.status-completed {
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.3);
+  &.status-completed,
+  &.completed {
+    background: #dcfce7;
+    color: #166534;
+    border: none;
   }
 
   &.status-failed {

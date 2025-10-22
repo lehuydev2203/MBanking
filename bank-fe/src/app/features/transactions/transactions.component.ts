@@ -4,13 +4,10 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { SelectModule } from 'primeng/select';
-import { DatePickerModule } from 'primeng/datepicker';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { CardModule } from 'primeng/card';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { TagModule } from 'primeng/tag';
+import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import {
@@ -34,13 +31,10 @@ import { CurrencyVndPipe } from '../../shared/pipes/currency-vnd.pipe';
     ReactiveFormsModule,
     TableModule,
     ButtonModule,
-    InputTextModule,
-    SelectModule,
-    DatePickerModule,
-    InputNumberModule,
     CardModule,
     ProgressSpinnerModule,
     TagModule,
+    ToastModule,
     CurrencyVndPipe,
   ],
   providers: [MessageService],
@@ -59,6 +53,9 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   sortField = 'createdAt';
   sortOrder = -1;
 
+  // Make TransactionType available in template
+  TransactionType = TransactionType;
+
   transactionTypes = [
     { label: 'Tất cả', value: null },
     { label: 'Nạp tiền', value: TransactionType.DEPOSIT },
@@ -67,13 +64,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     { label: 'Nhận tiền', value: TransactionType.TRANSFER_RECEIVE },
   ];
 
-  statusOptions = [
-    { label: 'Tất cả', value: null },
-    { label: 'Đang xử lý', value: 'pending' },
-    { label: 'Hoàn thành', value: 'completed' },
-    { label: 'Thất bại', value: 'failed' },
-    { label: 'Đã hủy', value: 'cancelled' },
-  ];
+  // Note: Status filter removed as API doesn't support it
 
   private destroy$ = new Subject<void>();
 
@@ -83,12 +74,20 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
   ) {
     this.filterForm = this.fb.group({
-      type: [null],
-      status: [null],
+      type: [''], // Default to empty string to show "Tất cả"
       from: [null],
       to: [null],
       min: [null],
       max: [null],
+    });
+
+    // Add date validation
+    this.filterForm.get('from')?.valueChanges.subscribe(() => {
+      this.validateDateRange();
+    });
+
+    this.filterForm.get('to')?.valueChanges.subscribe(() => {
+      this.validateDateRange();
     });
   }
 
@@ -104,12 +103,17 @@ export class TransactionsComponent implements OnInit, OnDestroy {
   loadTransactions(event?: any): void {
     this.isLoading = true;
 
+    const formValue = this.filterForm.value;
+
+    // Convert Date objects to ISO strings for API
     const filters: TransactionFilters = {
       page: event ? event.first / event.rows + 1 : this.currentPage,
       pageSize: event ? event.rows : this.pageSize,
-      sortField: this.sortField,
-      sortOrder: this.sortOrder,
-      ...this.filterForm.value,
+      type: formValue.type,
+      from: formValue.from ? new Date(formValue.from).toISOString() : undefined,
+      to: formValue.to ? new Date(formValue.to).toISOString() : undefined,
+      min: formValue.min,
+      max: formValue.max,
     };
 
     this.transactionsService.list(filters).subscribe({
@@ -117,16 +121,50 @@ export class TransactionsComponent implements OnInit, OnDestroy {
         this.transactions = response.items as any[];
         this.totalRecords = response.total;
         this.totalPages = Math.ceil(this.totalRecords / this.pageSize);
+        this.sortTransactions(); // Apply sorting after loading data
         this.isLoading = false;
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error loading transactions:', error);
         this.isLoading = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Lỗi',
+          detail: 'Không thể tải danh sách giao dịch',
+          life: 3000,
+        });
       },
     });
   }
 
   applyFilters(): void {
-    this.loadTransactions();
+    // Validate date range before applying filters
+    if (this.validateDateRangeBeforeSubmit()) {
+      this.loadTransactions();
+    }
+  }
+
+  private validateDateRangeBeforeSubmit(): boolean {
+    const fromDate = this.filterForm.get('from')?.value;
+    const toDate = this.filterForm.get('to')?.value;
+
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+
+      if (from > to) {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Lỗi',
+          detail:
+            'Ngày bắt đầu không được lớn hơn ngày kết thúc. Vui lòng chọn lại.',
+          life: 5000,
+        });
+        return false;
+      }
+    }
+
+    return true;
   }
 
   clearFilters(): void {
@@ -136,7 +174,16 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   exportCsv(): void {
     this.isExporting = true;
-    const filters = this.filterForm.value;
+    const formValue = this.filterForm.value;
+
+    // Convert Date objects to ISO strings for API
+    const filters: TransactionFilters = {
+      type: formValue.type,
+      from: formValue.from ? new Date(formValue.from).toISOString() : undefined,
+      to: formValue.to ? new Date(formValue.to).toISOString() : undefined,
+      min: formValue.min,
+      max: formValue.max,
+    };
 
     this.transactionsService.exportCsv(filters).subscribe({
       next: (blob) => {
@@ -155,8 +202,15 @@ export class TransactionsComponent implements OnInit, OnDestroy {
           life: 3000,
         });
       },
-      error: () => {
+      error: (error) => {
+        console.error('Error exporting CSV:', error);
         this.isExporting = false;
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Lỗi',
+          detail: 'Không thể xuất file CSV',
+          life: 3000,
+        });
       },
     });
   }
@@ -186,35 +240,7 @@ export class TransactionsComponent implements OnInit, OnDestroy {
     return `${color} font-semibold`;
   }
 
-  getStatusLabel(status: string): string {
-    const labels: Record<string, string> = {
-      pending: 'Đang xử lý',
-      completed: 'Hoàn thành',
-      failed: 'Thất bại',
-      cancelled: 'Đã hủy',
-    };
-    return labels[status] || status;
-  }
-
-  getStatusSeverity(status: string): 'success' | 'info' | 'warn' | 'danger' {
-    const severities: Record<string, 'success' | 'info' | 'warn' | 'danger'> = {
-      pending: 'warn',
-      completed: 'success',
-      failed: 'danger',
-      cancelled: 'info',
-    };
-    return severities[status] || 'info';
-  }
-
-  getStatusClass(status: string): string {
-    const classes: Record<string, string> = {
-      pending: 'status-pending',
-      completed: 'status-completed',
-      failed: 'status-failed',
-      cancelled: 'status-cancelled',
-    };
-    return classes[status] || 'status-default';
-  }
+  // Note: Status-related functions removed as API doesn't support status filtering
 
   sortBy(field: string): void {
     if (this.sortField === field) {
@@ -223,7 +249,40 @@ export class TransactionsComponent implements OnInit, OnDestroy {
       this.sortField = field;
       this.sortOrder = 1;
     }
-    this.loadTransactions();
+    this.sortTransactions();
+  }
+
+  private sortTransactions(): void {
+    if (!this.transactions || this.transactions.length === 0) return;
+
+    this.transactions.sort((a, b) => {
+      let aValue: any;
+      let bValue: any;
+
+      switch (this.sortField) {
+        case 'type':
+          aValue = a.transType;
+          bValue = b.transType;
+          break;
+        case 'amount':
+          aValue = a.transMoney;
+          bValue = b.transMoney;
+          break;
+        case 'status':
+          aValue = 'completed'; // All transactions are completed for now
+          bValue = 'completed';
+          break;
+        case 'createdAt':
+        default:
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+      }
+
+      if (aValue < bValue) return this.sortOrder;
+      if (aValue > bValue) return -this.sortOrder;
+      return 0;
+    });
   }
 
   goToPage(page: number): void {
@@ -235,5 +294,70 @@ export class TransactionsComponent implements OnInit, OnDestroy {
 
   get Math() {
     return Math;
+  }
+
+  // Generate description based on transaction type and time
+  getTransactionDescription(transaction: any): string {
+    const transactionType = transaction.transType;
+    const createdAt = new Date(transaction.createdAt);
+
+    // Format time as HH:MM:SS
+    const timeStr = createdAt.toLocaleTimeString('vi-VN', {
+      hour12: false,
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+
+    // Format date as DD/MM/YYYY
+    const dateStr = createdAt.toLocaleDateString('vi-VN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    });
+
+    switch (transactionType) {
+      case TransactionType.DEPOSIT:
+        return `Nạp tiền ${timeStr} ${dateStr}`;
+      case TransactionType.WITHDRAW:
+        return `Rút tiền ${timeStr} ${dateStr}`;
+      case TransactionType.TRANSFER_SEND:
+        return `Chuyển khoản ${timeStr} ${dateStr}`;
+      case TransactionType.TRANSFER_RECEIVE:
+        return `Nhận tiền ${timeStr} ${dateStr}`;
+      default:
+        return `Giao dịch ${timeStr} ${dateStr}`;
+    }
+  }
+
+  // Method to trigger date picker when clicking on date input
+  openDatePicker(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (input.type === 'date') {
+      input.showPicker();
+    }
+  }
+
+  // Validate date range
+  private validateDateRange(): void {
+    const fromDate = this.filterForm.get('from')?.value;
+    const toDate = this.filterForm.get('to')?.value;
+
+    if (fromDate && toDate) {
+      const from = new Date(fromDate);
+      const to = new Date(toDate);
+
+      if (from > to) {
+        this.messageService.add({
+          severity: 'warn',
+          summary: 'Cảnh báo',
+          detail: 'Ngày bắt đầu không được lớn hơn ngày kết thúc',
+          life: 3000,
+        });
+
+        // Clear the invalid date
+        this.filterForm.get('from')?.setValue(null);
+      }
+    }
   }
 }

@@ -68,14 +68,14 @@ export interface LegacyTransaction {
 }
 
 export interface TransactionFilters {
-  type?: 'deposit' | 'withdraw' | 'transfer';
+  type?: number; // TransactionType enum value
   page?: number;
   pageSize?: number;
   from?: string;
   to?: string;
   min?: number;
   max?: number;
-  status?: 'pending' | 'completed' | 'failed' | 'cancelled';
+  // Note: status, sortField and sortOrder are not supported by the API
 }
 
 @Injectable({

@@ -1,7 +1,7 @@
-// Register Page Styles - Tương tự Login Page
+// Register Page Styles - Dark Theme
 .register-page {
   min-height: 100vh;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -9,8 +9,35 @@
   position: relative;
   overflow: hidden;
 
-  // Animated background
+  // Animated background - Dark theme
   &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+      radial-gradient(
+        circle at 20% 80%,
+        rgba(120, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 80% 20%,
+        rgba(255, 119, 198, 0.3) 0%,
+        transparent 50%
+      ),
+      radial-gradient(
+        circle at 40% 40%,
+        rgba(120, 219, 255, 0.2) 0%,
+        transparent 50%
+      );
+    animation: backgroundShift 20s ease-in-out infinite;
+    z-index: 0;
+  }
+
+  &::after {
     content: "";
     position: absolute;
     top: -50%;
@@ -19,27 +46,12 @@
     height: 200%;
     background: radial-gradient(
       circle,
-      rgba(255, 255, 255, 0.1) 1px,
+      rgba(255, 255, 255, 0.05) 1px,
       transparent 1px
     );
     background-size: 50px 50px;
     animation: float 20s infinite linear;
-  }
-
-  &::after {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.05) 50%,
-      transparent 70%
-    );
-    animation: shimmer 3s infinite;
+    z-index: 0;
   }
 }
 
@@ -52,20 +64,25 @@
   }
 }
 
-@keyframes shimmer {
-  0% {
-    transform: translateX(-100%);
-  }
+@keyframes backgroundShift {
+  0%,
   100% {
-    transform: translateX(100%);
+    transform: translateX(0) translateY(0);
+  }
+  33% {
+    transform: translateX(-20px) translateY(-10px);
+  }
+  66% {
+    transform: translateX(20px) translateY(10px);
   }
 }
 
 .register-card-wrapper {
   width: 100%;
-  max-width: 420px;
+  max-width: 600px;
   z-index: 1;
   animation: slideUp 0.6s ease-out;
+  position: relative;
 }
 
 @keyframes slideUp {
@@ -80,37 +97,42 @@
 }
 
 .register-card {
-  background: rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  border-radius: 12px;
-  box-shadow:
-    0 20px 25px -5px rgba(0, 0, 0, 0.3),
-    0 10px 10px -5px rgba(0, 0, 0, 0.1);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   overflow: hidden;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
 
   .p-card-header {
     padding: 0;
   }
 
   .card-header {
-    padding: 2rem 2rem 1rem 2rem;
-    background: rgba(255, 255, 255, 0.08);
+    padding: 3rem 2rem 2rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     text-align: center;
-    border-radius: 8px;
+    border-radius: 24px 24px 0 0;
     position: relative;
     overflow: hidden;
 
     .icon-wrapper {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.2);
       border-radius: 50%;
-      margin: 0 auto 1rem auto;
+      margin: 0 auto 1.5rem auto;
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 0 5px rgba(16, 185, 129, 0.3);
+      backdrop-filter: blur(10px);
+      border: 2px solid rgba(255, 255, 255, 0.3);
       animation: pulse 2s infinite;
     }
 
@@ -120,15 +142,19 @@
     }
 
     .card-title {
-      font-size: 1.8rem;
-      font-weight: bold;
-      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0 0 0.5rem;
+      letter-spacing: -0.025em;
       color: #ffffff;
     }
 
     .card-subtitle {
-      color: #b0b0b0;
-      font-size: 0.9rem;
+      font-size: 1rem;
+      opacity: 0.9;
+      margin: 0;
+      font-weight: 400;
+      color: rgba(255, 255, 255, 0.9);
     }
   }
 
@@ -146,7 +172,7 @@
 
   .card-content {
     padding: 2rem;
-    background: rgba(255, 255, 255, 0.05);
+    background: transparent;
   }
 
   .register-form {
@@ -155,21 +181,28 @@
     gap: 1.5rem;
   }
 
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
   .form-field {
     display: flex;
     flex-direction: column;
 
     .form-label {
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-      color: #e0e0e0;
       display: flex;
       align-items: center;
       gap: 0.5rem;
+      font-weight: 600;
+      color: #e2e8f0;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
 
       i {
-        font-size: 1rem;
-        color: #a0a0a0;
+        color: #7c8cf9;
+        font-size: 0.8rem;
       }
     }
 
@@ -181,33 +214,53 @@
     .form-input {
       width: 100%;
       padding: 1rem;
-      border: 2px solid #e5e7eb;
+      border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 12px;
-      background: #f9fafb;
-      color: #111827;
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
       font-size: 1rem;
       transition: all 0.3s ease;
+      outline: none;
 
       &:focus {
-        outline: none;
-        border-color: #667eea;
-        background: white;
-        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        border-color: #7c8cf9;
+        background: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 0 0 3px rgba(124, 140, 249, 0.1);
         transform: translateY(-1px);
       }
 
+      &:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+
       &::placeholder {
-        color: #9ca3af;
+        color: rgba(255, 255, 255, 0.5);
       }
 
       &.error {
         border-color: #ef4444;
-        background: #fef2f2;
+        background: rgba(239, 68, 68, 0.1);
 
         &:focus {
           border-color: #ef4444;
           box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
         }
+      }
+    }
+
+    .password-requirements {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      line-height: 1.3;
+
+      i {
+        font-size: 0.7rem;
+        color: #7c8cf9;
       }
     }
 
@@ -324,25 +377,27 @@
   }
 
   .card-footer {
-    padding: 1.5rem 2rem 2rem 2rem;
+    padding: 1.5rem 2rem 2rem;
     text-align: center;
+    background: rgba(255, 255, 255, 0.02);
     border-top: 1px solid rgba(255, 255, 255, 0.1);
-    background: rgba(255, 255, 255, 0.05);
+    border-radius: 0 0 24px 24px;
   }
 
   .login-text {
+    color: rgba(255, 255, 255, 0.7);
     font-size: 0.9rem;
-    color: #e0e0e0;
+    margin: 0;
   }
 
   .login-link {
-    color: #10b981;
+    color: #7c8cf9;
     text-decoration: none;
     font-weight: 600;
     transition: color 0.3s ease;
 
     &:hover {
-      color: #059669;
+      color: #3b82f6;
       text-decoration: underline;
     }
   }
@@ -359,53 +414,66 @@
   }
 }
 
-// PrimeNG Password Component Customization
+// PrimeNG Password Component Customization - Đồng bộ với form-input
 :host ::ng-deep .p-password {
   width: 100%;
 
   .p-inputtext {
-    width: 100%;
-    padding: 1rem;
-    border: 2px solid #e5e7eb;
-    border-radius: 12px;
-    background: #f9fafb;
-    color: #111827;
-    font-size: 1rem;
-    transition: all 0.3s ease;
+    width: 100% !important;
+    padding: 1rem !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    border-radius: 12px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: #ffffff !important;
+    font-size: 1rem !important;
+    transition: none !important;
+    outline: none !important;
 
     &:focus {
-      border-color: #667eea;
-      background: white;
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-      transform: translateY(-1px);
+      border-color: #7c8cf9 !important;
+      background: rgba(255, 255, 255, 0.1) !important;
+      box-shadow: 0 0 0 3px rgba(124, 140, 249, 0.1) !important;
+      transform: translateY(-1px) !important;
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.1) !important;
+      border-color: rgba(255, 255, 255, 0.2) !important;
     }
 
     &::placeholder {
-      color: #9ca3af;
+      color: rgba(255, 255, 255, 0.5) !important;
     }
   }
 
   .p-password-toggle-icon {
-    color: #6b7280;
+    color: rgba(255, 255, 255, 0.7) !important;
     transition: color 0.3s ease;
 
     &:hover {
-      color: #667eea;
+      color: #7c8cf9 !important;
     }
   }
 
   &.error .p-inputtext {
-    border-color: #ef4444;
-    background: #fef2f2;
+    border-color: #ef4444 !important;
+    background: rgba(239, 68, 68, 0.1) !important;
 
     &:focus {
-      border-color: #ef4444;
-      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+      border-color: #ef4444 !important;
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1) !important;
     }
   }
 }
 
 // Responsive Design
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+}
+
 @media (max-width: 480px) {
   .register-page {
     padding: 1rem;
@@ -428,6 +496,10 @@
   }
 
   .register-form {
+    gap: 1rem;
+  }
+
+  .form-row {
     gap: 1rem;
   }
 

@@ -17,118 +17,143 @@
           (ngSubmit)="onSubmit()"
           class="register-form"
         >
-          <div class="form-field">
-            <label for="name" class="form-label">
-              <i class="pi pi-user"></i>
-              Họ và tên
-            </label>
-            <div class="input-wrapper">
-              <input
-                pInputText
-                id="name"
-                formControlName="name"
-                placeholder="Nhập họ và tên"
-                class="form-input"
-                [class.error]="
-                  registerForm.get('name')?.invalid &&
-                  registerForm.get('name')?.touched
-                "
-              />
-            </div>
-            @if (
-              registerForm.get("name")?.invalid &&
-              registerForm.get("name")?.touched
-            ) {
-              <div class="error-message">
-                <i class="pi pi-exclamation-triangle"></i>
-                Vui lòng nhập họ và tên
+          <!-- Row 1: Họ và tên + Email -->
+          <div class="form-row">
+            <div class="form-field">
+              <label for="name" class="form-label">
+                <i class="pi pi-user"></i>
+                Họ và tên
+              </label>
+              <div class="input-wrapper">
+                <input
+                  pInputText
+                  id="name"
+                  formControlName="name"
+                  placeholder="Nhập họ và tên"
+                  class="form-input"
+                  [class.error]="
+                    registerForm.get('name')?.invalid &&
+                    registerForm.get('name')?.touched
+                  "
+                />
               </div>
-            }
-          </div>
-
-          <div class="form-field">
-            <label for="email" class="form-label">
-              <i class="pi pi-envelope"></i>
-              Email
-            </label>
-            <div class="input-wrapper">
-              <input
-                pInputText
-                id="email"
-                type="email"
-                formControlName="email"
-                placeholder="Nhập email của bạn"
-                class="form-input"
-                [class.error]="
-                  registerForm.get('email')?.invalid &&
-                  registerForm.get('email')?.touched
-                "
-              />
+              @if (
+                registerForm.get("name")?.invalid &&
+                registerForm.get("name")?.touched
+              ) {
+                <div class="error-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  Vui lòng nhập họ và tên
+                </div>
+              }
             </div>
-            @if (
-              registerForm.get("email")?.invalid &&
-              registerForm.get("email")?.touched
-            ) {
-              <div class="error-message">
-                <i class="pi pi-exclamation-triangle"></i>
-                Vui lòng nhập email hợp lệ
-              </div>
-            }
-          </div>
 
-          <div class="form-field">
-            <label for="phone" class="form-label">
-              <i class="pi pi-phone"></i>
-              Số điện thoại (tùy chọn)
-            </label>
-            <div class="input-wrapper">
-              <input
-                pInputText
-                id="phone"
-                formControlName="phone"
-                placeholder="Nhập số điện thoại"
-                class="form-input"
-              />
+            <div class="form-field">
+              <label for="email" class="form-label">
+                <i class="pi pi-envelope"></i>
+                Email
+              </label>
+              <div class="input-wrapper">
+                <input
+                  pInputText
+                  id="email"
+                  type="email"
+                  formControlName="email"
+                  placeholder="Nhập email của bạn"
+                  class="form-input"
+                  [class.error]="
+                    registerForm.get('email')?.invalid &&
+                    registerForm.get('email')?.touched
+                  "
+                />
+              </div>
+              @if (
+                registerForm.get("email")?.invalid &&
+                registerForm.get("email")?.touched
+              ) {
+                <div class="error-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  Vui lòng nhập email hợp lệ
+                </div>
+              }
             </div>
           </div>
 
-          <div class="form-field">
-            <label for="password" class="form-label">
-              <i class="pi pi-lock"></i>
-              Mật khẩu
-            </label>
-            <div class="input-wrapper">
-              <p-password
-                id="password"
-                formControlName="password"
-                placeholder="Nhập mật khẩu (tối thiểu 8 ký tự)"
-                [feedback]="true"
-                [toggleMask]="true"
-                [inputStyle]="{
-                  width: '100%',
-                  padding: '1rem',
-                  'border-radius': '12px',
-                  border: '2px solid #e5e7eb',
-                  background: '#f9fafb',
-                  color: '#111827',
-                  'font-size': '1rem',
-                }"
-                [class.error]="
-                  registerForm.get('password')?.invalid &&
-                  registerForm.get('password')?.touched
-                "
-              >
-              </p-password>
-            </div>
-            @if (
-              registerForm.get("password")?.invalid &&
-              registerForm.get("password")?.touched
-            ) {
-              <div class="error-message">
-                <i class="pi pi-exclamation-triangle"></i>
-                Mật khẩu phải có ít nhất 8 ký tự
+          <!-- Row 2: Số điện thoại + Mật khẩu -->
+          <div class="form-row">
+            <div class="form-field">
+              <label for="phone" class="form-label">
+                <i class="pi pi-phone"></i>
+                Số điện thoại (tùy chọn)
+              </label>
+              <div class="input-wrapper">
+                <input
+                  pInputText
+                  id="phone"
+                  formControlName="phone"
+                  placeholder="Nhập số điện thoại (VD: 0901234567)"
+                  class="form-input"
+                  [class.error]="
+                    registerForm.get('phone')?.invalid &&
+                    registerForm.get('phone')?.touched
+                  "
+                />
               </div>
-            }
+              @if (
+                registerForm.get("phone")?.invalid &&
+                registerForm.get("phone")?.touched
+              ) {
+                <div class="error-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  Số điện thoại không đúng định dạng (VD: 0901234567, +84901234567)
+                </div>
+              }
+            </div>
+
+            <div class="form-field">
+              <label for="password" class="form-label">
+                <i class="pi pi-lock"></i>
+                Mật khẩu
+              </label>
+              <div class="input-wrapper">
+                <p-password
+                  id="password"
+                  formControlName="password"
+                  placeholder="Nhập mật khẩu"
+                  [feedback]="true"
+                  [toggleMask]="true"
+                  [class.error]="
+                    registerForm.get('password')?.invalid &&
+                    registerForm.get('password')?.touched
+                  "
+                >
+                </p-password>
+              </div>
+              <div class="password-requirements">
+                <i class="pi pi-info-circle"></i>
+                Mật khẩu phải có ít nhất 8 ký tự, bao gồm chữ hoa, chữ thường,
+                số và ký tự đặc biệt (@$!%*?&)
+              </div>
+              @if (
+                registerForm.get("password")?.invalid &&
+                registerForm.get("password")?.touched
+              ) {
+                <div class="error-message">
+                  <i class="pi pi-exclamation-triangle"></i>
+                  @if (registerForm.get("password")?.errors?.["required"]) {
+                    Vui lòng nhập mật khẩu
+                  } @else if (
+                    registerForm.get("password")?.errors?.["minlength"]
+                  ) {
+                    Mật khẩu phải có ít nhất 8 ký tự
+                  }                   @else if (
+                    registerForm.get("password")?.errors?.["passwordComplexity"]
+                  ) {
+                    Mật khẩu phải có chữ hoa, chữ thường, số và ký tự đặc biệt (@$!%*?&)
+                  }
+                </div>
+              }
+            </div>
           </div>
 
           <!-- Submit Button -->
