@@ -20,6 +20,7 @@ import {
   TransactionsService,
   TransferConfirmRequest,
 } from '../../../core/services/transactions.service';
+import { AccountsService } from '../../../core/services/accounts.service';
 import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
 
 interface TransferData {
@@ -60,6 +61,7 @@ export class TransferConfirmComponent implements OnInit, OnDestroy {
   constructor(
     private fb: FormBuilder,
     private transactionsService: TransactionsService,
+    private accountsService: AccountsService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
@@ -143,6 +145,9 @@ export class TransferConfirmComponent implements OnInit, OnDestroy {
               detail: 'Chuyển khoản hoàn tất thành công!',
               life: 5000,
             });
+
+            // Refresh balance
+            this.accountsService.refreshBalance();
 
             // Navigate to transactions page
             this.router.navigate(['/app/transactions']);

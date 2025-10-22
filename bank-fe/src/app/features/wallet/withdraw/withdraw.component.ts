@@ -89,6 +89,16 @@ export class WithdrawComponent implements OnInit, OnDestroy {
     console.log('User authenticated:', this.authService.isAuthenticated);
     console.log('Current user:', this.authService.currentUser);
     console.log('Token:', this.authService.getToken());
+
+    // Subscribe to balance updates
+    this.accountsService.balance$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((balance) => {
+        if (balance) {
+          this.currentBalance = balance;
+        }
+      });
+
     this.loadBalance();
   }
 
@@ -206,7 +216,8 @@ export class WithdrawComponent implements OnInit, OnDestroy {
             detail: 'Rút tiền thành công!',
           });
           this.withdrawForm.reset();
-          this.loadBalance(); // Reload balance
+          // Refresh balance
+          this.accountsService.refreshBalance();
         },
         error: (error) => {
           console.error('Withdraw error:', error);

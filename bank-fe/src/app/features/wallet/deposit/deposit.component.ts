@@ -62,6 +62,15 @@ export class DepositComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    // Subscribe to balance updates
+    this.accountsService.balance$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((balance) => {
+        if (balance) {
+          this.currentBalance = balance;
+        }
+      });
+
     this.loadCurrentBalance();
   }
 

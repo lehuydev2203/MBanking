@@ -6,7 +6,7 @@ import {
   Validators,
   ReactiveFormsModule,
 } from '@angular/forms';
-import { Subject, takeUntil } from 'rxjs';
+import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
@@ -68,7 +68,7 @@ export class TransferComponent implements OnInit, OnDestroy {
         '',
         [
           Validators.required,
-          Validators.pattern(/^(\d{10}|[a-zA-Z0-9_]{3,20})$/),
+          Validators.pattern(/^(\d{8}|[a-zA-Z0-9_]{3,20})$/),
         ],
       ],
       amount: [
@@ -81,16 +81,29 @@ export class TransferComponent implements OnInit, OnDestroy {
       ],
     });
 
-    // Listen to recipient changes
+    // Listen to recipient changes with debounce
     this.transferForm
       .get('recipient')
-      ?.valueChanges.pipe(takeUntil(this.destroy$))
+      ?.valueChanges.pipe(
+        debounceTime(500),
+        distinctUntilChanged(),
+        takeUntil(this.destroy$),
+      )
       .subscribe((value) => {
         this.onRecipientChange(value);
       });
   }
 
   ngOnInit(): void {
+    // Subscribe to balance updates
+    this.accountsService.balance$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((balance) => {
+        if (balance) {
+          this.currentBalance = balance;
+        }
+      });
+
     this.loadCurrentBalance();
   }
 

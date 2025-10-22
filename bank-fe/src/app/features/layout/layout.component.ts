@@ -71,6 +71,15 @@ export class LayoutComponent implements OnInit, OnDestroy {
       }
     });
 
+    // Subscribe to balance updates
+    this.accountsService.balance$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((balance) => {
+        if (balance) {
+          this.balance = balance;
+        }
+      });
+
     // Load initial data
     this.loadBalance();
   }

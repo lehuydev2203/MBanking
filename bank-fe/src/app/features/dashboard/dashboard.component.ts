@@ -69,6 +69,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    // Subscribe to balance updates
+    this.accountsService.balance$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((balance) => {
+        if (balance) {
+          this.balance = balance;
+        }
+      });
+
     this.loadBalance();
     this.loadRecentTransactions();
     this.loadProfile();
