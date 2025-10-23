@@ -98,6 +98,27 @@ export class AuthController {
     return this.authService.verifyEmail(verifyDto);
   }
 
+  @Post('verify-email')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Verify email address via form',
+    description:
+      'Verifies email address using form submission (for email forms)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Email verified successfully',
+    type: MessageResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Invalid or expired verification code',
+  })
+  async verifyEmailForm(@Body() body: { email: string; code: string }) {
+    const verifyDto: VerifyEmailDto = { code: body.code };
+    return this.authService.verifyEmail(verifyDto);
+  }
+
   @Post('resend-verification')
   @UseGuards(ThrottlerGuard)
   @HttpCode(HttpStatus.ACCEPTED)

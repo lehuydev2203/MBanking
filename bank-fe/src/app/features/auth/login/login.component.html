@@ -69,14 +69,29 @@
           }
         </div>
 
+        <!-- Error Message -->
+        @if (errorMessage) {
+          <div class="error-message-container">
+            <div class="error-message">
+              <i class="pi pi-exclamation-triangle"></i>
+              <span>{{ errorMessage }}</span>
+            </div>
+          </div>
+        }
+
         <!-- Submit Button -->
         <button
           type="submit"
           class="gradient-button"
           [disabled]="loginForm.invalid || isLoading"
         >
-          <i class="pi pi-sign-in"></i>
-          <span>Đăng nhập</span>
+          @if (isLoading) {
+            <i class="pi pi-spin pi-spinner"></i>
+            <span>Đang đăng nhập...</span>
+          } @else {
+            <i class="pi pi-sign-in"></i>
+            <span>Đăng nhập</span>
+          }
         </button>
       </form>
 

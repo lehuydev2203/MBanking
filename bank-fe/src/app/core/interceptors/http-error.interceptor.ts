@@ -29,6 +29,13 @@ export const httpErrorInterceptor: HttpInterceptorFn = (req, next) => {
       }
 
       if (error.status === 403) {
+        // Check if it's EMAIL_NOT_VERIFIED error - don't show toast, let component handle it
+        if (error.error && error.error.code === 'EMAIL_NOT_VERIFIED') {
+          // Don't show toast for EMAIL_NOT_VERIFIED, let the login component handle the error
+          return throwError(() => error);
+        }
+
+        // For other 403 errors, redirect to 403 page
         router.navigate(['/403']);
         return throwError(() => error);
       }

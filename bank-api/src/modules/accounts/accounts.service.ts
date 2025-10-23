@@ -78,8 +78,23 @@ export class AccountsService {
     let isUnique = false;
 
     while (!isUnique) {
-      // Generate 10-digit account number starting with 1
-      accountNumber = '1' + Math.random().toString().substr(2, 9);
+      // Generate account number with format: YYMMDDHHmmss + 4 random digits
+      const now = new Date();
+      const year = now.getFullYear().toString().slice(-2); // YY
+      const month = (now.getMonth() + 1).toString().padStart(2, '0'); // MM
+      const day = now.getDate().toString().padStart(2, '0'); // DD
+      const hour = now.getHours().toString().padStart(2, '0'); // HH
+      const minute = now.getMinutes().toString().padStart(2, '0'); // mm
+      const second = now.getSeconds().toString().padStart(2, '0'); // ss
+
+      // Generate 4 random digits
+      const randomDigits = Math.floor(Math.random() * 10000)
+        .toString()
+        .padStart(4, '0');
+
+      // Combine: YYMMDDHHmmss + 4 random digits = 16 digits total
+      accountNumber =
+        year + month + day + hour + minute + second + randomDigits;
 
       const existingAccount = await this.accountModel.findOne({
         accountNumber,
@@ -167,12 +182,12 @@ export class AccountsService {
 
   async getRecipientInfo(currentUserId: string, identifier: string) {
     // Validate identifier format
-    const isAccountNumber = /^\d{10}$/.test(identifier);
+    const isAccountNumber = /^\d{16}$/.test(identifier);
     const isNickname = /^[a-zA-Z0-9_]{3,20}$/.test(identifier);
 
     if (!isAccountNumber && !isNickname) {
       throw new BadRequestException(
-        'Invalid identifier format. Must be 10-digit account number or 3-20 character nickname',
+        'Invalid identifier format. Must be 16-digit account number or 3-20 character nickname',
       );
     }
 

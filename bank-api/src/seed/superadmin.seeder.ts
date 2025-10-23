@@ -27,12 +27,12 @@ async function seedSuperadmin() {
     const saltRounds = 12;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create superadmin
+    // Create superadmin with 16-digit account number
     const superadmin = new accountModel({
       name: 'Le Huy Dev',
       email,
       passwordHash,
-      accountNumber: '99999999',
+      accountNumber: '9999999999999999', // 16-digit superadmin account
       nickname: 'lehuydev',
       role: Role.SUPERADMIN,
       status: Status.ACTIVE,
@@ -45,7 +45,7 @@ async function seedSuperadmin() {
     console.log('✅ Superadmin created successfully:');
     console.log('   Email:', email);
     console.log('   Password:', password);
-    console.log('   Account Number:', '99999999');
+    console.log('   Account Number:', '9999999999999999');
     console.log('   Nickname:', 'lehuydev');
     console.log('   Role: SUPERADMIN');
     console.log('   Status: ACTIVE');

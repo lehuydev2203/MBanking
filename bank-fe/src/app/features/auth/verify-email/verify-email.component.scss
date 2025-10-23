@@ -216,9 +216,21 @@
   }
 
   // Loading State
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    text-align: center;
+  }
+
   .loading-text {
     color: rgba(255, 255, 255, 0.7);
     font-size: 1rem;
+    text-align: center;
+    margin: 0;
+    width: 100%;
   }
 
   // Status Icons
@@ -296,6 +308,75 @@
       position: relative;
       z-index: 1;
     }
+
+    // Fireworks container
+    .fireworks-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .success-icon {
+      font-size: 2.5rem;
+      color: white;
+      position: relative;
+      z-index: 10;
+      animation: successBounce 0.6s ease-out;
+    }
+
+    // Firework particles
+    .firework {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      animation: fireworkExplode 2s ease-out infinite;
+    }
+
+    .firework-1 {
+      background: #ff6b6b;
+      animation-delay: 0s;
+      --firework-x: 0px;
+      --firework-y: -60px;
+    }
+
+    .firework-2 {
+      background: #4ecdc4;
+      animation-delay: 0.2s;
+      --firework-x: 40px;
+      --firework-y: -40px;
+    }
+
+    .firework-3 {
+      background: #45b7d1;
+      animation-delay: 0.4s;
+      --firework-x: 60px;
+      --firework-y: 0px;
+    }
+
+    .firework-4 {
+      background: #96ceb4;
+      animation-delay: 0.6s;
+      --firework-x: 40px;
+      --firework-y: 40px;
+    }
+
+    .firework-5 {
+      background: #feca57;
+      animation-delay: 0.8s;
+      --firework-x: 0px;
+      --firework-y: 60px;
+    }
+
+    .firework-6 {
+      background: #ff9ff3;
+      animation-delay: 1s;
+      --firework-x: -40px;
+      --firework-y: 40px;
+    }
   }
 
   // Status Text
@@ -304,6 +385,7 @@
     font-weight: bold;
     margin-bottom: 1rem;
     color: #ffffff;
+    text-align: center;
 
     &.success {
       color: #10b981;
@@ -320,10 +402,21 @@
     font-size: 1rem;
     margin-bottom: 1rem;
     line-height: 1.5;
+    text-align: center;
 
     &.error {
       color: #fca5a5;
     }
+  }
+
+  .success-message-container {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+
+  .error-message-container {
+    text-align: center;
+    margin-bottom: 1rem;
   }
 
   .status-description {
@@ -331,6 +424,14 @@
     font-size: 0.9rem;
     margin-bottom: 2rem;
     line-height: 1.5;
+    text-align: center;
+  }
+
+  // State containers
+  .verify-pending,
+  .verify-success,
+  .verify-error {
+    text-align: center;
   }
 
   // Action Buttons
@@ -526,6 +627,37 @@
   }
 }
 
+// Firework animations
+@keyframes fireworkExplode {
+  0% {
+    opacity: 1;
+    transform: scale(0) translate(0, 0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1) translate(var(--firework-x, 0), var(--firework-y, 0));
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.5) translate(var(--firework-x, 0), var(--firework-y, 0));
+  }
+}
+
+@keyframes successBounce {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 // Responsive Design
 @media (max-width: 480px) {
   .verify-page {
@@ -567,5 +699,111 @@
 
   .status-description {
     font-size: 0.8rem;
+  }
+
+  // Code Input Form
+  .code-input-container {
+    margin: 2rem 0;
+    padding: 1.5rem;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+  }
+
+  .code-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+    width: 100%;
+  }
+
+  // Custom OTP Input Styling
+  .otp-inputs {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .otp-input {
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center;
+    font-family: "Inter", "Segoe UI", sans-serif;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+
+    &:focus {
+      outline: none;
+      border-color: #7c8cf9;
+      background: rgba(124, 140, 249, 0.2);
+      box-shadow: 0 0 0 4px rgba(124, 140, 249, 0.3);
+      transform: scale(1.05);
+    }
+
+    &:hover:not(:focus) {
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    &::placeholder {
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 1.2rem;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+  }
+
+  .verify-button {
+    background: linear-gradient(135deg, #7c8cf9 0%, #22d3ee 100%);
+    color: white;
+    border: none;
+    padding: 0.75rem 2rem;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 150px;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(124, 140, 249, 0.3);
+    position: relative;
+    overflow: hidden;
+
+    &:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(124, 140, 249, 0.4);
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    i {
+      font-size: 1rem;
+    }
   }
 }

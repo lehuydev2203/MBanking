@@ -43,7 +43,7 @@
                     pInputText
                     id="recipient"
                     formControlName="recipient"
-                    placeholder="Nhập số tài khoản (8 chữ số) hoặc nickname"
+                    placeholder="Nhập số tài khoản (16 chữ số) hoặc nickname"
                     class="form-input"
                     [class.error]="
                       transferForm.get('recipient')?.invalid &&
@@ -62,7 +62,7 @@
                     }
                     @if (transferForm.get("recipient")?.errors?.["pattern"]) {
                       <span
-                        >Vui lòng nhập số tài khoản 8 chữ số hoặc nickname 3-20
+                        >Vui lòng nhập số tài khoản 16 chữ số hoặc nickname 3-20
                         ký tự</span
                       >
                     }

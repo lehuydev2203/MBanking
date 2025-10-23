@@ -26,37 +26,137 @@ export class EmailService {
     const mailOptions = {
       from: this.configService.get<string>('email.from'),
       to: email,
-      subject: 'Verify Your Email - Banking API',
+      subject: 'Xác minh Email - MBanking',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Email Verification</h2>
-          <p>Thank you for registering with our banking service!</p>
-          <p>Please use the following verification code to activate your account:</p>
-          <div style="background-color: #f5f5f5; padding: 20px; text-align: center; margin: 20px 0;">
-            <h1 style="color: #007bff; font-size: 32px; margin: 0;">${code}</h1>
-          </div>
-          <p>Or click the link below:</p>
-          <p><a href="${verificationUrl}" style="color: #007bff;">Verify Email Address</a></p>
-          <p><strong>This code will expire in 15 minutes.</strong></p>
-          <p>If you didn't request this verification, please ignore this email.</p>
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          <p style="color: #666; font-size: 12px;">This is an automated message, please do not reply.</p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <meta name="format-detection" content="telephone=no">
+          <meta name="x-apple-disable-message-reformatting">
+          <style>
+            body { margin: 0; padding: 0; }
+            .email-container { 
+              font-family: Arial, sans-serif; 
+              max-width: 600px; 
+              margin: 0 auto; 
+              background-color: #f8f9fa; 
+              padding: 20px; 
+              min-height: 100vh;
+            }
+            .email-content { 
+              background-color: white; 
+              padding: 30px; 
+              border-radius: 10px; 
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+              overflow: visible;
+            }
+            .verification-code { 
+              white-space: nowrap !important; 
+              overflow: visible !important; 
+              text-overflow: unset !important;
+              display: inline-block !important;
+            }
+            /* Force email clients to show full content */
+            * { 
+              max-width: none !important; 
+              text-overflow: unset !important; 
+            }
+            p, div, span { 
+              overflow: visible !important; 
+            }
+          </style>
+        </head>
+        <body>
+        <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+          <tr>
+            <td style="padding: 20px;">
+              <div class="email-container">
+                <div class="email-content">
+            <div style="text-align: center; margin-bottom: 30px;">
+              <h1 style="color: #7c8cf9; margin: 0; font-size: 28px;">🔐 Xác minh Email</h1>
+            </div>
+            
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+              Cảm ơn bạn đã đăng ký dịch vụ ngân hàng của chúng tôi!
+            </p>
+            
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">
+              Vui lòng sử dụng mã xác minh sau để kích hoạt tài khoản của bạn:
+            </p>
+            
+            <div style="background: linear-gradient(135deg, #7c8cf9, #22d3ee); padding: 25px; margin: 25px 0; border-radius: 10px; text-align: center;">
+              <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">Mã xác minh của bạn</h2>
+              <div style="background-color: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; display: inline-block; min-width: 200px;">
+                <span class="verification-code" style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 3px; font-family: monospace;">${code}</span>
+              </div>
+            </div>
+            
+            <div style="text-align: center; margin: 25px 0;">
+              <p style="color: #333; font-size: 16px; margin-bottom: 15px;">Hoặc nhấp vào liên kết bên dưới:</p>
+              <a href="${verificationUrl}" style="background: linear-gradient(135deg, #7c8cf9, #22d3ee); color: white; padding: 12px 25px; text-decoration: none; border-radius: 20px; font-weight: bold; display: inline-block;">
+                Xác minh địa chỉ email
+              </a>
+            </div>
+            
+            <div style="background-color: #e8f4fd; padding: 20px; margin: 25px 0; border-radius: 8px; border-left: 4px solid #7c8cf9;">
+              <h3 style="color: #333; margin-top: 0;">📋 Hướng dẫn tiếp theo:</h3>
+              <ul style="color: #333; line-height: 1.8;">
+                <li>Nhập mã xác minh 6 chữ số ở trên vào trang xác thực</li>
+                <li>Hoặc nhấp vào liên kết "Xác minh địa chỉ email"</li>
+                <li>Sau khi xác minh thành công, bạn có thể đăng nhập vào tài khoản</li>
+                <li>Truy cập trang <strong>Hồ sơ cá nhân</strong> để tạo nickname duy nhất</li>
+              </ul>
+            </div>
+            
+            <div style="background-color: #f8f9fa; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h4 style="color: #333; margin-top: 0;">⚠️ Lưu ý quan trọng:</h4>
+              <ul style="color: #666; line-height: 1.6; font-size: 14px;">
+                <li><strong>Mã này sẽ hết hạn sau 15 phút</strong></li>
+                <li>Nếu bạn không yêu cầu xác minh này, vui lòng bỏ qua email này</li>
+                <li>Không chia sẻ mã xác minh với bất kỳ ai</li>
+                <li>Liên hệ hỗ trợ nếu gặp vấn đề trong quá trình xác minh</li>
+              </ul>
+            </div>
+            
+            <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
+            <p style="color: #666; font-size: 12px; text-align: center;">
+              Email này được gửi tự động từ hệ thống MBanking. Vui lòng không trả lời email này.
+            </p>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        </body>
+        </html>
       `,
       text: `
-        Email Verification
+        Xác minh Email - MBanking
         
-        Thank you for registering with our banking service!
+        Cảm ơn bạn đã đăng ký dịch vụ ngân hàng của chúng tôi!
         
-        Please use the following verification code to activate your account:
+        Vui lòng sử dụng mã xác minh sau để kích hoạt tài khoản của bạn:
         
-        ${code}
+        Mã xác minh: ${code}
         
-        Or visit: ${verificationUrl}
+        Hoặc truy cập: ${verificationUrl}
         
-        This code will expire in 15 minutes.
+        Hướng dẫn tiếp theo:
+        - Nhập mã xác minh 6 chữ số vào trang xác thực
+        - Hoặc nhấp vào liên kết "Xác minh địa chỉ email"
+        - Sau khi xác minh thành công, bạn có thể đăng nhập vào tài khoản
+        - Truy cập trang Hồ sơ cá nhân để tạo nickname duy nhất
         
-        If you didn't request this verification, please ignore this email.
+        Lưu ý quan trọng:
+        - Mã này sẽ hết hạn sau 15 phút
+        - Nếu bạn không yêu cầu xác minh này, vui lòng bỏ qua email này
+        - Không chia sẻ mã xác minh với bất kỳ ai
+        - Liên hệ hỗ trợ nếu gặp vấn đề trong quá trình xác minh
+        
+        Email này được gửi tự động từ hệ thống MBanking. Vui lòng không trả lời email này.
       `,
     };
 
@@ -68,7 +168,7 @@ export class EmailService {
         user: this.configService.get<string>('email.user'),
         from: this.configService.get<string>('email.from'),
       });
-      
+
       const result = await this.transporter.sendMail(mailOptions);
       console.log('Verification email sent successfully:', result.messageId);
     } catch (error) {
@@ -98,8 +198,59 @@ export class EmailService {
       to: email,
       subject: 'Chào mừng đến với MBanking - Tài khoản đã được tạo thành công!',
       html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f8f9fa; padding: 20px;">
-          <div style="background-color: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+          <meta name="format-detection" content="telephone=no">
+          <meta name="x-apple-disable-message-reformatting">
+          <style>
+            body { margin: 0; padding: 0; }
+            .email-container { 
+              font-family: Arial, sans-serif; 
+              max-width: 600px; 
+              margin: 0 auto; 
+              background-color: #f8f9fa; 
+              padding: 20px; 
+              min-height: 100vh;
+            }
+            .email-content { 
+              background-color: white; 
+              padding: 30px; 
+              border-radius: 10px; 
+              box-shadow: 0 2px 10px rgba(0,0,0,0.1); 
+              overflow: visible;
+            }
+            .account-number { 
+              white-space: nowrap !important; 
+              overflow: visible !important; 
+              text-overflow: unset !important;
+              display: inline-block !important;
+            }
+            .verification-code { 
+              white-space: nowrap !important; 
+              overflow: visible !important; 
+              text-overflow: unset !important;
+              display: inline-block !important;
+            }
+            /* Force email clients to show full content */
+            * { 
+              max-width: none !important; 
+              text-overflow: unset !important; 
+            }
+            p, div, span { 
+              overflow: visible !important; 
+            }
+          </style>
+        </head>
+        <body>
+        <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0; padding: 0;">
+          <tr>
+            <td style="padding: 20px;">
+              <div class="email-container">
+                <div class="email-content">
             <div style="text-align: center; margin-bottom: 30px;">
               <h1 style="color: #7c8cf9; margin: 0; font-size: 28px;">🎉 Chào mừng đến với MBanking!</h1>
             </div>
@@ -112,8 +263,8 @@ export class EmailService {
             
             <div style="background: linear-gradient(135deg, #7c8cf9, #22d3ee); padding: 25px; margin: 25px 0; border-radius: 10px; text-align: center;">
               <h2 style="color: white; margin: 0 0 15px 0; font-size: 24px;">Số tài khoản của bạn</h2>
-              <div style="background-color: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; display: inline-block;">
-                <span style="color: white; font-size: 32px; font-weight: bold; letter-spacing: 2px;">${accountNumber}</span>
+              <div style="background-color: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; display: inline-block; min-width: 350px;">
+                <span class="account-number" style="color: white; font-size: 24px; font-weight: bold; letter-spacing: 0.5px; word-break: keep-all; font-family: monospace;">${accountNumber}</span>
               </div>
             </div>
             
@@ -147,8 +298,13 @@ export class EmailService {
             <p style="color: #666; font-size: 12px; text-align: center;">
               Email này được gửi tự động từ hệ thống MBanking. Vui lòng không trả lời email này.
             </p>
-          </div>
-        </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+        </table>
+        </body>
+        </html>
       `,
       text: `
         Chào mừng đến với MBanking!

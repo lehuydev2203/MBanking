@@ -17,7 +17,7 @@
         <div class="text-center">
           <!-- Loading State -->
           @if (isLoading) {
-            <div class="flex flex-column align-items-center gap-3">
+            <div class="loading-container">
               <p-progressSpinner
                 [style]="{ width: '50px', height: '50px' }"
               ></p-progressSpinner>
@@ -63,13 +63,23 @@
           @if (isVerified) {
             <div class="verify-success">
               <div class="status-icon success">
-                <i class="pi pi-check-circle"></i>
+                <div class="fireworks-container">
+                  <div class="firework firework-1"></div>
+                  <div class="firework firework-2"></div>
+                  <div class="firework firework-3"></div>
+                  <div class="firework firework-4"></div>
+                  <div class="firework firework-5"></div>
+                  <div class="firework firework-6"></div>
+                  <i class="pi pi-check-circle success-icon"></i>
+                </div>
               </div>
               <h3 class="status-title success">Xác thực thành công!</h3>
-              <p class="status-message">
-                Email của bạn đã được xác thực thành công. Bạn có thể đăng nhập
-                vào tài khoản ngay bây giờ.
-              </p>
+              <div class="success-message-container">
+                <p class="status-message">
+                  Email của bạn đã được xác thực thành công. Bạn có thể đăng
+                  nhập vào tài khoản ngay bây giờ.
+                </p>
+              </div>
               <button class="login-button" (click)="goToLogin()">
                 <i class="pi pi-sign-in"></i>
                 <span>Đăng nhập ngay</span>
@@ -84,9 +94,11 @@
                 <i class="pi pi-times-circle"></i>
               </div>
               <h3 class="status-title error">Xác thực thất bại</h3>
-              <p class="status-message error">
-                {{ error }}
-              </p>
+              <div class="error-message-container">
+                <p class="status-message error">
+                  {{ error }}
+                </p>
+              </div>
               <div class="action-buttons">
                 <button class="retry-button" (click)="retryVerification()">
                   <i class="pi pi-refresh"></i>

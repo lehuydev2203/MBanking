@@ -68,7 +68,7 @@ export class TransferComponent implements OnInit, OnDestroy {
         '',
         [
           Validators.required,
-          Validators.pattern(/^(\d{8}|[a-zA-Z0-9_]{3,20})$/),
+          Validators.pattern(/^(\d{16}|[a-zA-Z0-9_]{3,20})$/),
         ],
       ],
       amount: [
