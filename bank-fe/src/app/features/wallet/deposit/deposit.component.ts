@@ -107,10 +107,6 @@ export class DepositComponent implements OnInit, OnDestroy {
         transName: this.depositForm.value.transName || undefined,
         clientRequestId: uuidv4(), // Generate unique ID for idempotency
       };
-      console.log(
-        '🚀 ~ DepositComponent ~ onSubmit ~ depositData:',
-        depositData,
-      );
 
       this.transactionsService.deposit(depositData).subscribe({
         next: (transaction) => {

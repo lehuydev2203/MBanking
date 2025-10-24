@@ -19,7 +19,6 @@ async function seedSuperadmin() {
     const existingSuperadmin = await accountModel.findOne({ email });
 
     if (existingSuperadmin) {
-      console.log('✅ Superadmin already exists:', email);
       return;
     }
 
@@ -41,15 +40,6 @@ async function seedSuperadmin() {
     });
 
     await superadmin.save();
-
-    console.log('✅ Superadmin created successfully:');
-    console.log('   Email:', email);
-    console.log('   Password:', password);
-    console.log('   Account Number:', '9999999999999999');
-    console.log('   Nickname:', 'lehuydev');
-    console.log('   Role: SUPERADMIN');
-    console.log('   Status: ACTIVE');
-    console.log('   Email Verified: true');
   } catch (error) {
     console.error('❌ Error seeding superadmin:', error);
     process.exit(1);
@@ -62,7 +52,6 @@ async function seedSuperadmin() {
 if (require.main === module) {
   seedSuperadmin()
     .then(() => {
-      console.log('🎉 Seeding completed');
       process.exit(0);
     })
     .catch((error) => {

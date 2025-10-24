@@ -85,11 +85,6 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    console.log('WithdrawComponent ngOnInit');
-    console.log('User authenticated:', this.authService.isAuthenticated);
-    console.log('Current user:', this.authService.currentUser);
-    console.log('Token:', this.authService.getToken());
-
     // Subscribe to balance updates
     this.accountsService.balance$
       .pipe(takeUntil(this.destroy$))
@@ -132,18 +127,9 @@ export class WithdrawComponent implements OnInit, OnDestroy {
       event.stopPropagation();
     }
 
-    console.log('onSubmit called');
-    console.log('Form valid:', this.withdrawForm.valid);
-    console.log('Form value:', this.withdrawForm.value);
-    console.log('Form errors:', this.withdrawForm.errors);
-
     if (this.withdrawForm.valid) {
       const amount = this.withdrawForm.get('amount')?.value;
       const transName = this.withdrawForm.get('transName')?.value;
-
-      console.log('Amount:', amount);
-      console.log('TransName:', transName);
-      console.log('Current balance:', this.currentBalance);
 
       // Check if sufficient balance
       if (this.currentBalance && amount > this.currentBalance.balance) {
@@ -156,14 +142,12 @@ export class WithdrawComponent implements OnInit, OnDestroy {
         return;
       }
 
-      console.log('Showing confirmation dialog');
       this.confirmDialogData = {
         ...this.confirmDialogData,
         message: `Bạn có chắc chắn muốn rút ${amount.toLocaleString('vi-VN')} ₫ từ tài khoản?`,
       };
       this.showConfirmDialog = true;
     } else {
-      console.log('Form is invalid, marking all as touched');
       this.withdrawForm.markAllAsTouched();
       this.messageService.add({
         severity: 'warn',
@@ -174,7 +158,6 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   }
 
   onConfirmDialog(): void {
-    console.log('User confirmed withdrawal');
     const amount = this.withdrawForm.get('amount')?.value;
     const transName = this.withdrawForm.get('transName')?.value;
     this.processWithdrawal(amount, transName);
@@ -182,7 +165,6 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   }
 
   onCancelDialog(): void {
-    console.log('User cancelled withdrawal');
     this.showConfirmDialog = false;
   }
 
@@ -191,7 +173,6 @@ export class WithdrawComponent implements OnInit, OnDestroy {
   }
 
   private processWithdrawal(amount: number, transName: string): void {
-    console.log('processWithdrawal called with:', { amount, transName });
     this.isLoading = true;
 
     const withdrawRequest: WithdrawRequest = {
@@ -200,15 +181,11 @@ export class WithdrawComponent implements OnInit, OnDestroy {
       clientRequestId: uuidv4(),
     };
 
-    console.log('Withdraw request:', withdrawRequest);
-    console.log('Calling transactionsService.withdraw...');
-
     this.transactionsService
       .withdraw(withdrawRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Withdraw success:', response);
           this.isLoading = false;
           this.messageService.add({
             severity: 'success',

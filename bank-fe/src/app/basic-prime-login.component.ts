@@ -117,7 +117,6 @@ export class BasicPrimeLoginComponent {
   onSubmit(): void {
     if (this.loginForm.valid) {
       this.isLoading = true;
-      console.log('Login form submitted:', this.loginForm.value);
 
       // Simulate login process
       setTimeout(() => {

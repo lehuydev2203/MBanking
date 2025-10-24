@@ -110,10 +110,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (profile) => {
-          console.log(
-            '🚀 ~ DashboardComponent ~ loadProfile ~ profile:',
-            profile,
-          );
           this.currentProfile = profile;
           this.isLoadingProfile = false;
         },

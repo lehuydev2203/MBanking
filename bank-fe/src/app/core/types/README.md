@@ -78,9 +78,9 @@ const transaction: Transaction = {
 
 // Add type info to transaction
 const transactionWithInfo = addTransactionTypeInfo(transaction);
-console.log(transactionWithInfo.typeLabel); // "Nạp tiền"
-console.log(transactionWithInfo.typeIcon); // "pi pi-arrow-down"
-console.log(transactionWithInfo.isIncoming); // true
+// transactionWithInfo.typeLabel = "Nạp tiền"
+// transactionWithInfo.typeIcon = "pi pi-arrow-down"
+// transactionWithInfo.isIncoming = true
 ```
 
 ## Available Functions

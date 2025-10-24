@@ -161,16 +161,7 @@ export class EmailService {
     };
 
     try {
-      console.log('Sending verification email to:', email);
-      console.log('Email config:', {
-        host: this.configService.get<string>('email.host'),
-        port: this.configService.get<number>('email.port'),
-        user: this.configService.get<string>('email.user'),
-        from: this.configService.get<string>('email.from'),
-      });
-
       const result = await this.transporter.sendMail(mailOptions);
-      console.log('Verification email sent successfully:', result.messageId);
     } catch (error) {
       console.error('Failed to send verification email:', error);
       console.error('Error details:', {

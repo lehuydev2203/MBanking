@@ -234,7 +234,6 @@ export class AuthService {
       const currentExpLeft = this.getTokenExpirationLeft();
 
       if (currentExpLeft <= 0) {
-        console.log('Token expired, logging out...');
         this.logout();
       } else if (currentExpLeft <= 60000) {
         console.warn(

@@ -55,16 +55,10 @@ export class ApiService {
   }
 
   post<T>(endpoint: string, body: any): Observable<T> {
-    console.log('🚀 ~ ApiService ~ post ~ body:', body);
-    console.log(
-      '🚀 ~ ApiService ~ post ~ endpoint:',
-      `${this.baseUrl}${endpoint}`,
-    );
     return this.http
       .post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, body)
       .pipe(
         map((response) => {
-          console.log('🚀 ~ ApiService ~ post ~ response:', response);
           if (response.success) {
             return response.data;
           }

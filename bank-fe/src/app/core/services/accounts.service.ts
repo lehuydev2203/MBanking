@@ -63,8 +63,6 @@ export class AccountsService {
   getProfile(): Observable<UserProfile> {
     return this.apiService.get<any>(API_ENDPOINTS.PROFILE.GET).pipe(
       map((profileData: any) => {
-        console.log('🔍 Profile Data:', profileData);
-
         // Map API response to UserProfile interface
         const profile: UserProfile = {
           id: profileData.id,
@@ -84,7 +82,6 @@ export class AccountsService {
           nickname: profileData.nickname,
         };
 
-        console.log('🔍 Mapped Profile:', profile);
         return profile;
       }),
       tap((profile) => {

@@ -143,7 +143,6 @@ export class TransferComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (profile) => {
-          console.log('Loaded current user profile:', profile);
           this.currentUser = profile;
         },
         error: (error) => {
@@ -242,31 +241,12 @@ export class TransferComponent implements OnInit, OnDestroy {
       ? this.transferForm.get('transName')?.valid
       : true;
 
-    console.log('Form validation:', {
-      recipientValid,
-      amountValid,
-      transNameValid,
-      recipientErrors: this.transferForm.get('recipient')?.errors,
-      amountErrors: this.transferForm.get('amount')?.errors,
-      transNameErrors: this.transferForm.get('transName')?.errors,
-      recipientEnabled: this.transferForm.get('recipient')?.enabled,
-      amountEnabled: this.transferForm.get('amount')?.enabled,
-      transNameEnabled: this.transferForm.get('transName')?.enabled,
-    });
-
     if (recipientValid && amountValid && transNameValid) {
       const amountValue = this.transferForm.get('amount')?.value;
       const amount =
         typeof amountValue === 'string' ? parseInt(amountValue) : amountValue;
       const recipient = this.transferForm.get('recipient')?.value;
       const transName = this.transferForm.get('transName')?.value;
-
-      console.log('Transfer data:', {
-        amount,
-        recipient,
-        transName,
-        recipientInfo: this.recipientInfo,
-      });
 
       // Check if sufficient balance
       if (this.currentBalance && amount > this.currentBalance.balance) {
@@ -278,10 +258,6 @@ export class TransferComponent implements OnInit, OnDestroy {
         });
         return;
       }
-
-      console.log('About to show confirmation dialog');
-      console.log('RecipientInfo object:', this.recipientInfo);
-      console.log('RecipientInfo keys:', Object.keys(this.recipientInfo || {}));
 
       const senderName = this.currentUser?.name || 'Người gửi';
       const senderAccount = this.currentUser?.accountNumber || 'N/A';
@@ -304,12 +280,9 @@ export class TransferComponent implements OnInit, OnDestroy {
         acceptLabel: 'Xác nhận',
         rejectLabel: 'Hủy',
         accept: () => {
-          console.log('User accepted transfer');
           this.processTransfer(recipient, amount, transName);
         },
-        reject: () => {
-          console.log('User rejected transfer');
-        },
+        reject: () => {},
       });
     } else {
       this.transferForm.markAllAsTouched();
@@ -396,17 +369,6 @@ export class TransferComponent implements OnInit, OnDestroy {
     amount: number,
     transName: string,
   ): void {
-    console.log('processTransfer called with:', {
-      recipient,
-      amount,
-      transName,
-    });
-
-    // Debug: Check current user and token
-    console.log('Current user:', this.currentUser);
-    console.log('Auth token:', this.authService.getToken());
-    console.log('Is authenticated:', this.authService.isAuthenticated());
-
     // Check if user is authenticated
     if (!this.authService.isAuthenticated()) {
       console.error('User is not authenticated');
@@ -427,14 +389,11 @@ export class TransferComponent implements OnInit, OnDestroy {
       transName,
     };
 
-    console.log('Transfer request:', transferRequest);
-
     this.transactionsService
       .initiateTransfer(transferRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          console.log('Transfer initiation successful:', response);
           this.isLoading = false;
           this.messageService.add({
             severity: 'success',
