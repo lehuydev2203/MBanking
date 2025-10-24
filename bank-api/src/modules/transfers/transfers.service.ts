@@ -6,7 +6,7 @@ import {
   ConflictException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model, ClientSession } from 'mongoose';
+import { Model } from 'mongoose';
 import { Decimal128 } from 'mongodb';
 import {
   Account,
@@ -36,100 +36,104 @@ export class TransfersService {
     @InjectModel(Transaction.name)
     private transactionModel: Model<TransactionDocument>,
     private emailService: EmailService,
-    private auditService: AuditService,
+    // private auditService: AuditService,
   ) {}
 
   async initiateTransfer(
     userId: string,
     transferRequestDto: TransferRequestDto,
   ) {
-    const { recipientIdentifier, amount, transName } = transferRequestDto;
+    try {
+      const { recipientIdentifier, amount, transName } = transferRequestDto;
 
-    // Get sender account
-    const senderAccount = await this.accountModel.findById(userId);
-    if (!senderAccount) {
-      throw new NotFoundException('Sender account not found');
-    }
+      // Get sender account
+      const senderAccount = await this.accountModel.findOne({ _id: userId });
+      if (!senderAccount) {
+        throw new NotFoundException('Sender account not found');
+      }
 
-    // Check if sender has sufficient balance
-    const senderBalance = parseFloat(senderAccount.balance.toString());
-    if (senderBalance < amount) {
-      throw new ForbiddenException({
-        code: 'INSUFFICIENT_FUNDS',
-        message: 'Insufficient account balance',
+      // Check if sender has sufficient balance
+      const senderBalance = parseFloat(senderAccount.balance.toString());
+      if (senderBalance < amount) {
+        throw new ForbiddenException({
+          code: 'INSUFFICIENT_FUNDS',
+          message: 'Insufficient account balance',
+        });
+      }
+
+      // Check per-transaction limit
+      if (amount > transactionConfig().maxTransactionAmount) {
+        throw new ForbiddenException({
+          code: 'LIMIT_PER_TRANSACTION',
+          message: `Amount exceeds per-transaction limit of ${transactionConfig().maxTransactionAmount.toLocaleString()} VND`,
+        });
+      }
+
+      // Find recipient account
+      const recipientAccount = await this.accountModel.findOne({
+        $or: [
+          { accountNumber: recipientIdentifier },
+          { nickname: recipientIdentifier },
+        ],
       });
-    }
 
-    // Check per-transaction limit
-    if (amount > transactionConfig().maxTransactionAmount) {
-      throw new ForbiddenException({
-        code: 'LIMIT_PER_TRANSACTION',
-        message: `Amount exceeds per-transaction limit of ${transactionConfig().maxTransactionAmount.toLocaleString()} VND`,
+      if (!recipientAccount) {
+        throw new NotFoundException('Recipient account not found');
+      }
+
+      // Check if trying to transfer to self
+      if ((recipientAccount as any)._id.toString() === userId) {
+        throw new BadRequestException('Cannot transfer to your own account');
+      }
+
+      // Generate 6-digit verification code
+      const code = Math.floor(100000 + Math.random() * 900000).toString();
+
+      // Set expiration time (5 minutes from now)
+      const expiresAt = new Date();
+      expiresAt.setMinutes(expiresAt.getMinutes() + 5);
+
+      // Invalidate existing verification codes for this account
+      await this.transferVerificationModel.updateMany(
+        { accountId: userId, isUsed: false },
+        { isUsed: true, usedAt: new Date() },
+      );
+
+      // Create transfer verification record
+      const transferVerification = new this.transferVerificationModel({
+        accountId: userId,
+        code,
+        recipientAccountNumber: recipientAccount.accountNumber,
+        recipientName: recipientAccount.name,
+        amount,
+        transName,
+        expiresAt,
       });
-    }
 
-    // Find recipient account
-    const recipientAccount = await this.accountModel.findOne({
-      $or: [
-        { accountNumber: recipientIdentifier },
-        { nickname: recipientIdentifier },
-      ],
-    });
+      await transferVerification.save();
 
-    if (!recipientAccount) {
-      throw new NotFoundException('Recipient account not found');
-    }
+      // Send verification email
+      await this.emailService.sendTransferVerificationEmail(
+        senderAccount.email,
+        code,
+        {
+          recipientName: recipientAccount.name,
+          recipientAccountNumber: recipientAccount.accountNumber,
+          amount,
+          transName,
+        },
+      );
 
-    // Check if trying to transfer to self
-    if ((recipientAccount as any)._id.toString() === userId) {
-      throw new BadRequestException('Cannot transfer to your own account');
-    }
-
-    // Generate 6-digit verification code
-    const code = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Set expiration time (5 minutes from now)
-    const expiresAt = new Date();
-    expiresAt.setMinutes(expiresAt.getMinutes() + 5);
-
-    // Invalidate existing verification codes for this account
-    await this.transferVerificationModel.updateMany(
-      { accountId: userId, isUsed: false },
-      { isUsed: true, usedAt: new Date() },
-    );
-
-    // Create transfer verification record
-    const transferVerification = new this.transferVerificationModel({
-      accountId: userId,
-      code,
-      recipientAccountNumber: recipientAccount.accountNumber,
-      recipientName: recipientAccount.name,
-      amount,
-      transName,
-      expiresAt,
-    });
-
-    await transferVerification.save();
-
-    // Send verification email
-    await this.emailService.sendTransferVerificationEmail(
-      senderAccount.email,
-      code,
-      {
+      return {
+        message: 'VERIFICATION_CODE_SENT',
         recipientName: recipientAccount.name,
         recipientAccountNumber: recipientAccount.accountNumber,
         amount,
-        transName,
-      },
-    );
-
-    return {
-      message: 'VERIFICATION_CODE_SENT',
-      recipientName: recipientAccount.name,
-      recipientAccountNumber: recipientAccount.accountNumber,
-      amount,
-      expiresAt,
-    };
+        expiresAt,
+      };
+    } catch (error) {
+      throw error;
+    }
   }
 
   async confirmTransfer(
@@ -153,121 +157,75 @@ export class TransfersService {
       });
     }
 
-    const session: ClientSession =
-      await this.transactionModel.db.startSession();
-
-    try {
-      await session.withTransaction(async () => {
-        // Get sender account
-        const senderAccount = await this.accountModel.findById(userId, null, {
-          session,
-        });
-        if (!senderAccount) {
-          throw new NotFoundException('Sender account not found');
-        }
-
-        // Double-check balance
-        const senderBalance = parseFloat(senderAccount.balance.toString());
-        if (senderBalance < verification.amount) {
-          throw new ForbiddenException({
-            code: 'INSUFFICIENT_FUNDS',
-            message: 'Insufficient account balance',
-          });
-        }
-
-        // Get recipient account
-        const recipientAccount = await this.accountModel.findOne(
-          { accountNumber: verification.recipientAccountNumber },
-          null,
-          { session },
-        );
-        if (!recipientAccount) {
-          throw new NotFoundException('Recipient account not found');
-        }
-
-        // Create sender transaction (withdrawal)
-        const senderTransaction = new this.transactionModel({
-          accountId: userId,
-          transName: `Transfer to ${verification.recipientName} - ${verification.transName}`,
-          transMoney: Decimal128.fromString((-verification.amount).toString()),
-          transType: TransactionType.WITHDRAW,
-        });
-
-        await senderTransaction.save({ session });
-
-        // Create recipient transaction (deposit)
-        const recipientTransaction = new this.transactionModel({
-          accountId: recipientAccount._id,
-          transName: `Transfer from ${senderAccount.name} - ${verification.transName}`,
-          transMoney: Decimal128.fromString(verification.amount.toString()),
-          transType: TransactionType.DEPOSIT,
-        });
-
-        await recipientTransaction.save({ session });
-
-        // Update sender balance
-        await this.accountModel.findByIdAndUpdate(
-          userId,
-          {
-            $inc: {
-              balance: Decimal128.fromString((-verification.amount).toString()),
-            },
-          },
-          { session },
-        );
-
-        // Update recipient balance
-        await this.accountModel.findByIdAndUpdate(
-          recipientAccount._id,
-          {
-            $inc: {
-              balance: Decimal128.fromString(verification.amount.toString()),
-            },
-          },
-          { session },
-        );
-
-        // Mark verification as used
-        verification.isUsed = true;
-        verification.usedAt = new Date();
-        await verification.save({ session });
-
-        // Log audit for sender
-        await this.auditService.log({
-          actorId: userId,
-          action: 'TRANSFER_SENT',
-          resource: 'transaction',
-          meta: {
-            transactionId: (senderTransaction as any)._id.toString(),
-            amount: verification.amount,
-            recipientAccountNumber: verification.recipientAccountNumber,
-            recipientName: verification.recipientName,
-          },
-        });
-
-        // Log audit for recipient
-        await this.auditService.log({
-          actorId: (recipientAccount as any)._id.toString(),
-          action: 'TRANSFER_RECEIVED',
-          resource: 'transaction',
-          meta: {
-            transactionId: (recipientTransaction as any)._id.toString(),
-            amount: verification.amount,
-            senderAccountNumber: senderAccount.accountNumber,
-            senderName: senderAccount.name,
-          },
-        });
-      });
-
-      return {
-        message: 'TRANSFER_COMPLETED',
-        amount: verification.amount,
-        recipientName: verification.recipientName,
-        recipientAccountNumber: verification.recipientAccountNumber,
-      };
-    } finally {
-      await session.endSession();
+    // Get sender account
+    const senderAccount = await this.accountModel.findOne({ _id: userId });
+    if (!senderAccount) {
+      throw new NotFoundException('Sender account not found');
     }
+
+    // Check balance
+    const senderBalance = parseFloat(senderAccount.balance.toString());
+    if (senderBalance < verification.amount) {
+      throw new ForbiddenException({
+        code: 'INSUFFICIENT_FUNDS',
+        message: 'Insufficient account balance',
+      });
+    }
+
+    // Get recipient account
+    const recipientAccount = await this.accountModel.findOne({
+      accountNumber: verification.recipientAccountNumber,
+    });
+    if (!recipientAccount) {
+      throw new NotFoundException('Recipient account not found');
+    }
+
+    // Create sender transaction (transfer sent)
+    const senderTransaction = new this.transactionModel({
+      accountId: userId,
+      transName: `Transfer to ${verification.recipientName} - ${verification.transName}`,
+      transMoney: Decimal128.fromString(verification.amount.toString()),
+      transType: TransactionType.TRANSFER_SENT,
+    });
+    await senderTransaction.save();
+
+    // Create recipient transaction (transfer received)
+    const recipientTransaction = new this.transactionModel({
+      accountId: recipientAccount._id,
+      transName: `Transfer from ${senderAccount.name} - ${verification.transName}`,
+      transMoney: Decimal128.fromString(verification.amount.toString()),
+      transType: TransactionType.TRANSFER_RECEIVED,
+    });
+    await recipientTransaction.save();
+
+    // Update sender balance
+    await this.accountModel.findOneAndUpdate(
+      { _id: userId },
+      {
+        $inc: {
+          balance: Decimal128.fromString((-verification.amount).toString()),
+        },
+      },
+    );
+
+    // Update recipient balance
+    await this.accountModel.findByIdAndUpdate(recipientAccount._id, {
+      $inc: {
+        balance: Decimal128.fromString(verification.amount.toString()),
+      },
+    });
+
+    // Mark verification as used
+    verification.isUsed = true;
+    verification.usedAt = new Date();
+    await verification.save();
+
+    return {
+      message: 'TRANSFER_COMPLETED',
+      amount: verification.amount,
+      recipientName: verification.recipientName,
+      recipientAccountNumber: verification.recipientAccountNumber,
+    };
   }
 
   async getTransferHistory(

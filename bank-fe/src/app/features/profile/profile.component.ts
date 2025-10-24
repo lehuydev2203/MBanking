@@ -10,7 +10,6 @@ import { Router } from '@angular/router';
 import { Subject, takeUntil } from 'rxjs';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
@@ -31,7 +30,6 @@ import { AuthService } from '../../core/services/auth.service';
     ReactiveFormsModule,
     CardModule,
     ButtonModule,
-    InputTextModule,
     PasswordModule,
     MessageModule,
     ProgressSpinnerModule,

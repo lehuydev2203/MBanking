@@ -80,8 +80,8 @@ export class AccountsService {
           accountNumber:
             profileData.accountNumber ||
             this.generateAccountNumber(profileData.id),
-          // Use nickname from API or fallback to name
-          nickname: profileData.nickname || profileData.name,
+          // Use nickname from API only (no fallback)
+          nickname: profileData.nickname,
         };
 
         console.log('🔍 Mapped Profile:', profile);

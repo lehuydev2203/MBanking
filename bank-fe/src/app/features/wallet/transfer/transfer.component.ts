@@ -1,4 +1,10 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnDestroy,
+  ChangeDetectorRef,
+  ViewEncapsulation,
+} from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   FormBuilder,
@@ -10,8 +16,6 @@ import { Subject, takeUntil, debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { CardModule } from 'primeng/card';
 import { ButtonModule } from 'primeng/button';
-import { InputTextModule } from 'primeng/inputtext';
-import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
@@ -35,8 +39,6 @@ import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
     ReactiveFormsModule,
     CardModule,
     ButtonModule,
-    InputTextModule,
-    InputNumberModule,
     MessageModule,
     ProgressSpinnerModule,
     ConfirmDialogModule,
@@ -45,6 +47,7 @@ import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
   providers: [MessageService, ConfirmationService],
   templateUrl: './transfer.component.html',
   styleUrl: './transfer.component.scss',
+  encapsulation: ViewEncapsulation.None,
 })
 export class TransferComponent implements OnInit, OnDestroy {
   transferForm: FormGroup;
@@ -52,6 +55,7 @@ export class TransferComponent implements OnInit, OnDestroy {
   currentBalance: any = null;
   recipientInfo: RecipientInfo | null = null;
   isCheckingRecipient = false;
+  currentUser: any = null;
 
   private destroy$ = new Subject<void>();
 
@@ -62,6 +66,7 @@ export class TransferComponent implements OnInit, OnDestroy {
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
+    private cdr: ChangeDetectorRef,
   ) {
     this.transferForm = this.fb.group({
       recipient: [
@@ -105,6 +110,7 @@ export class TransferComponent implements OnInit, OnDestroy {
       });
 
     this.loadCurrentBalance();
+    this.loadCurrentUser();
   }
 
   ngOnDestroy(): void {
@@ -126,6 +132,27 @@ export class TransferComponent implements OnInit, OnDestroy {
             balance: 0,
             currency: 'VND',
             lastUpdated: new Date().toISOString(),
+          };
+        },
+      });
+  }
+
+  private loadCurrentUser(): void {
+    this.accountsService
+      .getProfile()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (profile) => {
+          console.log('Loaded current user profile:', profile);
+          this.currentUser = profile;
+        },
+        error: (error) => {
+          console.error('Error loading user profile:', error);
+          // Set default user info when API fails
+          this.currentUser = {
+            name: 'Người dùng',
+            email: 'user@example.com',
+            accountNumber: '0000000000000000',
           };
         },
       });
@@ -163,6 +190,9 @@ export class TransferComponent implements OnInit, OnDestroy {
         next: (recipientData) => {
           this.isCheckingRecipient = false;
           this.recipientInfo = recipientData;
+
+          // Force change detection
+          this.cdr.detectChanges();
 
           // Enable other fields
           this.transferForm.get('amount')?.enable();
@@ -212,10 +242,31 @@ export class TransferComponent implements OnInit, OnDestroy {
       ? this.transferForm.get('transName')?.valid
       : true;
 
+    console.log('Form validation:', {
+      recipientValid,
+      amountValid,
+      transNameValid,
+      recipientErrors: this.transferForm.get('recipient')?.errors,
+      amountErrors: this.transferForm.get('amount')?.errors,
+      transNameErrors: this.transferForm.get('transName')?.errors,
+      recipientEnabled: this.transferForm.get('recipient')?.enabled,
+      amountEnabled: this.transferForm.get('amount')?.enabled,
+      transNameEnabled: this.transferForm.get('transName')?.enabled,
+    });
+
     if (recipientValid && amountValid && transNameValid) {
-      const amount = this.transferForm.get('amount')?.value;
+      const amountValue = this.transferForm.get('amount')?.value;
+      const amount =
+        typeof amountValue === 'string' ? parseInt(amountValue) : amountValue;
       const recipient = this.transferForm.get('recipient')?.value;
       const transName = this.transferForm.get('transName')?.value;
+
+      console.log('Transfer data:', {
+        amount,
+        recipient,
+        transName,
+        recipientInfo: this.recipientInfo,
+      });
 
       // Check if sufficient balance
       if (this.currentBalance && amount > this.currentBalance.balance) {
@@ -228,14 +279,36 @@ export class TransferComponent implements OnInit, OnDestroy {
         return;
       }
 
+      console.log('About to show confirmation dialog');
+      console.log('RecipientInfo object:', this.recipientInfo);
+      console.log('RecipientInfo keys:', Object.keys(this.recipientInfo || {}));
+
+      const senderName = this.currentUser?.name || 'Người gửi';
+      const senderAccount = this.currentUser?.accountNumber || 'N/A';
+      const recipientName =
+        this.recipientInfo?.name || 'Tài khoản không xác định';
+
       this.confirmationService.confirm({
-        message: `Bạn có chắc chắn muốn chuyển ${amount.toLocaleString('vi-VN')} ₫ đến ${this.recipientInfo.name} (${recipient})?`,
+        message: `
+          <div style="text-align: left;">
+            <p><strong>Người gửi:</strong> ${senderName} (${senderAccount})</p>
+            <p><strong>Người nhận:</strong> ${recipientName} (${recipient})</p>
+            <p><strong>Số tiền:</strong> ${amount.toLocaleString('vi-VN')} ₫</p>
+            <p><strong>Nội dung:</strong> ${transName}</p>
+            <br>
+            <p>Bạn có chắc chắn muốn thực hiện giao dịch này?</p>
+          </div>
+        `,
         header: 'Xác nhận chuyển khoản',
         icon: 'pi pi-exclamation-triangle',
         acceptLabel: 'Xác nhận',
         rejectLabel: 'Hủy',
         accept: () => {
+          console.log('User accepted transfer');
           this.processTransfer(recipient, amount, transName);
+        },
+        reject: () => {
+          console.log('User rejected transfer');
         },
       });
     } else {
@@ -248,11 +321,104 @@ export class TransferComponent implements OnInit, OnDestroy {
     }
   }
 
+  formatAmount(value: number): string {
+    if (!value) return '';
+    return value.toLocaleString('vi-VN');
+  }
+
+  onAmountInput(event: any): void {
+    const input = event.target;
+    const value = input.value;
+
+    // Remove all non-numeric characters
+    const numericValue = value.replace(/[^\d]/g, '');
+
+    // Update the form control with numeric value (as number, not string)
+    const numericAmount = numericValue ? parseInt(numericValue) : null;
+    this.transferForm
+      .get('amount')
+      ?.setValue(numericAmount, { emitEvent: false });
+
+    // Format the display value
+    if (numericValue) {
+      const formattedValue = parseInt(numericValue).toLocaleString('vi-VN');
+      input.value = formattedValue;
+    } else {
+      input.value = '';
+    }
+  }
+
+  onAmountBlur(event: any): void {
+    const input = event.target;
+    const value = input.value;
+
+    // Remove all non-numeric characters
+    const numericValue = value.replace(/[^\d]/g, '');
+
+    if (numericValue) {
+      const numericAmount = parseInt(numericValue);
+      const formattedValue = numericAmount.toLocaleString('vi-VN');
+      input.value = formattedValue;
+
+      // Update form control with numeric value
+      this.transferForm.get('amount')?.setValue(numericAmount);
+    } else {
+      input.value = '';
+      this.transferForm.get('amount')?.setValue(null);
+    }
+  }
+
+  copyAccountNumber(): void {
+    if (this.recipientInfo?.accountNumber) {
+      navigator.clipboard
+        .writeText(this.recipientInfo.accountNumber)
+        .then(() => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Đã sao chép',
+            detail: 'Số tài khoản đã được sao chép vào clipboard',
+            life: 2000,
+          });
+        })
+        .catch(() => {
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Lỗi',
+            detail: 'Không thể sao chép số tài khoản',
+            life: 2000,
+          });
+        });
+    }
+  }
+
   private processTransfer(
     recipient: string,
     amount: number,
     transName: string,
   ): void {
+    console.log('processTransfer called with:', {
+      recipient,
+      amount,
+      transName,
+    });
+
+    // Debug: Check current user and token
+    console.log('Current user:', this.currentUser);
+    console.log('Auth token:', this.authService.getToken());
+    console.log('Is authenticated:', this.authService.isAuthenticated());
+
+    // Check if user is authenticated
+    if (!this.authService.isAuthenticated()) {
+      console.error('User is not authenticated');
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Lỗi',
+        detail: 'Bạn cần đăng nhập để thực hiện chuyển khoản',
+        life: 5000,
+      });
+      return;
+    }
+
     this.isLoading = true;
 
     const transferRequest: TransferRequest = {
@@ -261,11 +427,14 @@ export class TransferComponent implements OnInit, OnDestroy {
       transName,
     };
 
+    console.log('Transfer request:', transferRequest);
+
     this.transactionsService
       .initiateTransfer(transferRequest)
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
+          console.log('Transfer initiation successful:', response);
           this.isLoading = false;
           this.messageService.add({
             severity: 'success',
@@ -286,13 +455,23 @@ export class TransferComponent implements OnInit, OnDestroy {
           });
         },
         error: (error) => {
+          console.error('Transfer initiation failed:', error);
           this.isLoading = false;
+
+          // Show more specific error message
+          let errorMessage =
+            'Không thể khởi tạo chuyển khoản. Vui lòng thử lại.';
+          if (error.error && error.error.message) {
+            errorMessage = error.error.message;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
           this.messageService.add({
             severity: 'error',
             summary: 'Lỗi',
-            detail:
-              error.error?.message ||
-              'Khởi tạo chuyển khoản thất bại. Vui lòng thử lại.',
+            detail: errorMessage,
+            life: 5000,
           });
         },
       });

@@ -39,7 +39,15 @@ export class ApiService {
       .pipe(
         map((response) => {
           if (response.success) {
-            return response.data;
+            // Handle double wrapper case
+            if (
+              response.data &&
+              typeof response.data === 'object' &&
+              'data' in response.data
+            ) {
+              return (response.data as any).data as T;
+            }
+            return response.data as T;
           }
           throw new Error(response.message || 'API request failed');
         }),
@@ -48,10 +56,15 @@ export class ApiService {
 
   post<T>(endpoint: string, body: any): Observable<T> {
     console.log('🚀 ~ ApiService ~ post ~ body:', body);
+    console.log(
+      '🚀 ~ ApiService ~ post ~ endpoint:',
+      `${this.baseUrl}${endpoint}`,
+    );
     return this.http
       .post<ApiResponse<T>>(`${this.baseUrl}${endpoint}`, body)
       .pipe(
         map((response) => {
+          console.log('🚀 ~ ApiService ~ post ~ response:', response);
           if (response.success) {
             return response.data;
           }

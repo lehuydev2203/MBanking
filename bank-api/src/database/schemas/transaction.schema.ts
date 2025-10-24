@@ -7,6 +7,8 @@ export type TransactionDocument = Transaction & Document;
 export enum TransactionType {
   DEPOSIT = 1,
   WITHDRAW = 2,
+  TRANSFER_SENT = 3,
+  TRANSFER_RECEIVED = 4,
 }
 
 @Schema({ timestamps: true })

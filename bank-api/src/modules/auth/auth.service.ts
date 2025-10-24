@@ -238,7 +238,7 @@ export class AuthService {
   }
 
   async validateUserById(userId: string) {
-    return this.accountModel.findById(userId);
+    return this.accountModel.findOne({ _id: userId });
   }
 
   private async createAndSendVerificationCode(accountId: any, email: string) {

@@ -36,10 +36,10 @@ export const API_ENDPOINTS = {
 
   // ==================== TRANSFERS ====================
   TRANSFERS: {
-    INITIATE: '/transfers/initiate',
-    CONFIRM: '/transfers/confirm',
-    SET_NICKNAME: '/transfers/nickname',
-    HISTORY: '/transfers/history', // Deprecated
+    INITIATE: '/v1/transfers/initiate',
+    CONFIRM: '/v1/transfers/confirm',
+    SET_NICKNAME: '/v1/transfers/nickname',
+    HISTORY: '/v1/transfers/history', // Deprecated
   },
 
   // ==================== ADMIN PANEL ====================

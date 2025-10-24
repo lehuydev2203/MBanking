@@ -66,10 +66,8 @@ export class TransfersController {
     @Request() req,
     @Body() transferRequestDto: TransferRequestDto,
   ) {
-    return this.transfersService.initiateTransfer(
-      req.user.sub,
-      transferRequestDto,
-    );
+    const userId = req.user._id ? req.user._id.toString() : req.user.sub;
+    return this.transfersService.initiateTransfer(userId, transferRequestDto);
   }
 
   @Post('confirm')
@@ -95,10 +93,8 @@ export class TransfersController {
     @Request() req,
     @Body() transferConfirmDto: TransferConfirmDto,
   ) {
-    return this.transfersService.confirmTransfer(
-      req.user.sub,
-      transferConfirmDto,
-    );
+    const userId = req.user._id ? req.user._id.toString() : req.user.sub;
+    return this.transfersService.confirmTransfer(userId, transferConfirmDto);
   }
 
   @Get('history')
@@ -130,11 +126,8 @@ export class TransfersController {
     @Query('page', new DefaultValuePipe(1), ParseIntPipe) page: number,
     @Query('pageSize', new DefaultValuePipe(10), ParseIntPipe) pageSize: number,
   ) {
-    return this.transfersService.getTransferHistory(
-      req.user.sub,
-      page,
-      pageSize,
-    );
+    const userId = req.user._id ? req.user._id.toString() : req.user.sub;
+    return this.transfersService.getTransferHistory(userId, page, pageSize);
   }
 
   @Post('nickname')

@@ -40,11 +40,11 @@
                 </label>
                 <div class="input-wrapper">
                   <input
-                    pInputText
                     id="recipient"
+                    type="text"
                     formControlName="recipient"
                     placeholder="Nhập số tài khoản (16 chữ số) hoặc nickname"
-                    class="form-input"
+                    class="transfer-input"
                     [class.error]="
                       transferForm.get('recipient')?.invalid &&
                       transferForm.get('recipient')?.touched
@@ -70,26 +70,110 @@
                 }
               </div>
 
+              <!-- Recipient Info Card -->
+              @if (recipientInfo) {
+                <div class="recipient-info-card">
+                  <!-- Animated background -->
+                  <div class="card-bg-animation"></div>
+                  
+                  <!-- Header with enhanced design -->
+                  <div class="recipient-header">
+                    <div class="header-left">
+                      <div class="recipient-avatar">
+                        <div class="avatar-bg"></div>
+                        <i class="pi pi-user-check"></i>
+                        <div class="avatar-glow"></div>
+                      </div>
+                      <div class="header-text">
+                        <h4 class="header-title">Thông tin người nhận</h4>
+                        <p class="header-subtitle">Đã xác thực tài khoản</p>
+                      </div>
+                    </div>
+                    <div class="header-right">
+                      <div class="verification-badge">
+                        <i class="pi pi-shield-check"></i>
+                        <span>Verified</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Content with improved layout -->
+                  <div class="recipient-content">
+                    <div class="recipient-details">
+                      <!-- Name with highlight -->
+                      <div class="detail-item primary">
+                        <div class="detail-icon">
+                          <i class="pi pi-user"></i>
+                        </div>
+                        <div class="detail-content">
+                          <span class="detail-label">Họ tên</span>
+                          <span class="detail-value name-highlight">
+                            {{ recipientInfo?.name || "N/A" }}
+                          </span>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  <!-- Footer with action -->
+                  <div class="recipient-footer">
+                    <div class="footer-info">
+                      <i class="pi pi-info-circle"></i>
+                      <span>Thông tin đã được xác thực bởi hệ thống</span>
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Loading state for recipient check -->
+              @if (isCheckingRecipient) {
+                <div class="recipient-loading">
+                  <div class="loading-content">
+                    <i class="pi pi-spin pi-spinner"></i>
+                    <span>Đang tìm kiếm thông tin người nhận...</span>
+                  </div>
+                </div>
+              }
+
+              <!-- Error state for recipient not found -->
+              @if (
+                transferForm.get("recipient")?.touched &&
+                transferForm.get("recipient")?.valid &&
+                !recipientInfo &&
+                !isCheckingRecipient &&
+                transferForm.get("recipient")?.value
+              ) {
+                <div class="recipient-error">
+                  <div class="error-content">
+                    <i class="pi pi-exclamation-triangle"></i>
+                    <span
+                      >Không tìm thấy tài khoản người nhận. Vui lòng kiểm tra
+                      lại thông tin.</span
+                    >
+                  </div>
+                </div>
+              }
+
               <div class="form-field">
                 <label for="amount" class="form-label">
                   <i class="pi pi-money-bill"></i>
                   Số tiền chuyển <span class="required">*</span>
                 </label>
                 <div class="input-wrapper">
-                  <p-inputNumber
+                  <input
                     id="amount"
+                    type="text"
                     formControlName="amount"
-                    mode="currency"
-                    currency="VND"
-                    locale="vi-VN"
                     placeholder="Nhập số tiền"
-                    class="amount-input"
+                    class="transfer-input amount-input"
                     [class.error]="
                       transferForm.get('amount')?.invalid &&
                       transferForm.get('amount')?.touched
                     "
-                  >
-                  </p-inputNumber>
+                    (input)="onAmountInput($event)"
+                    (blur)="onAmountBlur($event)"
+                  />
                 </div>
                 @if (
                   transferForm.get("amount")?.invalid &&
@@ -120,11 +204,11 @@
                 </label>
                 <div class="input-wrapper">
                   <input
-                    pInputText
                     id="transName"
+                    type="text"
                     formControlName="transName"
                     placeholder="Nhập nội dung chuyển khoản"
-                    class="form-input"
+                    class="transfer-input"
                     maxlength="100"
                   />
                 </div>
@@ -267,3 +351,5 @@
     </div>
   </div>
 </div>
+
+<p-confirmDialog></p-confirmDialog>
