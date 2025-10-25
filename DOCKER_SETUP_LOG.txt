@@ -1,0 +1,204 @@
+# DOCKER SETUP LOG - MBANKING PROJECT
+# Ngày: 25/10/2025
+# Mục tiêu: Triển khai Docker CI/CD cho dự án MBanking (Frontend Angular + Backend NestJS) với Ngrok
+
+## TÓM TẮT CÔNG VIỆC ĐÃ HOÀN THÀNH
+
+### 1. Docker Configuration Files Created
+- ✅ Dockerfile cho Frontend Angular (bank-fe/Dockerfile)
+- ✅ nginx.conf cho Frontend (bank-fe/nginx.conf) 
+- ✅ docker-compose.yml tổng thể cho cả hệ thống
+- ✅ env.example với cấu hình Gmail SMTP
+- ✅ Scripts CI/CD (deploy.sh, stop.sh, logs.sh, health-check.sh)
+- ✅ Makefile cho quản lý commands
+- ✅ DOCKER_README.md hướng dẫn chi tiết
+
+### 2. Services Architecture
+- MongoDB: Database chính
+- Backend API: NestJS server (port 1403)
+- Frontend: Angular app với Nginx (port 2203)
+- Ngrok: Tunnel service để expose ra ngoài (port 4040)
+- MailHog: Email testing (optional, port 8025)
+
+### 3. Key Features Implemented
+- Multi-stage Docker builds
+- Health checks cho tất cả services
+- Nginx reverse proxy cho frontend và API
+- Environment variables configuration
+- Automated deployment scripts
+- Logs management
+- Health monitoring
+
+## CẤU HÌNH QUAN TRỌNG
+
+### Environment Variables (.env)
+```
+# Ngrok Configuration (BẮT BUỘC)
+NGROK_AUTHTOKEN=your-ngrok-auth-token-here
+
+# Email Configuration (Gmail SMTP)
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=465
+EMAIL_USER=your-gmail@gmail.com
+EMAIL_PASS=your-gmail-app-password
+EMAIL_FROM=noreply@banking.local
+
+# Database
+MONGODB_URI=mongodb://mongo:27017/banking
+MONGO_INITDB_ROOT_PASSWORD=password
+
+# JWT
+JWT_SECRET=your-super-secret-jwt-key-change-in-production
+
+# App
+APP_PORT=1403
+APP_BASE_URL=http://localhost:2203
+```
+
+### Ports Configuration
+- 2203: Frontend (Nginx)
+- 1403: Backend API
+- 27017: MongoDB
+- 4040: Ngrok Dashboard
+- 8025: MailHog Web UI (optional)
+
+## COMMANDS ĐỂ CHẠY DỰ ÁN
+
+### Quick Start
+```bash
+# 1. Cập nhật .env với thông tin thực tế
+cp env.example .env
+# Chỉnh sửa NGROK_AUTHTOKEN và Gmail credentials
+
+# 2. Deploy tự động
+./scripts/deploy.sh
+
+# 3. Hoặc dùng Makefile
+make deploy
+
+# 4. Hoặc Docker Compose trực tiếp
+docker-compose up -d --build
+```
+
+### Management Commands
+```bash
+# Kiểm tra health
+./scripts/health-check.sh
+make health
+
+# Xem logs
+./scripts/logs.sh
+./scripts/logs.sh api -f  # Follow API logs
+make logs
+
+# Dừng services
+./scripts/stop.sh
+make stop
+
+# Xem URLs
+make urls
+```
+
+## VẤN ĐỀ GẶP PHẢI VÀ GIẢI PHÁP
+
+### 1. Docker Network Issues
+- **Vấn đề**: Yarn install timeout khi build Docker images
+- **Nguyên nhân**: Network connection issues với npm registry
+- **Giải pháp**: Chạy local development thay vì Docker build
+
+### 2. Gmail SMTP Configuration
+- **Vấn đề**: Cấu hình email ban đầu dùng MailHog, nhưng code backend dùng Gmail
+- **Giải pháp**: Cập nhật docker-compose.yml và env.example để dùng Gmail SMTP
+- **Lưu ý**: Cần App Password cho Gmail, không dùng mật khẩu thường
+
+### 3. Port Conflicts
+- **Vấn đề**: Port 2203 đã được sử dụng
+- **Giải pháp**: Kill process hoặc dùng port khác
+
+## TRẠNG THÁI HIỆN TẠI
+
+### Đã chạy thành công:
+- ✅ Docker Desktop đã cài đặt và hoạt động
+- ✅ MongoDB container đã chạy
+- ✅ Frontend Angular đã chạy trên port 2203
+- ✅ Backend API đã cài dependencies và đang chạy
+
+### Cần hoàn thiện:
+- ⚠️ Backend API chưa bind được port 1403 (có thể đang chạy port khác)
+- ⚠️ Ngrok chưa được cấu hình (cần NGROK_AUTHTOKEN)
+- ⚠️ Gmail SMTP chưa được test
+
+## HƯỚNG DẪN TIẾP THEO
+
+### 1. Hoàn thiện cấu hình
+```bash
+# Cập nhật .env với thông tin thực tế
+nano .env
+
+# Cần cập nhật:
+# - NGROK_AUTHTOKEN (từ https://ngrok.com)
+# - EMAIL_USER và EMAIL_PASS (Gmail App Password)
+```
+
+### 2. Test email functionality
+- Tạo Gmail App Password
+- Test gửi email verification
+- Kiểm tra MailHog nếu cần debug
+
+### 3. Setup Ngrok
+- Đăng ký tài khoản ngrok.com
+- Lấy auth token
+- Test public URL
+
+### 4. Production considerations
+- Thay đổi tất cả passwords mặc định
+- Cấu hình SSL/HTTPS
+- Setup monitoring và logging
+- Backup strategy cho database
+
+## FILES QUAN TRỌNG ĐÃ TẠO
+
+### Docker Files
+- docker-compose.yml: Main orchestration
+- bank-fe/Dockerfile: Frontend container
+- bank-fe/nginx.conf: Nginx configuration
+- env.example: Environment template
+
+### Scripts
+- scripts/deploy.sh: Automated deployment
+- scripts/stop.sh: Stop all services
+- scripts/logs.sh: Log management
+- scripts/health-check.sh: Health monitoring
+
+### Documentation
+- DOCKER_README.md: Detailed setup guide
+- Makefile: Command shortcuts
+
+## NOTES CHO LẦN SETUP TIẾP THEO
+
+1. **Docker Desktop**: Đã cài đặt, chỉ cần khởi động
+2. **Network Issues**: Nếu gặp yarn install timeout, chạy local development
+3. **Gmail Setup**: Cần App Password, không dùng mật khẩu thường
+4. **Port Management**: Kiểm tra port conflicts trước khi chạy
+5. **Environment**: Luôn cập nhật .env với thông tin thực tế
+
+## COMMANDS ĐỂ RESUME
+
+```bash
+# 1. Khởi động Docker Desktop
+open -a Docker
+
+# 2. Chờ Docker khởi động, sau đó:
+cd /Users/lehuy/data/dev/project/MBanking
+
+# 3. Cập nhật .env
+nano .env
+
+# 4. Chạy dự án
+./scripts/deploy.sh
+# hoặc
+make deploy
+```
+
+---
+End of Docker Setup Log

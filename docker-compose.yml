@@ -1,0 +1,108 @@
+version: "3.8"
+
+services:
+  # MongoDB Database
+  mongo:
+    image: mongo:7.0
+    container_name: banking-mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: banking
+    volumes:
+      - mongo_data:/data/db
+      - ./bank-api/scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - banking-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # MailHog for email testing (optional - only for development)
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: banking-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - banking-network
+    profiles:
+      - dev
+
+  # Backend API
+  banking-api:
+    build:
+      context: ./bank-api
+      dockerfile: Dockerfile
+      target: production
+    container_name: banking-api
+    restart: unless-stopped
+    ports:
+      - "1403:1403"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongo:27017/banking
+      JWT_SECRET: your-super-secret-jwt-key-change-in-production
+      APP_PORT: 1403
+      APP_BASE_URL: http://localhost:2203
+      EMAIL_HOST: ${EMAIL_HOST:-smtp.gmail.com}
+      EMAIL_PORT: ${EMAIL_PORT:-465}
+      EMAIL_USER: ${EMAIL_USER}
+      EMAIL_PASS: ${EMAIL_PASS}
+      EMAIL_FROM: ${EMAIL_FROM:-noreply@banking.local}
+      TZ: Asia/Ho_Chi_Minh
+      SEED_SUPERADMIN_EMAIL: lehuydev@example.com
+      SEED_SUPERADMIN_PASSWORD: 123456
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - banking-network
+    volumes:
+      - ./bank-api/logs:/app/logs
+
+  # Frontend Angular
+  banking-fe:
+    build:
+      context: ./bank-fe
+      dockerfile: Dockerfile
+      target: production
+    container_name: banking-fe
+    restart: unless-stopped
+    ports:
+      - "2203:80"
+    depends_on:
+      - banking-api
+    networks:
+      - banking-network
+
+  # Ngrok for external access
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: banking-ngrok
+    restart: unless-stopped
+    command: ["ngrok", "http", "banking-fe:80", "--log=stdout"]
+    environment:
+      NGROK_AUTHTOKEN: ${NGROK_AUTHTOKEN:-your-ngrok-token}
+    ports:
+      - "4040:4040"
+    depends_on:
+      - banking-fe
+    networks:
+      - banking-network
+
+volumes:
+  mongo_data:
+    driver: local
+
+networks:
+  banking-network:
+    driver: bridge
