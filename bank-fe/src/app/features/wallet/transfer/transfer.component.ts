@@ -29,6 +29,7 @@ import {
   AccountsService,
   RecipientInfo,
 } from '../../../core/services/accounts.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
 
 @Component({
@@ -63,6 +64,7 @@ export class TransferComponent implements OnInit, OnDestroy {
     private fb: FormBuilder,
     private transactionsService: TransactionsService,
     private accountsService: AccountsService,
+    private authService: AuthService,
     private messageService: MessageService,
     private confirmationService: ConfirmationService,
     private router: Router,
@@ -370,7 +372,7 @@ export class TransferComponent implements OnInit, OnDestroy {
     transName: string,
   ): void {
     // Check if user is authenticated
-    if (!this.authService.isAuthenticated()) {
+    if (!this.authService.isAuthenticated) {
       console.error('User is not authenticated');
       this.messageService.add({
         severity: 'error',

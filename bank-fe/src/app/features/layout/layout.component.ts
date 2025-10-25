@@ -5,7 +5,9 @@ import {
   RouterLink,
   RouterLinkActive,
   RouterOutlet,
+  NavigationEnd,
 } from '@angular/router';
+import { filter } from 'rxjs/operators';
 import { Subject, takeUntil } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { MenubarModule } from 'primeng/menubar';
@@ -47,6 +49,7 @@ export class LayoutComponent implements OnInit, OnDestroy {
   isAdmin = false;
   userMenuItems: MenuItem[] = [];
   isBalanceVisible = true; // Toggle để ẩn/hiện số dư
+  isAdminRoute = false; // Track admin routes
 
   private destroy$ = new Subject<void>();
 
@@ -57,7 +60,24 @@ export class LayoutComponent implements OnInit, OnDestroy {
     private router: Router,
   ) {}
 
+  private checkAdminRoute(): void {
+    this.isAdminRoute = this.router.url.startsWith('/app/admin');
+  }
+
   ngOnInit(): void {
+    // Check initial route
+    this.checkAdminRoute();
+
+    // Subscribe to route changes
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntil(this.destroy$),
+      )
+      .subscribe(() => {
+        this.checkAdminRoute();
+      });
+
     // Subscribe to auth state
     this.authService.auth$.pipe(takeUntil(this.destroy$)).subscribe((auth) => {
       this.currentUser = auth?.user || null;

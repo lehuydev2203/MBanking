@@ -426,6 +426,15 @@
       .p-toast-message-icon {
         color: #ffffff;
       }
+
+      .p-toast-summary {
+        color: #ffffff !important;
+        font-weight: 600;
+      }
+
+      .p-toast-detail {
+        color: #ffffff !important;
+      }
     }
 
     &.p-toast-message-success {

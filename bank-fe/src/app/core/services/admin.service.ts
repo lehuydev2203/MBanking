@@ -1,40 +1,49 @@
 import { Injectable } from '@angular/core';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { ApiService } from './api.service';
-import { API_ENDPOINTS } from '../constants/api.constants';
+import { environment } from '../../../environments/environment';
 
 export interface User {
   id: string;
   name: string;
   email: string;
   phone?: string;
-  role: string;
-  status: string;
+  accountNumber: string;
+  nickname?: string;
+  role: 'user' | 'admin' | 'superadmin';
+  status: 'active' | 'locked';
+  balance: number;
+  isEmailVerified: boolean;
   createdAt: string;
   updatedAt: string;
-  lastLoginAt?: string;
+  verifiedAt?: string;
 }
 
 export interface UserFilters {
+  page?: number;
+  pageSize?: number;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
   q?: string;
   role?: string;
   status?: string;
-  email?: string;
-  page?: number;
-  pageSize?: number;
+  emailVerified?: string;
 }
 
-export interface UserListResponse {
-  users: User[];
-  total: number;
-  page: number;
-  pageSize: number;
-  totalPages: number;
+export interface UsersResponse {
+  success: boolean;
+  data: {
+    items: User[];
+    total: number;
+    page: number;
+    pageSize: number;
+    totalPages: number;
+  };
 }
 
 export interface UpdateUserRequest {
-  role?: string;
-  status?: string;
+  role?: 'user' | 'admin' | 'superadmin';
+  status?: 'active' | 'locked';
 }
 
 export interface HealthStatus {
@@ -43,9 +52,8 @@ export interface HealthStatus {
   services: {
     database: 'up' | 'down';
     redis: 'up' | 'down';
-    external: 'up' | 'down';
+    email: 'up' | 'down';
   };
-  uptime: number;
   version: string;
 }
 
@@ -53,37 +61,46 @@ export interface HealthStatus {
   providedIn: 'root',
 })
 export class AdminService {
-  constructor(private apiService: ApiService) {}
+  private readonly baseUrl = `${environment.baseApiUrl}/admin`;
 
-  listUsers(filters: UserFilters = {}): Observable<UserListResponse> {
-    return this.apiService.get<UserListResponse>(
-      API_ENDPOINTS.ADMIN.USERS.LIST,
-      filters,
-    );
+  constructor(private http: HttpClient) {}
+
+  getUsers(filters: UserFilters = {}): Observable<UsersResponse> {
+    let params = new HttpParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value.toString());
+      }
+    });
+
+    return this.http.get<UsersResponse>(`${this.baseUrl}/users`, { params });
   }
 
-  updateUserRoleStatus(
-    userId: string,
-    body: UpdateUserRequest,
-  ): Observable<User> {
-    return this.apiService.patch<User>(
-      API_ENDPOINTS.ADMIN.USERS.UPDATE(userId),
-      body,
-    );
+  updateUser(userId: string, updates: UpdateUserRequest): Observable<User> {
+    return this.http.patch<User>(`${this.baseUrl}/users/${userId}`, updates);
   }
 
-  resendUserVerification(userId: string): Observable<any> {
-    return this.apiService.post(
-      API_ENDPOINTS.ADMIN.USERS.RESEND_VERIFICATION(userId),
+  resendUserVerification(userId: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(
+      `${this.baseUrl}/users/${userId}/resend-verification`,
       {},
     );
   }
 
-  adminListTransactions(filters: any = {}): Observable<any> {
-    return this.apiService.get(API_ENDPOINTS.ADMIN.TRANSACTIONS.LIST, filters);
+  getTransactions(filters: any = {}): Observable<any> {
+    let params = new HttpParams();
+
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.set(key, value.toString());
+      }
+    });
+
+    return this.http.get<any>(`${this.baseUrl}/transactions`, { params });
   }
 
-  getHealth(): Observable<HealthStatus> {
-    return this.apiService.get<HealthStatus>(API_ENDPOINTS.SYSTEM.HEALTH);
+  getHealthStatus(): Observable<HealthStatus> {
+    return this.http.get<HealthStatus>(`${environment.baseApiUrl}/health`);
   }
 }

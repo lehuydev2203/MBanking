@@ -211,6 +211,77 @@ export class AdminController {
     );
   }
 
+  @Post('users/resend-verification-by-email')
+  @Roles(Role.ADMIN, Role.SUPERADMIN)
+  @ApiOperation({
+    summary: 'Resend user verification by email',
+    description:
+      'Resends verification email to a user by email address (Admin/Superadmin only)',
+  })
+  @ApiResponse({
+    status: 202,
+    description: 'Verification email resent',
+    schema: {
+      example: { success: true, data: { message: 'VERIFICATION_SENT' } },
+    },
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'User already verified',
+    schema: {
+      example: {
+        success: false,
+        code: 'BAD_REQUEST',
+        message: 'User email is already verified',
+      },
+    },
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    schema: {
+      example: { success: false, code: 'NOT_FOUND', message: 'User not found' },
+    },
+  })
+  async resendUserVerificationByEmail(
+    @Body() body: { email: string },
+    @CurrentUser() user: Account,
+  ) {
+    return this.adminService.resendUserVerificationByEmail(
+      body.email,
+      (user as any)._id.toString(),
+    );
+  }
+
+  @Patch('users/by-account/:accountNumber')
+  @Roles(Role.SUPERADMIN)
+  @ApiOperation({
+    summary: 'Update user by account number',
+    description: 'Updates user by account number (Superadmin only)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'User not found',
+    schema: {
+      example: { success: false, code: 'NOT_FOUND', message: 'User not found' },
+    },
+  })
+  async updateUserByAccountNumber(
+    @Param('accountNumber') accountNumber: string,
+    @Body() updateUserDto: UpdateUserDto,
+    @CurrentUser() user: Account,
+  ) {
+    return this.adminService.updateUserByAccountNumber(
+      accountNumber,
+      updateUserDto,
+      (user as any)._id.toString(),
+    );
+  }
+
   @Get('transactions')
   @Roles(Role.ADMIN, Role.SUPERADMIN)
   @ApiOperation({

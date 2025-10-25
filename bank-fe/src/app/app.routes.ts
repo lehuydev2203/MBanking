@@ -34,13 +34,13 @@ export const routes: Routes = [
       ),
   },
 
-  // Protected routes
+  // Protected routes - User routes
   {
     path: 'app',
     canActivate: [AuthGuard],
     loadComponent: () =>
-      import('./features/layout/layout.component').then(
-        (m) => m.LayoutComponent,
+      import('./features/user/user-layout/user-layout.component').then(
+        (m) => m.UserLayoutComponent,
       ),
     children: [
       {
@@ -97,37 +97,43 @@ export const routes: Routes = [
             (m) => m.ProfileComponent,
           ),
       },
+    ],
+  },
+
+  // Protected routes - Admin routes
+  {
+    path: 'app/admin',
+    canActivate: [AuthGuard, RoleGuard],
+    loadComponent: () =>
+      import('./features/admin/admin-layout/admin-layout.component').then(
+        (m) => m.AdminLayoutComponent,
+      ),
+    children: [
       {
-        path: 'admin',
-        canActivate: [RoleGuard],
-        children: [
-          {
-            path: '',
-            redirectTo: 'users',
-            pathMatch: 'full',
-          },
-          {
-            path: 'users',
-            loadComponent: () =>
-              import('./features/admin/users/users.component').then(
-                (m) => m.UsersComponent,
-              ),
-          },
-          {
-            path: 'transactions',
-            loadComponent: () =>
-              import(
-                './features/admin/admin-transactions/admin-transactions.component'
-              ).then((m) => m.AdminTransactionsComponent),
-          },
-          {
-            path: 'health',
-            loadComponent: () =>
-              import('./features/admin/health/health.component').then(
-                (m) => m.HealthComponent,
-              ),
-          },
-        ],
+        path: '',
+        redirectTo: 'dashboard',
+        pathMatch: 'full',
+      },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import(
+            './features/admin/admin-dashboard/general/general.component'
+          ).then((m) => m.GeneralComponent),
+      },
+      {
+        path: 'users',
+        loadComponent: () =>
+          import('./features/admin/users/users.component').then(
+            (m) => m.UsersComponent,
+          ),
+      },
+      {
+        path: 'transactions',
+        loadComponent: () =>
+          import(
+            './features/admin/admin-transactions/admin-transactions.component'
+          ).then((m) => m.AdminTransactionsComponent),
       },
     ],
   },

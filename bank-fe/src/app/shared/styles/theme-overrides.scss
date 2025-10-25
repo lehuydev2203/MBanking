@@ -283,25 +283,95 @@ body {
   .p-toast-message {
     border-radius: 12px;
     backdrop-filter: blur(10px);
+    color: #ffffff;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+
+    // Tạo vùng hover rộng hơn
+    &::before {
+      content: "";
+      position: absolute;
+      top: -8px;
+      left: -8px;
+      right: -8px;
+      bottom: -8px;
+      border-radius: 16px;
+      z-index: -1;
+      transition: all 0.3s ease;
+    }
+
+    // Hover effect
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+
+      &::before {
+        background: rgba(255, 255, 255, 0.05);
+      }
+    }
+
+    .p-toast-message-content {
+      padding: 16px 20px;
+
+      .p-toast-summary {
+        color: #ffffff !important;
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 4px;
+      }
+
+      .p-toast-detail {
+        color: #ffffff !important;
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+
+      .p-toast-message-icon {
+        color: #ffffff !important;
+        font-size: 1.2rem;
+        margin-right: 12px;
+      }
+    }
 
     &.p-toast-message-success {
-      background: var(--brand-success);
-      border-color: var(--brand-success);
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.4);
+
+      &:hover {
+        background: rgba(16, 185, 129, 0.25);
+        border-color: rgba(16, 185, 129, 0.6);
+      }
     }
 
     &.p-toast-message-error {
-      background: var(--brand-danger);
-      border-color: var(--brand-danger);
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.25);
+        border-color: rgba(239, 68, 68, 0.6);
+      }
     }
 
     &.p-toast-message-warn {
-      background: var(--brand-warning);
-      border-color: var(--brand-warning);
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+
+      &:hover {
+        background: rgba(245, 158, 11, 0.25);
+        border-color: rgba(245, 158, 11, 0.6);
+      }
     }
 
     &.p-toast-message-info {
-      background: var(--brand-info);
-      border-color: var(--brand-info);
+      background: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+
+      &:hover {
+        background: rgba(59, 130, 246, 0.25);
+        border-color: rgba(59, 130, 246, 0.6);
+      }
     }
   }
 }

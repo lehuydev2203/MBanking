@@ -58,13 +58,18 @@ export class LoginComponent {
 
       this.authService.login(loginData).subscribe({
         next: (response) => {
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Thành công',
-            detail: 'Đăng nhập thành công!',
-            life: 3000,
-          });
-          this.router.navigate(['/app/dashboard']);
+          if (response) {
+            this.messageService.add({
+              severity: 'success',
+              summary: 'Thành công',
+              detail: 'Đăng nhập thành công!',
+              life: 3000,
+            });
+            this.router.navigate(['/app/dashboard']);
+          } else {
+            this.errorMessage = 'Đăng nhập thất bại. Vui lòng thử lại.';
+            this.isLoading = false;
+          }
         },
         error: (error) => {
           console.error('🚀 ~ LoginComponent ~ login error:', error);

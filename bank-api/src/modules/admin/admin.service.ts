@@ -31,7 +31,16 @@ export class AdminService {
   ) {}
 
   async getUsers(query: AdminUserQueryDto, currentUserId: string) {
-    const { page = 1, pageSize = 10, q, role, status } = query;
+    const {
+      page = 1,
+      pageSize = 10,
+      q,
+      role,
+      status,
+      emailVerified,
+      sortBy = 'createdAt',
+      sortOrder = 'desc',
+    } = query;
 
     const filter: any = {};
 
@@ -52,13 +61,21 @@ export class AdminService {
       filter.status = status;
     }
 
+    if (emailVerified !== undefined && emailVerified !== '') {
+      filter.isEmailVerified = emailVerified === 'true';
+    }
+
     const skip = (page - 1) * pageSize;
     const total = await this.accountModel.countDocuments(filter);
+
+    // Build sort object
+    const sort: any = {};
+    sort[sortBy] = sortOrder === 'asc' ? 1 : -1;
 
     const users = await this.accountModel
       .find(filter)
       .select('-passwordHash')
-      .sort({ createdAt: -1 })
+      .sort(sort)
       .skip(skip)
       .limit(pageSize)
       .lean();
@@ -208,6 +225,84 @@ export class AdminService {
       page,
       pageSize,
       totalPages: Math.ceil(total / pageSize),
+    };
+  }
+
+  async resendUserVerificationByEmail(email: string, currentUserId: string) {
+    const user = await this.accountModel.findOne({ email });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    if (user.isEmailVerified) {
+      throw new BadRequestException({
+        code: 'BAD_REQUEST',
+        message: 'User email is already verified',
+      });
+    }
+
+    // Use auth service to resend verification
+    await this.authService.resendVerification({ email: user.email });
+
+    // Log audit
+    await this.auditService.log({
+      actorId: currentUserId,
+      action: 'RESEND_VERIFICATION',
+      resource: 'user',
+      meta: { targetUserId: (user as any)._id.toString(), email: user.email },
+    });
+
+    return { message: 'VERIFICATION_SENT' };
+  }
+
+  async updateUserByAccountNumber(
+    accountNumber: string,
+    updateUserDto: UpdateUserDto,
+    currentUserId: string,
+  ) {
+    const user = await this.accountModel.findOne({ accountNumber });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    // Prevent self-demotion
+    if ((user as any)._id.toString() === currentUserId && updateUserDto.role) {
+      const currentUser = await this.accountModel.findById(currentUserId);
+      if (
+        currentUser?.role === 'superadmin' &&
+        updateUserDto.role !== 'superadmin'
+      ) {
+        throw new ForbiddenException({
+          code: 'FORBIDDEN',
+          message: 'Cannot demote yourself from superadmin role',
+        });
+      }
+    }
+
+    const updatedUser = await this.accountModel
+      .findOneAndUpdate({ accountNumber }, updateUserDto, {
+        new: true,
+        runValidators: true,
+      })
+      .select('-passwordHash');
+
+    // Log audit
+    await this.auditService.log({
+      actorId: currentUserId,
+      action: 'UPDATE_USER',
+      resource: 'user',
+      meta: {
+        targetUserId: (user as any)._id.toString(),
+        updatedFields: Object.keys(updateUserDto),
+        newValues: updateUserDto,
+      },
+    });
+
+    return {
+      ...updatedUser!.toJSON(),
+      balance: parseFloat(updatedUser!.balance.toString()),
     };
   }
 }

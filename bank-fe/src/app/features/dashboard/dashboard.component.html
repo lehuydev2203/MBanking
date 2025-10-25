@@ -105,19 +105,19 @@
           <div
             class="status-badge"
             [ngClass]="
-              currentProfile?.status === 'active' ? 'active' : 'inactive'
+              currentProfile.status === 'active' ? 'active' : 'inactive'
             "
           >
             <i
               class="pi"
               [ngClass]="
-                currentProfile?.status === 'active'
+                currentProfile.status === 'active'
                   ? 'pi-check-circle'
                   : 'pi-times-circle'
               "
             ></i>
             <span>{{
-              currentProfile?.status === "active" ? "Hoạt động" : "Bị khóa"
+              currentProfile.status === "active" ? "Hoạt động" : "Bị khóa"
             }}</span>
           </div>
         </div>
@@ -125,35 +125,35 @@
         <div class="info-item">
           <span class="info-label">Số Tài Khoản:</span>
           <span class="info-value">{{
-            currentProfile?.accountNumber || "Chưa có"
+            currentProfile.accountNumber || "Chưa có"
           }}</span>
         </div>
 
-        @if (currentProfile?.phone) {
+        @if (currentProfile.phone) {
           <div class="info-item">
             <span class="info-label">Số điện thoại:</span>
             <span class="info-value">{{
-              currentProfile?.phone || "Chưa cập nhật"
+              currentProfile.phone || "Chưa cập nhật"
             }}</span>
           </div>
         }
 
-        @if (currentProfile?.nickname) {
+        @if (currentProfile.nickname) {
           <div class="info-item">
             <span class="info-label">Biệt danh:</span>
             <span class="info-value">{{
-              currentProfile?.nickname || "Chưa đặt"
+              currentProfile.nickname || "Chưa đặt"
             }}</span>
           </div>
         }
         <div class="info-item">
           <span class="info-label">Email:</span>
-          <span class="info-value">{{ currentProfile?.email }}</span>
+          <span class="info-value">{{ currentProfile.email }}</span>
         </div>
         <div class="info-item">
           <span class="info-label">Loại tài khoản:</span>
           <span class="info-value">{{
-            getAccountTypeLabel(currentProfile?.role)
+            getAccountTypeLabel(currentProfile.role)
           }}</span>
         </div>
       </div>

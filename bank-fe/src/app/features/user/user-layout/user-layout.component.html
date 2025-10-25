@@ -1,0 +1,100 @@
+<p-confirmDialog></p-confirmDialog>
+<p-toast></p-toast>
+
+<div class="user-layout">
+  <!-- Header -->
+  <header class="layout-header">
+    <div class="header-content">
+      <div class="logo-section">
+        <div class="logo">
+          <div class="logo-icon">M</div>
+          <span class="logo-text">MBanking</span>
+        </div>
+      </div>
+
+      <nav class="main-nav">
+        <a
+          routerLink="/app/dashboard"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-home"></i>
+          <span>Trang chủ</span>
+        </a>
+        <a routerLink="/app/deposit" routerLinkActive="active" class="nav-link">
+          <i class="pi pi-arrow-down"></i>
+          <span>Nạp tiền</span>
+        </a>
+        <a
+          routerLink="/app/withdraw"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-arrow-up"></i>
+          <span>Rút tiền</span>
+        </a>
+        <a
+          routerLink="/app/transfer"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-send"></i>
+          <span>Chuyển khoản</span>
+        </a>
+        <a
+          routerLink="/app/transactions"
+          routerLinkActive="active"
+          class="nav-link"
+        >
+          <i class="pi pi-list"></i>
+          <span>Lịch sử</span>
+        </a>
+      </nav>
+
+      <div class="header-right">
+        <div class="balance-display">
+          <span class="balance-label">Số dư:</span>
+          <span class="balance-amount">{{ balance | number: "1.0-0" }} ₫</span>
+        </div>
+
+        <div class="user-menu" (click)="toggleMenu()">
+          <div class="user-avatar">
+            <i class="pi pi-user"></i>
+          </div>
+          <span class="user-name">{{ user?.name }}</span>
+          <i class="pi pi-chevron-down"></i>
+
+          @if (isMenuOpen) {
+            <div class="dropdown-menu">
+              <a routerLink="/app/profile" class="dropdown-item">
+                <i class="pi pi-user"></i>
+                <span>Hồ sơ</span>
+              </a>
+              @if (user?.role === "admin" || user?.role === "superadmin") {
+                <a
+                  routerLink="/app/admin/dashboard"
+                  class="dropdown-item"
+                  (click)="isMenuOpen = false"
+                >
+                  <i class="pi pi-cog"></i>
+                  <span>Quản trị</span>
+                </a>
+              }
+              <button class="dropdown-item" (click)="logout()">
+                <i class="pi pi-sign-out"></i>
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <div class="content-wrapper">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

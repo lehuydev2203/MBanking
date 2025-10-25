@@ -1,164 +1,297 @@
-<div class="grid">
-  <div class="col-12">
-    <p-card>
-      <ng-template pTemplate="header">
-        <div class="p-4">
-          <h1 class="text-2xl font-bold mb-2">Quản lý người dùng</h1>
-          <p class="text-gray-400">
-            Quản lý tài khoản người dùng trong hệ thống
-          </p>
-        </div>
-      </ng-template>
+<div class="users-page">
+  <!-- Toast Messages -->
+  <p-toast></p-toast>
 
-      <!-- Filters -->
-      <form
-        [formGroup]="filterForm"
-        (ngSubmit)="applyFilters()"
-        class="p-4 border-bottom-1 border-gray-700"
-      >
-        <div class="grid">
-          <div class="col-12 md:col-3">
-            <label class="block text-sm font-medium mb-2">Tìm kiếm</label>
-            <input
-              pInputText
-              formControlName="q"
-              placeholder="Tên, email..."
-              class="w-full"
-            />
+
+
+  <!-- Main Content -->
+  <div class="content-wrapper">
+    <div class="users-container">
+      <!-- Filters Card -->
+      <div class="filters-card">
+        <form
+          [formGroup]="filterForm"
+          (ngSubmit)="applyFilters()"
+          class="filters-form"
+        >
+          <div class="filters-grid">
+            <div class="filter-group">
+              <label class="filter-label">Tên, email...</label>
+              <input
+                type="text"
+                formControlName="q"
+                placeholder="Tìm kiếm người dùng..."
+                class="filter-input"
+              />
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Vai trò</label>
+              <select formControlName="role" class="filter-select">
+                <option value="">Tất cả</option>
+                <option value="user">Người dùng</option>
+                <option value="admin">Quản trị viên</option>
+                <option value="superadmin">Siêu quản trị viên</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Trạng thái</label>
+              <select formControlName="status" class="filter-select">
+                <option value="">Tất cả</option>
+                <option value="active">Hoạt động</option>
+                <option value="locked">Khóa</option>
+              </select>
+            </div>
+
+            <div class="filter-group">
+              <label class="filter-label">Xác thực email</label>
+              <select formControlName="emailVerified" class="filter-select">
+                <option value="">Tất cả</option>
+                <option value="true">Đã xác thực</option>
+                <option value="false">Chưa xác thực</option>
+              </select>
+            </div>
           </div>
 
-          <div class="col-12 md:col-3">
-            <label class="block text-sm font-medium mb-2">Vai trò</label>
-            <p-select
-              formControlName="role"
-              [options]="roleOptions"
-              placeholder="Tất cả"
-              class="w-full"
-            >
-            </p-select>
-          </div>
-
-          <div class="col-12 md:col-3">
-            <label class="block text-sm font-medium mb-2">Trạng thái</label>
-            <p-select
-              formControlName="status"
-              [options]="statusOptions"
-              placeholder="Tất cả"
-              class="w-full"
-            >
-            </p-select>
-          </div>
-
-          <div class="col-12 md:col-3 flex align-items-end gap-2">
+          <div class="filter-actions">
             <p-button
               type="submit"
               label="Lọc"
               icon="pi pi-filter"
-              class="p-button-outlined"
+              class="filter-btn primary"
             >
             </p-button>
             <p-button
               type="button"
               label="Xóa bộ lọc"
               icon="pi pi-times"
-              class="p-button-text"
+              class="filter-btn secondary"
               (click)="clearFilters()"
             >
             </p-button>
+            <p-button
+              type="button"
+              label="Xuất CSV"
+              icon="pi pi-download"
+              class="filter-btn success"
+              (click)="exportCsv()"
+              [loading]="isExporting"
+            >
+            </p-button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Users Table Card -->
+      <div class="users-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="pi pi-users"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="header-title">Danh sách người dùng</h3>
+            <p class="header-subtitle">Tất cả người dùng trong hệ thống</p>
           </div>
         </div>
-      </form>
 
-      <!-- Users Table -->
-      <div class="p-4">
-        @if (isLoading) {
-          <div class="flex justify-content-center p-4">
-            <p-progressSpinner
-              [style]="{ width: '50px', height: '50px' }"
-            ></p-progressSpinner>
-          </div>
-        } @else {
-          <p-table
-            [value]="users"
-            [paginator]="true"
-            [rows]="pageSize"
-            [totalRecords]="totalRecords"
-            [lazy]="true"
-            (onLazyLoad)="loadUsers($event)"
-            styleClass="p-datatable-sm"
-          >
-            <ng-template pTemplate="header">
-              <tr>
-                <th>Tên</th>
-                <th>Email</th>
-                <th>Số tài khoản</th>
-                <th>Biệt danh</th>
-                <th>Số điện thoại</th>
-                <th>Vai trò</th>
-                <th>Trạng thái</th>
-                <th>Ngày tạo</th>
-                <th>Thao tác</th>
-              </tr>
-            </ng-template>
+        <div class="users-content">
+          @if (isLoading) {
+            <div class="loading-container">
+              <p-progressSpinner
+                [style]="{ width: '50px', height: '50px' }"
+              ></p-progressSpinner>
+            </div>
+          } @else {
+            <div class="users-table">
+              <div class="table-header">
+                <div class="header-cell sortable" (click)="sortBy('name')">
+                  Tên
+                  @if (sortField !== "name") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "name" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "name" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('email')">
+                  Email
+                  @if (sortField !== "email") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "email" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "email" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+                <div
+                  class="header-cell sortable"
+                  (click)="sortBy('accountNumber')"
+                >
+                  Số tài khoản
+                  @if (sortField !== "accountNumber") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "accountNumber" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "accountNumber" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('role')">
+                  Vai trò
+                  @if (sortField !== "role") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "role" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "role" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('status')">
+                  Trạng thái
+                  @if (sortField !== "status") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "status" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "status" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+                <div class="header-cell sortable" (click)="sortBy('createdAt')">
+                  Ngày tạo
+                  @if (sortField !== "createdAt") {
+                    <i class="pi pi-sort-alt"></i>
+                  }
+                  @if (sortField === "createdAt" && sortOrder === 1) {
+                    <i class="pi pi-sort-up"></i>
+                  }
+                  @if (sortField === "createdAt" && sortOrder === -1) {
+                    <i class="pi pi-sort-down"></i>
+                  }
+                </div>
+              </div>
 
-            <ng-template pTemplate="body" let-user>
-              <tr>
-                <td>{{ user.name }}</td>
-                <td>{{ user.email }}</td>
-                <td>{{ user.accountNumber || "-" }}</td>
-                <td>{{ user.nickname || "-" }}</td>
-                <td>{{ user.phone || "-" }}</td>
-                <td>
-                  <p-tag
-                    [value]="getRoleLabel(user.role)"
-                    [severity]="getRoleSeverity(user.role)"
-                  >
-                  </p-tag>
-                </td>
-                <td>
-                  <p-tag
-                    [value]="getStatusLabel(user.status)"
-                    [severity]="getStatusSeverity(user.status)"
-                  >
-                  </p-tag>
-                </td>
-                <td>{{ user.createdAt | date: "dd/MM/yyyy HH:mm" }}</td>
-                <td>
-                  <div class="flex gap-2">
-                    <p-button
-                      icon="pi pi-pencil"
-                      class="p-button-sm p-button-outlined"
-                      (click)="editUser(user)"
-                      aria-label="Chỉnh sửa"
-                    >
-                    </p-button>
-                    <p-button
-                      icon="pi pi-envelope"
-                      class="p-button-sm p-button-outlined"
-                      (click)="resendVerification(user)"
-                      aria-label="Gửi lại email xác thực"
-                    >
-                    </p-button>
+              <div class="table-body">
+                @for (user of users; track user.id) {
+                  <div class="table-row">
+                    <div class="table-cell">
+                      <div class="user-info">
+                        <div class="user-avatar">
+                          <i class="pi pi-user"></i>
+                        </div>
+                        <div class="user-details">
+                          <div class="user-name">{{ user.name }}</div>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="table-cell">
+                      <div class="email-info">
+                        <span class="email">{{ user.email }}</span>
+                        @if (user.isEmailVerified) {
+                          <i
+                            class="pi pi-check-circle verified-icon"
+                            title="Đã xác thực email"
+                          ></i>
+                        } @else {
+                          <i
+                            class="pi pi-exclamation-triangle unverified-icon"
+                            title="Chưa xác thực email"
+                          ></i>
+                        }
+                      </div>
+                    </div>
+                    <div class="table-cell">
+                      <span class="account-number">{{
+                        user.accountNumber
+                      }}</span>
+                    </div>
+                    <div class="table-cell">
+                      <div class="role-badge" [class]="'role-' + user.role">
+                        {{ getRoleLabel(user.role) }}
+                      </div>
+                    </div>
+                    <div class="table-cell">
+                      <div
+                        class="status-badge"
+                        [class]="'status-' + user.status"
+                      >
+                        {{ getStatusLabel(user.status) }}
+                      </div>
+                    </div>
+                    <div class="table-cell">
+                      {{ user.createdAt | date: "dd/MM/yyyy" }}
+                    </div>
                   </div>
-                </td>
-              </tr>
-            </ng-template>
+                }
 
-            <ng-template pTemplate="emptymessage">
-              <tr>
-                <td colspan="9" class="text-center p-4">
-                  <div class="flex flex-column align-items-center gap-2">
-                    <i class="pi pi-users text-4xl text-gray-400"></i>
-                    <p class="text-gray-400">Không tìm thấy người dùng nào</p>
+                @if (!users || users.length === 0) {
+                  <div class="empty-state">
+                    <div class="empty-content">
+                      <i class="pi pi-users empty-icon"></i>
+                      <p class="empty-text">Không tìm thấy người dùng nào</p>
+                    </div>
                   </div>
-                </td>
-              </tr>
-            </ng-template>
-          </p-table>
-        }
+                }
+              </div>
+            </div>
+
+            <!-- Pagination -->
+            @if (totalRecords > pageSize) {
+              <div class="pagination-container">
+                <div class="pagination-info">
+                  Hiển thị {{ (currentPage - 1) * pageSize + 1 }} -
+                  {{ Math.min(currentPage * pageSize, totalRecords) }}
+                  trong {{ totalRecords }} người dùng
+                </div>
+                <div class="pagination-controls">
+                  <button
+                    class="pagination-btn"
+                    (click)="goToPage(1)"
+                    [disabled]="currentPage === 1"
+                  >
+                    <i class="pi pi-angle-double-left"></i>
+                  </button>
+                  <button
+                    class="pagination-btn"
+                    (click)="goToPage(currentPage - 1)"
+                    [disabled]="currentPage === 1"
+                  >
+                    <i class="pi pi-angle-left"></i>
+                  </button>
+                  <span class="pagination-info">
+                    Trang {{ currentPage }} / {{ totalPages }}
+                  </span>
+                  <button
+                    class="pagination-btn"
+                    (click)="goToPage(currentPage + 1)"
+                    [disabled]="currentPage === totalPages"
+                  >
+                    <i class="pi pi-angle-right"></i>
+                  </button>
+                  <button
+                    class="pagination-btn"
+                    (click)="goToPage(totalPages)"
+                    [disabled]="currentPage === totalPages"
+                  >
+                    <i class="pi pi-angle-double-right"></i>
+                  </button>
+                </div>
+              </div>
+            }
+          }
+        </div>
       </div>
-    </p-card>
+    </div>
   </div>
 </div>
-
-<p-confirmDialog></p-confirmDialog>

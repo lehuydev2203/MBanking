@@ -1,0 +1,174 @@
+<div class="general-dashboard">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Tổng quan hệ thống</h1>
+      <p class="page-subtitle">Thông tin chung về hệ thống ngân hàng</p>
+    </div>
+  </div>
+
+  @if (isLoading) {
+    <div class="loading-container">
+      <i class="pi pi-spin pi-spinner" style="font-size: 3rem"></i>
+      <p>Đang tải dữ liệu...</p>
+    </div>
+  } @else {
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+      <div class="stat-card health-card">
+        <div class="stat-icon health">
+          <i class="pi pi-heart"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-label">Trạng thái hệ thống</h3>
+          <div
+            class="stat-value"
+            [class]="
+              'health-' +
+              (stats.systemHealth?.data?.status === 'up'
+                ? 'healthy'
+                : 'unhealthy')
+            "
+          >
+            {{
+              stats.systemHealth?.data?.status === "up" &&
+              stats.systemHealth?.data?.db === "ok"
+                ? "Hoạt động tốt"
+                : "Có vấn đề"
+            }}
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon users">
+          <i class="pi pi-users"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-label">Tổng số tài khoản</h3>
+          <div class="stat-value">{{ stats.totalUsers || 0 }}</div>
+          <a routerLink="/app/admin/users" class="stat-link">Xem tất cả</a>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon transactions">
+          <i class="pi pi-list"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-label">Tổng số giao dịch</h3>
+          <div class="stat-value">{{ stats.totalTransactions || 0 }}</div>
+          <a routerLink="/app/admin/transactions" class="stat-link"
+            >Xem tất cả</a
+          >
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon warning">
+          <i class="pi pi-exclamation-triangle"></i>
+        </div>
+        <div class="stat-content">
+          <h3 class="stat-label">Email chưa xác thực</h3>
+          <div class="stat-value">{{ stats.unverifiedEmails || 0 }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="content-grid">
+      <!-- Recent Transactions -->
+      <div class="content-card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="pi pi-list"></i>
+            <h2>Giao dịch gần đây</h2>
+          </div>
+          <a routerLink="/app/admin/transactions" class="view-all"
+            >Xem tất cả</a
+          >
+        </div>
+        <div class="card-body">
+          @if (recentTransactions.length === 0) {
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Chưa có giao dịch nào</p>
+            </div>
+          } @else {
+            <div class="transactions-list">
+              @for (tx of recentTransactions; track tx.id) {
+                <div class="transaction-item">
+                  <div
+                    class="transaction-icon"
+                    [class]="'type-' + tx.transType"
+                  >
+                    <i
+                      [class]="
+                        tx.transType === 1
+                          ? 'pi pi-arrow-down'
+                          : 'pi pi-arrow-up'
+                      "
+                    ></i>
+                  </div>
+                  <div class="transaction-info">
+                    <div class="transaction-name">{{ tx.transName }}</div>
+                    <div class="transaction-meta">
+                      @if (tx.accountId?.name) {
+                        <span>{{ tx.accountId.name }}</span>
+                      }
+                      <span>{{ tx.createdAt | date: "dd/MM/yyyy HH:mm" }}</span>
+                    </div>
+                  </div>
+                  <div
+                    class="transaction-amount"
+                    [class]="'type-' + tx.transType"
+                  >
+                    {{ tx.transType === 1 ? "+" : "-"
+                    }}{{ tx.transMoney | number: "1.0-0" }} ₫
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Unverified Users -->
+      <div class="content-card">
+        <div class="card-header">
+          <div class="header-title">
+            <i class="pi pi-exclamation-triangle"></i>
+            <h2>Email chưa xác thực</h2>
+          </div>
+          <span class="badge">{{ stats.unverifiedEmails || 0 }}</span>
+        </div>
+        <div class="card-body">
+          @if (unverifiedUsers.length === 0) {
+            <div class="empty-state">
+              <i class="pi pi-check-circle"></i>
+              <p>Tất cả email đã được xác thực</p>
+            </div>
+          } @else {
+            <div class="users-list">
+              @for (user of unverifiedUsers; track user.id) {
+                <div class="user-item">
+                  <div class="user-avatar">
+                    <i class="pi pi-user"></i>
+                  </div>
+                  <div class="user-info">
+                    <div class="user-name">{{ user.name }}</div>
+                    <div class="user-email">{{ user.email }}</div>
+                  </div>
+                  <div class="user-status unverified">
+                    <i class="pi pi-exclamation-circle"></i>
+                    Chưa xác thực
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

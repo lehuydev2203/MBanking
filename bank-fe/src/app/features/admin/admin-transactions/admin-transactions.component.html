@@ -1,27 +1,183 @@
-<div class="grid">
-      <div class="col-12">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="p-4">
-              <h1 class="text-2xl font-bold mb-2">Quản lý giao dịch</h1>
-              <p class="text-gray-400">
-                Xem và quản lý tất cả giao dịch trong hệ thống
-              </p>
-            </div>
-          </ng-template>
-
-          <div class="p-4">
-            <div class="text-center p-8">
-              <i class="pi pi-cog text-6xl text-gray-400 mb-4"></i>
-              <h3 class="text-xl font-semibold mb-2">
-                Chức năng đang phát triển
-              </h3>
-              <p class="text-gray-400">
-                Trang quản lý giao dịch sẽ được triển khai trong phiên bản tiếp
-                theo
-              </p>
-            </div>
-          </div>
-        </p-card>
-      </div>
+<div class="admin-transactions-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Quản lý giao dịch</h1>
+      <p class="page-subtitle">
+        Quản lý và theo dõi tất cả giao dịch trong hệ thống
+      </p>
     </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="filters-card">
+    <form
+      [formGroup]="filterForm"
+      (ngSubmit)="applyFilters()"
+      class="filters-form"
+    >
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label">Loại giao dịch</label>
+          <select formControlName="type" class="filter-select">
+            <option value="">Tất cả</option>
+            <option value="1">Nạp tiền</option>
+            <option value="2">Rút tiền</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Từ ngày</label>
+          <input type="date" formControlName="from" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Đến ngày</label>
+          <input type="date" formControlName="to" class="filter-input" />
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Số tiền tối thiểu</label>
+          <input
+            type="number"
+            formControlName="min"
+            class="filter-input"
+            placeholder="0"
+          />
+        </div>
+
+        <div class="filter-group">
+          <label class="filter-label">Số tiền tối đa</label>
+          <input
+            type="number"
+            formControlName="max"
+            class="filter-input"
+            placeholder="0"
+          />
+        </div>
+      </div>
+
+      <div class="filter-actions">
+        <button type="submit" class="btn btn-primary">
+          <i class="pi pi-filter"></i>
+          Lọc
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="clearFilters()"
+        >
+          <i class="pi pi-times"></i>
+          Xóa bộ lọc
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Transactions Table -->
+  <div class="transactions-card">
+    @if (isLoading) {
+      <div class="loading-container">
+        <p-progressSpinner
+          [style]="{ width: '50px', height: '50px' }"
+        ></p-progressSpinner>
+      </div>
+    } @else {
+      <div class="table-container">
+        <div class="table-header">
+          <div class="header-cell">Người dùng</div>
+          <div class="header-cell">Loại</div>
+          <div class="header-cell">Mô tả</div>
+          <div class="header-cell">Số tiền</div>
+          <div class="header-cell">Ngày tạo</div>
+        </div>
+
+        <div class="table-body">
+          @for (tx of transactions; track tx.id) {
+            <div class="table-row">
+              <div class="table-cell">
+                <div class="user-info">
+                  <div>
+                    <div class="user-name">
+                      {{ tx.accountId?.name || "N/A" }}
+                    </div>
+                    <div class="user-email">
+                      {{ tx.accountId?.email || "" }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="table-cell">
+                <div class="transaction-type" [class]="'type-' + tx.transType">
+                  <i [class]="'pi ' + getTransactionIcon(tx.transType)"></i>
+                  {{ getTransactionTypeName(tx.transType) }}
+                </div>
+              </div>
+              <div class="table-cell">{{ tx.transName }}</div>
+              <div class="table-cell">
+                <span class="amount" [class]="'type-' + tx.transType">
+                  {{ tx.transType === 1 ? "+" : "-"
+                  }}{{ tx.transMoney | number: "1.0-0" }} ₫
+                </span>
+              </div>
+              <div class="table-cell">
+                {{ tx.createdAt | date: "dd/MM/yyyy HH:mm" }}
+              </div>
+            </div>
+          }
+
+          @if (transactions.length === 0) {
+            <div class="empty-state">
+              <i class="pi pi-inbox"></i>
+              <p>Không tìm thấy giao dịch nào</p>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Pagination -->
+      @if (totalRecords > pageSize) {
+        <div class="pagination">
+          <div class="pagination-info">
+            Hiển thị {{ (currentPage - 1) * pageSize + 1 }} -
+            {{ Math.min(currentPage * pageSize, totalRecords) }}
+            trong {{ totalRecords }} giao dịch
+          </div>
+          <div class="pagination-controls">
+            <button
+              class="btn-pagination"
+              (click)="goToPage(1)"
+              [disabled]="currentPage === 1"
+            >
+              <i class="pi pi-angle-double-left"></i>
+            </button>
+            <button
+              class="btn-pagination"
+              (click)="goToPage(currentPage - 1)"
+              [disabled]="currentPage === 1"
+            >
+              <i class="pi pi-angle-left"></i>
+            </button>
+            <span class="pagination-info"
+              >Trang {{ currentPage }} / {{ totalPages }}</span
+            >
+            <button
+              class="btn-pagination"
+              (click)="goToPage(currentPage + 1)"
+              [disabled]="currentPage === totalPages"
+            >
+              <i class="pi pi-angle-right"></i>
+            </button>
+            <button
+              class="btn-pagination"
+              (click)="goToPage(totalPages)"
+              [disabled]="currentPage === totalPages"
+            >
+              <i class="pi pi-angle-double-right"></i>
+            </button>
+          </div>
+        </div>
+      }
+    }
+  </div>
+</div>

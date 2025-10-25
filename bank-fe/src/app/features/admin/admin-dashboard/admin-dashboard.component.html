@@ -1,0 +1,52 @@
+<div class="admin-layout">
+  <!-- Sidebar -->
+  <div class="admin-sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <div class="logo-icon">M</div>
+        <span class="logo-text">Admin Panel</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a
+        routerLink="/app/admin/dashboard"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <i class="pi pi-chart-line"></i>
+        <span>Tổng quan</span>
+      </a>
+
+      <a
+        routerLink="/app/admin/users"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <i class="pi pi-users"></i>
+        <span>Người dùng</span>
+      </a>
+
+      <a
+        routerLink="/app/admin/transactions"
+        routerLinkActive="active"
+        class="nav-item"
+      >
+        <i class="pi pi-list"></i>
+        <span>Giao dịch</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a routerLink="/app/dashboard" class="back-link">
+        <i class="pi pi-arrow-left"></i>
+        <span>Về trang chủ</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="admin-content">
+    <router-outlet></router-outlet>
+  </div>
+</div>

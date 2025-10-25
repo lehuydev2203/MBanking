@@ -1,8 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { BehaviorSubject, Observable, timer } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
-import { jwtDecode } from 'jwt-decode';
+import { BehaviorSubject, Observable, timer, switchMap, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 import { ApiService } from './api.service';
 import { API_ENDPOINTS } from '../constants/api.constants';
 
@@ -50,18 +49,24 @@ export interface JwtPayload {
 export class AuthService {
   private readonly TOKEN_KEY = 'auth.token';
   private readonly USER_KEY = 'auth.user';
+  private readonly TOKEN_TIMESTAMP_KEY = 'auth.token.timestamp';
+  private readonly TOKEN_EXPIRY_MINUTES = 15; // 15 phút
 
   private authSubject = new BehaviorSubject<{
     token: string;
     user: any;
     expiresIn?: number;
-  } | null>(this.getStoredAuth());
+  } | null>(null);
   private logoutTimer: any;
 
   constructor(
     private apiService: ApiService,
     private router: Router,
   ) {
+    // Clear any old localStorage data to avoid conflicts
+    this.clearOldLocalStorageData();
+    // Initialize auth state safely after constructor
+    this.initializeAuthState();
     this.setupAutoLogout();
   }
 
@@ -74,7 +79,20 @@ export class AuthService {
   }
 
   get isAuthenticated(): boolean {
-    return !!this.getToken() && !this.isTokenExpired();
+    const hasToken = !!this.getToken();
+    const notExpired = !this.isTokenExpired();
+    const result = hasToken && notExpired;
+
+    console.log(
+      '🔐 AuthService: isAuthenticated check - hasToken:',
+      hasToken,
+      'notExpired:',
+      notExpired,
+      'result:',
+      result,
+    );
+
+    return result;
   }
 
   get currentUser() {
@@ -99,19 +117,93 @@ export class AuthService {
     });
   }
 
-  login(body: LoginRequest): Observable<AuthResponse> {
+  login(body: LoginRequest): Observable<AuthResponse | null> {
     return this.apiService
       .post<AuthResponse>(API_ENDPOINTS.AUTH.LOGIN, body)
       .pipe(
-        tap((authData) => {
+        switchMap((authData) => {
+          console.log('🔐 AuthService: Login response:', authData);
+
           if (authData) {
-            this.setAuth({
-              token: authData.accessToken,
-              user: authData.user,
-              expiresIn: authData.expiresIn,
-            });
-            this.setupAutoLogout();
+            console.log('🔐 AuthService: User data from API:', authData.user);
+
+            // If API doesn't return user data, get from profile API
+            if (!authData.user && authData.accessToken) {
+              console.log('🔐 AuthService: Getting user profile from API...');
+              return this.apiService.get<any>(API_ENDPOINTS.PROFILE.GET).pipe(
+                map((profileData) => {
+                  const userData = {
+                    id: profileData.id,
+                    name: profileData.name,
+                    email: profileData.email,
+                    role: profileData.role || 'user',
+                    status: profileData.status || 'active',
+                    phone: profileData.phone,
+                  };
+                  console.log(
+                    '🔐 AuthService: User data from profile API:',
+                    userData,
+                  );
+
+                  this.setAuth({
+                    token: authData.accessToken,
+                    user: userData,
+                    expiresIn: authData.expiresIn,
+                  });
+                  this.setupAutoLogout();
+
+                  return authData;
+                }),
+                catchError((error) => {
+                  console.error(
+                    '🔐 AuthService: Failed to get profile:',
+                    error,
+                  );
+                  // Fallback to token decode
+                  try {
+                    const decodedToken = this.decodeToken(authData.accessToken);
+                    const userData = {
+                      id: decodedToken.sub,
+                      name: decodedToken.name || decodedToken.email || 'User',
+                      email: decodedToken.email,
+                      role: decodedToken.role,
+                      status: decodedToken.status || 'active',
+                      phone: decodedToken.phone || undefined,
+                    };
+                    console.log(
+                      '🔐 AuthService: User data decoded from token:',
+                      userData,
+                    );
+
+                    this.setAuth({
+                      token: authData.accessToken,
+                      user: userData,
+                      expiresIn: authData.expiresIn,
+                    });
+                    this.setupAutoLogout();
+                  } catch (decodeError) {
+                    console.error(
+                      '🔐 AuthService: Failed to decode token:',
+                      decodeError,
+                    );
+                  }
+
+                  return of(authData);
+                }),
+              );
+            } else {
+              // API returned user data
+              this.setAuth({
+                token: authData.accessToken,
+                user: authData.user,
+                expiresIn: authData.expiresIn,
+              });
+              this.setupAutoLogout();
+              return of(authData);
+            }
           }
+
+          return of(authData);
         }),
       );
   }
@@ -132,10 +224,12 @@ export class AuthService {
 
   setToken(token: string): void {
     localStorage.setItem(this.TOKEN_KEY, token);
+    localStorage.setItem(this.TOKEN_TIMESTAMP_KEY, Date.now().toString());
   }
 
   removeToken(): void {
     localStorage.removeItem(this.TOKEN_KEY);
+    localStorage.removeItem(this.TOKEN_TIMESTAMP_KEY);
   }
 
   isTokenExpired(): boolean {
@@ -144,36 +238,36 @@ export class AuthService {
       return true;
     }
 
-    // Kiểm tra format token
-    const tokenParts = token.split('.');
-    if (tokenParts.length !== 3) {
+    const timestampStr = localStorage.getItem(this.TOKEN_TIMESTAMP_KEY);
+    if (!timestampStr) {
       return true;
     }
 
-    // Kiểm tra thời gian hết hạn thực tế
-    try {
-      const decoded = this.decodeToken(token);
-      const now = Math.floor(Date.now() / 1000);
-      return decoded.exp <= now;
-    } catch {
-      return true;
+    const tokenTimestamp = parseInt(timestampStr, 10);
+    const now = Date.now();
+    const expiryTime = tokenTimestamp + this.TOKEN_EXPIRY_MINUTES * 60 * 1000;
+
+    const isExpired = now > expiryTime;
+
+    if (isExpired) {
+      console.log('🔐 Token expired based on timestamp');
     }
+
+    return isExpired;
   }
 
   getTokenExpirationLeft(): number {
     const token = this.getToken();
     if (!token) return 0;
 
-    try {
-      const decoded = this.decodeToken(token);
-      return Math.max(0, decoded.exp * 1000 - Date.now());
-    } catch {
-      return 0;
-    }
-  }
+    const timestampStr = localStorage.getItem(this.TOKEN_TIMESTAMP_KEY);
+    if (!timestampStr) return 0;
 
-  decodeToken(token: string): JwtPayload {
-    return jwtDecode<JwtPayload>(token);
+    const tokenTimestamp = parseInt(timestampStr, 10);
+    const now = Date.now();
+    const expiryTime = tokenTimestamp + this.TOKEN_EXPIRY_MINUTES * 60 * 1000;
+
+    return Math.max(0, expiryTime - now);
   }
 
   // Private methods
@@ -182,9 +276,33 @@ export class AuthService {
     user: any;
     expiresIn?: number;
   }): void {
+    console.log('🔐 AuthService: setAuth called with:', auth);
+    console.log('🔐 AuthService: User to save:', auth.user);
+
     this.setToken(auth.token);
     localStorage.setItem(this.USER_KEY, JSON.stringify(auth.user));
     this.authSubject.next(auth);
+
+    console.log(
+      '🔐 AuthService: User saved to localStorage:',
+      localStorage.getItem(this.USER_KEY),
+    );
+  }
+
+  private initializeAuthState(): void {
+    console.log('🔐 AuthService: Initializing auth state...');
+    const storedAuth = this.getStoredAuth();
+    console.log('🔐 AuthService: Stored auth found:', !!storedAuth);
+
+    if (storedAuth) {
+      console.log(
+        '🔐 AuthService: Setting auth state with user:',
+        storedAuth.user?.email,
+      );
+      this.authSubject.next(storedAuth);
+    } else {
+      console.log('🔐 AuthService: No valid stored auth found');
+    }
   }
 
   private getStoredAuth(): {
@@ -192,20 +310,87 @@ export class AuthService {
     user: any;
     expiresIn?: number;
   } | null {
+    console.log('🔐 AuthService: Getting stored auth...');
     const token = this.getToken();
     const userStr = localStorage.getItem(this.USER_KEY);
 
-    if (!token || !userStr || this.isTokenExpired()) {
+    console.log('🔐 AuthService: Token exists:', !!token);
+    console.log('🔐 AuthService: User data exists:', !!userStr);
+
+    if (!token || !userStr) {
+      console.log('🔐 AuthService: Missing token or user data');
+      return null;
+    }
+
+    // Check token expiration using simple timestamp
+    const isExpired = this.isTokenExpired();
+    console.log('🔐 AuthService: Token expired:', isExpired);
+
+    if (isExpired) {
+      console.log('🔐 AuthService: Token expired, clearing auth');
       this.clearAuth();
       return null;
     }
 
     try {
+      // Check if userStr is valid JSON
+      if (userStr === 'undefined' || userStr === 'null' || userStr === '') {
+        console.log('🔐 AuthService: Invalid user data (undefined/null/empty)');
+        this.clearAuth();
+        return null;
+      }
+
       const user = JSON.parse(userStr);
+      console.log('🔐 AuthService: Successfully parsed user data');
       return { token, user };
-    } catch {
+    } catch (error) {
+      console.log('🔐 AuthService: Failed to parse user data:', error);
       this.clearAuth();
       return null;
+    }
+  }
+
+  private decodeToken(token: string): any {
+    try {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split('')
+          .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+          .join(''),
+      );
+      return JSON.parse(jsonPayload);
+    } catch (error) {
+      console.error('🔐 AuthService: Error decoding token:', error);
+      return null;
+    }
+  }
+
+  private clearOldLocalStorageData(): void {
+    // Only clear if we have corrupted data
+    const userStr = localStorage.getItem(this.USER_KEY);
+
+    // If we have corrupted user data, clear everything
+    if (userStr === 'undefined' || userStr === 'null' || userStr === '') {
+      localStorage.removeItem(this.TOKEN_KEY);
+      localStorage.removeItem(this.USER_KEY);
+      localStorage.removeItem(this.TOKEN_TIMESTAMP_KEY);
+      console.log('🔐 AuthService: Cleared corrupted localStorage data');
+    } else if (userStr) {
+      // Try to parse user data to check if it's valid JSON
+      try {
+        JSON.parse(userStr);
+        console.log('🔐 AuthService: localStorage data looks good');
+      } catch {
+        // Invalid JSON, clear everything
+        localStorage.removeItem(this.TOKEN_KEY);
+        localStorage.removeItem(this.USER_KEY);
+        localStorage.removeItem(this.TOKEN_TIMESTAMP_KEY);
+        console.log('🔐 AuthService: Cleared invalid JSON localStorage data');
+      }
+    } else {
+      console.log('🔐 AuthService: No localStorage data found');
     }
   }
 
@@ -221,26 +406,29 @@ export class AuthService {
   private setupAutoLogout(): void {
     this.clearLogoutTimer();
 
-    if (!this.isAuthenticated) return;
+    // Wait a bit for auth state to be initialized
+    setTimeout(() => {
+      if (!this.isAuthenticated) return;
 
-    const expLeft = this.getTokenExpirationLeft();
-    if (expLeft <= 0) {
-      this.logout();
-      return;
-    }
-
-    // Set up a single timer that checks every 30 seconds
-    this.logoutTimer = timer(30000, 30000).subscribe(() => {
-      const currentExpLeft = this.getTokenExpirationLeft();
-
-      if (currentExpLeft <= 0) {
+      const expLeft = this.getTokenExpirationLeft();
+      if (expLeft <= 0) {
         this.logout();
-      } else if (currentExpLeft <= 60000) {
-        console.warn(
-          `Token will expire in ${Math.floor(currentExpLeft / 1000)} seconds`,
-        );
+        return;
       }
-    });
+
+      // Set up a single timer that checks every 30 seconds
+      this.logoutTimer = timer(30000, 30000).subscribe(() => {
+        const currentExpLeft = this.getTokenExpirationLeft();
+
+        if (currentExpLeft <= 0) {
+          this.logout();
+        } else if (currentExpLeft <= 60000) {
+          console.warn(
+            `Token will expire in ${Math.floor(currentExpLeft / 1000)} seconds`,
+          );
+        }
+      });
+    }, 100); // Small delay to ensure auth state is initialized
   }
 
   private clearLogoutTimer(): void {

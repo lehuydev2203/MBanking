@@ -27,4 +27,29 @@ export class AdminUserQueryDto extends PaginationDto {
   @IsOptional()
   @IsEnum(Status)
   status?: Status;
+
+  @ApiPropertyOptional({
+    description: 'Filter by email verification status',
+    example: 'true',
+  })
+  @IsOptional()
+  @IsString()
+  emailVerified?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort by field',
+    example: 'createdAt',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    example: 'desc',
+  })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc';
 }
