@@ -162,7 +162,7 @@
                   <button
                     type="submit"
                     class="form-button primary"
-                    [disabled]="profileForm.invalid || isUpdatingProfile"
+                    [disabled]="!canSubmitForm || isUpdatingProfile"
                   >
                     <i class="pi pi-save"></i>
                     <span>Cập nhật</span>

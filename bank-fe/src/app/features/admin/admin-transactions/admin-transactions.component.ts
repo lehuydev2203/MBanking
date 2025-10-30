@@ -4,17 +4,11 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AdminService } from '../../../core/services/admin.service';
-import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
 
 @Component({
   selector: 'app-admin-transactions',
   standalone: true,
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    ProgressSpinnerModule,
-    CurrencyVndPipe,
-  ],
+  imports: [CommonModule, ReactiveFormsModule, ProgressSpinnerModule],
   templateUrl: './admin-transactions.component.html',
   styleUrl: './admin-transactions.component.scss',
 })

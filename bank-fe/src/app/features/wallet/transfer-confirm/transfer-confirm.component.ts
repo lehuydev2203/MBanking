@@ -14,6 +14,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import {
@@ -42,6 +43,7 @@ interface TransferData {
     MessageModule,
     ProgressSpinnerModule,
     ConfirmDialogModule,
+    ToastModule,
     CurrencyVndPipe,
   ],
   providers: [MessageService, ConfirmationService],

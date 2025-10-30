@@ -46,6 +46,7 @@ export class ProfileComponent implements OnInit, OnDestroy {
   isUpdatingProfile = false;
   isEditing = false;
   isSettingNickname = false;
+  hasFormChanges = false;
 
   private destroy$ = new Subject<void>();
 
@@ -66,6 +67,11 @@ export class ProfileComponent implements OnInit, OnDestroy {
         '',
         [Validators.required, Validators.pattern(/^[a-zA-Z0-9_]{3,20}$/)],
       ],
+    });
+
+    // Track form changes to enable/disable update button
+    this.profileForm.valueChanges.subscribe(() => {
+      this.checkFormChanges();
     });
   }
 
@@ -103,15 +109,43 @@ export class ProfileComponent implements OnInit, OnDestroy {
       phone: this.currentProfile?.phone || '',
       newPassword: '',
     });
+    // Manually check form changes after patching values
+    setTimeout(() => this.checkFormChanges(), 0);
   }
 
   cancelEditing(): void {
     this.isEditing = false;
     this.profileForm.reset();
+    this.hasFormChanges = false;
+  }
+
+  private checkFormChanges(): void {
+    if (!this.currentProfile) {
+      this.hasFormChanges = false;
+      return;
+    }
+
+    const currentPhone = this.currentProfile.phone || '';
+    const currentPassword = '';
+    const formPhone = this.profileForm.get('phone')?.value || '';
+    const formPassword = this.profileForm.get('newPassword')?.value || '';
+
+    // Check if phone changed or password is provided (and valid)
+    const phoneChanged = formPhone !== currentPhone;
+    const passwordProvided = formPassword.length > 0;
+    const passwordValid = formPassword.length === 0 || formPassword.length >= 6;
+
+    this.hasFormChanges = phoneChanged || (passwordProvided && passwordValid);
+  }
+
+  get canSubmitForm(): boolean {
+    const phoneValid = this.profileForm.get('phone')?.valid ?? false;
+    const passwordValid = this.profileForm.get('newPassword')?.valid ?? false;
+    return phoneValid && passwordValid && this.hasFormChanges;
   }
 
   updateProfile(): void {
-    if (this.profileForm.valid) {
+    if (this.canSubmitForm) {
       this.isUpdatingProfile = true;
 
       // Update profile data
@@ -168,12 +202,23 @@ export class ProfileComponent implements OnInit, OnDestroy {
               });
             }
           },
-          error: () => {
+          error: (error) => {
             this.isUpdatingProfile = false;
+            let errorMessage = 'Không thể cập nhật thông tin cá nhân';
+
+            if (error.error?.code === 'PHONE_ALREADY_EXISTS') {
+              errorMessage =
+                'Số điện thoại này đã được sử dụng bởi tài khoản khác';
+            } else if (error.error?.code === 'INVALID_PHONE_FORMAT') {
+              errorMessage = 'Số điện thoại không đúng định dạng';
+            } else if (error.error?.message) {
+              errorMessage = error.error.message;
+            }
+
             this.messageService.add({
               severity: 'error',
               summary: 'Lỗi cập nhật',
-              detail: 'Không thể cập nhật thông tin cá nhân',
+              detail: errorMessage,
               life: 5000,
             });
           },

@@ -14,6 +14,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
 
 import {
@@ -34,6 +35,7 @@ import { AccountsService } from '../../../core/services/accounts.service';
     InputNumberModule,
     MessageModule,
     ProgressSpinnerModule,
+    ToastModule,
   ],
   providers: [MessageService],
   templateUrl: './deposit.component.html',

@@ -19,6 +19,7 @@ import { ButtonModule } from 'primeng/button';
 import { MessageModule } from 'primeng/message';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { ToastModule } from 'primeng/toast';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 import {
@@ -43,6 +44,7 @@ import { CurrencyVndPipe } from '../../../shared/pipes/currency-vnd.pipe';
     MessageModule,
     ProgressSpinnerModule,
     ConfirmDialogModule,
+    ToastModule,
     CurrencyVndPipe,
   ],
   providers: [MessageService, ConfirmationService],
